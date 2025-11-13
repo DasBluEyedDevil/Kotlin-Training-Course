@@ -1,0 +1,164 @@
+{
+  "challenges": [
+    {
+      "id": "2.1.1",
+      "lessonId": "2.1",
+      "title": "Age Checker",
+      "description": "Write a program that checks if age >= 18 and prints 'Adult' or 'Minor'.",
+      "difficulty": 2,
+      "starterCode": "fun main() {\n    val age = 20\n    // Use if/else to check age\n    \n}",
+      "solution": "fun main() {\n    val age = 20\n    if (age >= 18) {\n        println(\"Adult\")\n    } else {\n        println(\"Minor\")\n    }\n}",
+      "hints": [
+        "Use if (condition) { } else { }",
+        "Check: age >= 18",
+        "Print appropriate message in each branch"
+      ],
+      "testCases": [
+        {
+          "description": "For age 20, prints 'Adult'",
+          "expectedOutput": "Adult"
+        }
+      ]
+    },
+    {
+      "id": "2.1.2",
+      "lessonId": "2.1",
+      "title": "Grade Calculator",
+      "description": "Given a score, print the letter grade (A: 90+, B: 80+, C: 70+, D: 60+, F: below 60).",
+      "difficulty": 3,
+      "starterCode": "fun main() {\n    val score = 85\n    // Use if/else if/else to determine grade\n    \n}",
+      "solution": "fun main() {\n    val score = 85\n    if (score >= 90) {\n        println(\"A\")\n    } else if (score >= 80) {\n        println(\"B\")\n    } else if (score >= 70) {\n        println(\"C\")\n    } else if (score >= 60) {\n        println(\"D\")\n    } else {\n        println(\"F\")\n    }\n}",
+      "hints": [
+        "Use else if for multiple conditions",
+        "Check from highest to lowest",
+        "Score 85 should print 'B'"
+      ],
+      "testCases": [
+        {
+          "description": "For score 85, prints 'B'",
+          "expectedOutput": "B"
+        }
+      ]
+    },
+    {
+      "id": "2.2.1",
+      "lessonId": "2.2",
+      "title": "Can Drive Check",
+      "description": "Check if someone can drive (age >= 16 AND hasLicense is true).",
+      "difficulty": 2,
+      "starterCode": "fun main() {\n    val age = 17\n    val hasLicense = true\n    // Check if can drive\n    \n}",
+      "solution": "fun main() {\n    val age = 17\n    val hasLicense = true\n    if (age >= 16 && hasLicense) {\n        println(\"Can drive\")\n    } else {\n        println(\"Cannot drive\")\n    }\n}",
+      "hints": [
+        "Use && for AND logic",
+        "Both conditions must be true",
+        "Syntax: if (condition1 && condition2)"
+      ],
+      "testCases": [
+        {
+          "description": "Prints 'Can drive' for age 17 with license",
+          "expectedOutput": "Can drive"
+        }
+      ]
+    },
+    {
+      "id": "2.3.1",
+      "lessonId": "2.3",
+      "title": "Day of Week",
+      "description": "Use 'when' to print if a day number (1-7) is a weekday or weekend.",
+      "difficulty": 3,
+      "starterCode": "fun main() {\n    val day = 6\n    // Use when to check day\n    \n}",
+      "solution": "fun main() {\n    val day = 6\n    when (day) {\n        in 1..5 -> println(\"Weekday\")\n        6, 7 -> println(\"Weekend\")\n        else -> println(\"Invalid\")\n    }\n}",
+      "hints": [
+        "Use 'when (day) { }'",
+        "Use 'in 1..5' for range",
+        "Day 6 is Weekend"
+      ],
+      "testCases": [
+        {
+          "description": "For day 6, prints 'Weekend'",
+          "expectedOutput": "Weekend"
+        }
+      ]
+    },
+    {
+      "id": "2.4.1",
+      "lessonId": "2.4",
+      "title": "Count to 10",
+      "description": "Use a for loop to print numbers 1 to 10, each on a new line.",
+      "difficulty": 2,
+      "starterCode": "fun main() {\n    // Use for loop to print 1 to 10\n    \n}",
+      "solution": "fun main() {\n    for (i in 1..10) {\n        println(i)\n    }\n}",
+      "hints": [
+        "Use for (i in 1..10)",
+        "println(i) inside the loop",
+        "Range is inclusive: 1..10 includes both 1 and 10"
+      ],
+      "testCases": [
+        {
+          "description": "Prints numbers 1-10",
+          "expectedOutput": "1\n2\n3\n4\n5\n6\n7\n8\n9\n10"
+        }
+      ]
+    },
+    {
+      "id": "2.4.2",
+      "lessonId": "2.4",
+      "title": "Sum of Range",
+      "description": "Calculate the sum of numbers from 1 to 5 using a for loop.",
+      "difficulty": 3,
+      "starterCode": "fun main() {\n    var sum = 0\n    // Use for loop to add numbers 1 to 5\n    \n    println(sum)\n}",
+      "solution": "fun main() {\n    var sum = 0\n    for (i in 1..5) {\n        sum += i\n    }\n    println(sum)\n}",
+      "hints": [
+        "Initialize sum = 0",
+        "Use sum += i in the loop",
+        "1+2+3+4+5 = 15"
+      ],
+      "testCases": [
+        {
+          "description": "Prints 15",
+          "expectedOutput": "15"
+        }
+      ]
+    },
+    {
+      "id": "2.6.1",
+      "lessonId": "2.6",
+      "title": "Find Maximum",
+      "description": "Find and print the maximum number in a list.",
+      "difficulty": 3,
+      "starterCode": "fun main() {\n    val numbers = listOf(3, 7, 2, 9, 4)\n    // Find and print the maximum\n    \n}",
+      "solution": "fun main() {\n    val numbers = listOf(3, 7, 2, 9, 4)\n    val max = numbers.maxOrNull()\n    println(max)\n}",
+      "hints": [
+        "Use maxOrNull() function",
+        "List has built-in max function",
+        "Answer should be 9"
+      ],
+      "testCases": [
+        {
+          "description": "Prints 9",
+          "expectedOutput": "9"
+        }
+      ]
+    },
+    {
+      "id": "2.6.2",
+      "lessonId": "2.6",
+      "title": "Filter Even Numbers",
+      "description": "Filter and print only even numbers from a list.",
+      "difficulty": 3,
+      "starterCode": "fun main() {\n    val numbers = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)\n    // Filter even numbers and print\n    \n}",
+      "solution": "fun main() {\n    val numbers = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)\n    val evens = numbers.filter { it % 2 == 0 }\n    println(evens)\n}",
+      "hints": [
+        "Use filter { }",
+        "Check it % 2 == 0",
+        "Result: [2, 4, 6, 8, 10]"
+      ],
+      "testCases": [
+        {
+          "description": "Prints list of even numbers",
+          "expectedOutput": "[2, 4, 6, 8, 10]"
+        }
+      ]
+    }
+  ]
+}

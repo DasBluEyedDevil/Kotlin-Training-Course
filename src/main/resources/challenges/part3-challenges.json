@@ -1,0 +1,192 @@
+{
+  "partNumber": 3,
+  "partTitle": "Object-Oriented Programming",
+  "challenges": [
+    {
+      "id": "3.1.1",
+      "lessonId": "3.1",
+      "title": "Create a Simple Class",
+      "description": "Create a class called `Book` with properties for title (String), author (String), and pages (Int). Create an instance and print its properties.",
+      "difficulty": 2,
+      "starterCode": "// Create your Book class here\n\nfun main() {\n    // Create a book instance and print its properties\n}",
+      "solution": "class Book(val title: String, val author: String, val pages: Int)\n\nfun main() {\n    val myBook = Book(\"1984\", \"George Orwell\", 328)\n    println(\"Title: ${myBook.title}\")\n    println(\"Author: ${myBook.author}\")\n    println(\"Pages: ${myBook.pages}\")\n}",
+      "hints": [
+        "Use the class keyword followed by the class name",
+        "Define properties in the primary constructor",
+        "Use val for read-only properties",
+        "Access properties using dot notation"
+      ],
+      "testCases": [
+        {
+          "description": "Book class should exist with correct properties",
+          "expectedOutput": "Title:",
+          "points": 5
+        }
+      ]
+    },
+    {
+      "id": "3.1.2",
+      "lessonId": "3.1",
+      "title": "Class with Methods",
+      "description": "Create a `BankAccount` class with properties for accountNumber (String) and balance (Double). Add a method `deposit(amount: Double)` and `withdraw(amount: Double)` that modify the balance.",
+      "difficulty": 3,
+      "starterCode": "class BankAccount(val accountNumber: String, var balance: Double) {\n    // Add deposit method\n    \n    // Add withdraw method\n    \n}\n\nfun main() {\n    val account = BankAccount(\"12345\", 1000.0)\n    println(\"Initial balance: ${account.balance}\")\n    account.deposit(500.0)\n    println(\"After deposit: ${account.balance}\")\n    account.withdraw(200.0)\n    println(\"After withdrawal: ${account.balance}\")\n}",
+      "solution": "class BankAccount(val accountNumber: String, var balance: Double) {\n    fun deposit(amount: Double) {\n        balance += amount\n    }\n    \n    fun withdraw(amount: Double) {\n        balance -= amount\n    }\n}\n\nfun main() {\n    val account = BankAccount(\"12345\", 1000.0)\n    println(\"Initial balance: ${account.balance}\")\n    account.deposit(500.0)\n    println(\"After deposit: ${account.balance}\")\n    account.withdraw(200.0)\n    println(\"After withdrawal: ${account.balance}\")\n}",
+      "hints": [
+        "Methods are defined inside the class body",
+        "Use 'fun' keyword to define methods",
+        "balance must be 'var' to be modifiable",
+        "Use += to add to balance, -= to subtract"
+      ],
+      "testCases": [
+        {
+          "description": "Initial balance should be 1000.0",
+          "expectedOutput": "Initial balance: 1000.0",
+          "points": 3
+        },
+        {
+          "description": "After deposit should be 1500.0",
+          "expectedOutput": "After deposit: 1500.0",
+          "points": 4
+        },
+        {
+          "description": "After withdrawal should be 1300.0",
+          "expectedOutput": "After withdrawal: 1300.0",
+          "points": 3
+        }
+      ]
+    },
+    {
+      "id": "3.2.1",
+      "lessonId": "3.2",
+      "title": "Nullable Types",
+      "description": "Create a function `findUserById` that takes an Int ID and returns a nullable String (username). Return null if ID is not found (ID < 1 or ID > 5).",
+      "difficulty": 2,
+      "starterCode": "fun findUserById(id: Int): String? {\n    // Return username or null\n}\n\nfun main() {\n    println(findUserById(3))\n    println(findUserById(10))\n}",
+      "solution": "fun findUserById(id: Int): String? {\n    return when (id) {\n        1 -> \"Alice\"\n        2 -> \"Bob\"\n        3 -> \"Charlie\"\n        4 -> \"Diana\"\n        5 -> \"Eve\"\n        else -> null\n    }\n}\n\nfun main() {\n    println(findUserById(3))\n    println(findUserById(10))\n}",
+      "hints": [
+        "Use String? to indicate a nullable type",
+        "Use when expression to match IDs",
+        "Return null in the else branch"
+      ],
+      "testCases": [
+        {
+          "description": "Valid ID should return username",
+          "expectedOutput": "Charlie",
+          "points": 5
+        },
+        {
+          "description": "Invalid ID should return null",
+          "expectedOutput": "null",
+          "points": 5
+        }
+      ]
+    },
+    {
+      "id": "3.2.2",
+      "lessonId": "3.2",
+      "title": "Safe Call and Elvis Operator",
+      "description": "Given a nullable string, safely get its length. If null, return 0 using the Elvis operator.",
+      "difficulty": 2,
+      "starterCode": "fun getLength(text: String?): Int {\n    // Use safe call and Elvis operator\n}\n\nfun main() {\n    println(getLength(\"Hello\"))  // Should print 5\n    println(getLength(null))      // Should print 0\n}",
+      "solution": "fun getLength(text: String?): Int {\n    return text?.length ?: 0\n}\n\nfun main() {\n    println(getLength(\"Hello\"))  // Should print 5\n    println(getLength(null))      // Should print 0\n}",
+      "hints": [
+        "Use ?. for safe call on nullable types",
+        "Use ?: (Elvis operator) to provide default value",
+        "Combine them: text?.length ?: 0"
+      ],
+      "testCases": [
+        {
+          "description": "Non-null string should return its length",
+          "expectedOutput": "5",
+          "points": 5
+        },
+        {
+          "description": "Null string should return 0",
+          "expectedOutput": "0",
+          "points": 5
+        }
+      ]
+    },
+    {
+      "id": "3.3.1",
+      "lessonId": "3.3",
+      "title": "Inheritance",
+      "description": "Create an open class `Animal` with a property `name` and an open method `makeSound()`. Create a subclass `Dog` that overrides `makeSound()` to print 'Woof!'.",
+      "difficulty": 3,
+      "starterCode": "// Create your Animal class (make it open)\n\n// Create your Dog class that extends Animal\n\nfun main() {\n    val dog = Dog(\"Buddy\")\n    println(\"Name: ${dog.name}\")\n    dog.makeSound()\n}",
+      "solution": "open class Animal(val name: String) {\n    open fun makeSound() {\n        println(\"Some sound\")\n    }\n}\n\nclass Dog(name: String) : Animal(name) {\n    override fun makeSound() {\n        println(\"Woof!\")\n    }\n}\n\nfun main() {\n    val dog = Dog(\"Buddy\")\n    println(\"Name: ${dog.name}\")\n    dog.makeSound()\n}",
+      "hints": [
+        "Use 'open' keyword to allow inheritance",
+        "Use : to extend a class",
+        "Use 'override' keyword for overriding methods",
+        "Call parent constructor with : ParentClass(args)"
+      ],
+      "testCases": [
+        {
+          "description": "Dog should have name property",
+          "expectedOutput": "Name: Buddy",
+          "points": 3
+        },
+        {
+          "description": "Dog should override makeSound",
+          "expectedOutput": "Woof!",
+          "points": 7
+        }
+      ]
+    },
+    {
+      "id": "3.3.2",
+      "lessonId": "3.3",
+      "title": "Interfaces",
+      "description": "Create an interface `Drivable` with a method `drive()`. Create two classes `Car` and `Bicycle` that implement this interface.",
+      "difficulty": 3,
+      "starterCode": "// Create Drivable interface\n\n// Create Car class\n\n// Create Bicycle class\n\nfun main() {\n    val car: Drivable = Car()\n    val bicycle: Drivable = Bicycle()\n    car.drive()\n    bicycle.drive()\n}",
+      "solution": "interface Drivable {\n    fun drive()\n}\n\nclass Car : Drivable {\n    override fun drive() {\n        println(\"Driving a car with engine\")\n    }\n}\n\nclass Bicycle : Drivable {\n    override fun drive() {\n        println(\"Riding a bicycle with pedals\")\n    }\n}\n\nfun main() {\n    val car: Drivable = Car()\n    val bicycle: Drivable = Bicycle()\n    car.drive()\n    bicycle.drive()\n}",
+      "hints": [
+        "Use 'interface' keyword to define an interface",
+        "Interface methods don't have implementations",
+        "Implement interface with : InterfaceName",
+        "Use 'override' to implement interface methods"
+      ],
+      "testCases": [
+        {
+          "description": "Car should drive with engine",
+          "expectedOutput": "Driving a car with engine",
+          "points": 5
+        },
+        {
+          "description": "Bicycle should ride with pedals",
+          "expectedOutput": "Riding a bicycle with pedals",
+          "points": 5
+        }
+      ]
+    },
+    {
+      "id": "3.4.1",
+      "lessonId": "3.4",
+      "title": "Data Classes",
+      "description": "Create a data class `Person` with properties name, age, and email. Create two instances with the same data and compare them using ==.",
+      "difficulty": 2,
+      "starterCode": "// Create Person data class\n\nfun main() {\n    val person1 = Person(\"Alice\", 30, \"alice@example.com\")\n    val person2 = Person(\"Alice\", 30, \"alice@example.com\")\n    println(\"Are they equal? ${person1 == person2}\")\n    println(person1)\n}",
+      "solution": "data class Person(val name: String, val age: Int, val email: String)\n\nfun main() {\n    val person1 = Person(\"Alice\", 30, \"alice@example.com\")\n    val person2 = Person(\"Alice\", 30, \"alice@example.com\")\n    println(\"Are they equal? ${person1 == person2}\")\n    println(person1)\n}",
+      "hints": [
+        "Use 'data class' instead of 'class'",
+        "Data classes automatically generate equals(), hashCode(), toString()",
+        "Two data classes with same property values are equal"
+      ],
+      "testCases": [
+        {
+          "description": "Data classes with same values should be equal",
+          "expectedOutput": "Are they equal? true",
+          "points": 5
+        },
+        {
+          "description": "toString should show all properties",
+          "expectedOutput": "Person(name=Alice, age=30, email=alice@example.com)",
+          "points": 5
+        }
+      ]
+    }
+  ]
+}

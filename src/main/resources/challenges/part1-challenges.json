@@ -1,0 +1,144 @@
+{
+  "challenges": [
+    {
+      "id": "1.3.1",
+      "lessonId": "1.3",
+      "title": "Hello World",
+      "description": "Write a program that prints 'Hello, World!' to the screen.",
+      "difficulty": 1,
+      "starterCode": "fun main() {\n    // Write your code here\n    \n}",
+      "solution": "fun main() {\n    println(\"Hello, World!\")\n}",
+      "hints": [
+        "Use the println() function",
+        "Put text in quotes: \"Hello, World!\"",
+        "Don't forget the parentheses!"
+      ],
+      "testCases": [
+        {
+          "description": "Prints 'Hello, World!'",
+          "expectedOutput": "Hello, World!"
+        }
+      ]
+    },
+    {
+      "id": "1.4.1",
+      "lessonId": "1.4",
+      "title": "Create and Print Variable",
+      "description": "Create a variable named 'age' with value 25, then print it.",
+      "difficulty": 1,
+      "starterCode": "fun main() {\n    // Create a variable called age with value 25\n    \n    // Print the age\n    \n}",
+      "solution": "fun main() {\n    val age = 25\n    println(age)\n}",
+      "hints": [
+        "Use 'val' to create a variable",
+        "Syntax: val name = value",
+        "Use println() to print the variable"
+      ],
+      "testCases": [
+        {
+          "description": "Prints the number 25",
+          "expectedOutput": "25"
+        }
+      ]
+    },
+    {
+      "id": "1.4.2",
+      "lessonId": "1.4",
+      "title": "String Template",
+      "description": "Create a variable 'name' with your name, then print 'Hello, [name]!' using string templates.",
+      "difficulty": 2,
+      "starterCode": "fun main() {\n    val name = \"YourName\"\n    // Print Hello, [name]! using $name\n    \n}",
+      "solution": "fun main() {\n    val name = \"Alice\"\n    println(\"Hello, $name!\")\n}",
+      "hints": [
+        "Use $name inside the string",
+        "String templates: \"text $variable text\"",
+        "Remember quotes around the whole string"
+      ],
+      "testCases": [
+        {
+          "description": "Prints greeting with name",
+          "expectedOutput": "Hello, Alice!"
+        }
+      ]
+    },
+    {
+      "id": "1.5.1",
+      "lessonId": "1.5",
+      "title": "Calculate Sum",
+      "description": "Create two Int variables (a=10, b=20) and print their sum.",
+      "difficulty": 2,
+      "starterCode": "fun main() {\n    val a = 10\n    val b = 20\n    // Calculate and print the sum\n    \n}",
+      "solution": "fun main() {\n    val a = 10\n    val b = 20\n    val sum = a + b\n    println(sum)\n}",
+      "hints": [
+        "Use + to add numbers",
+        "Store result in a variable",
+        "Print the result"
+      ],
+      "testCases": [
+        {
+          "description": "Prints 30",
+          "expectedOutput": "30"
+        }
+      ]
+    },
+    {
+      "id": "1.7.1",
+      "lessonId": "1.7",
+      "title": "Create a Simple Function",
+      "description": "Create a function called 'greet' that prints 'Welcome!', then call it.",
+      "difficulty": 2,
+      "starterCode": "// Create the greet function here\n\n\nfun main() {\n    // Call the greet function\n    \n}",
+      "solution": "fun greet() {\n    println(\"Welcome!\")\n}\n\nfun main() {\n    greet()\n}",
+      "hints": [
+        "Use 'fun' keyword to create a function",
+        "Syntax: fun name() { code }",
+        "Call it with: greet()"
+      ],
+      "testCases": [
+        {
+          "description": "Prints 'Welcome!'",
+          "expectedOutput": "Welcome!"
+        }
+      ]
+    },
+    {
+      "id": "1.8.1",
+      "lessonId": "1.8",
+      "title": "Function with Parameter",
+      "description": "Create a function 'square' that takes an Int and returns its square.",
+      "difficulty": 3,
+      "starterCode": "fun square(n: Int): Int {\n    // Return n * n\n    \n}\n\nfun main() {\n    val result = square(5)\n    println(result)\n}",
+      "solution": "fun square(n: Int): Int {\n    return n * n\n}\n\nfun main() {\n    val result = square(5)\n    println(result)\n}",
+      "hints": [
+        "Use 'return' to send back a value",
+        "Multiply n by itself: n * n",
+        "Function signature is already provided"
+      ],
+      "testCases": [
+        {
+          "description": "Prints 25 (5 squared)",
+          "expectedOutput": "25"
+        }
+      ]
+    },
+    {
+      "id": "1.8.2",
+      "lessonId": "1.8",
+      "title": "Function with Multiple Parameters",
+      "description": "Create a function 'multiply' that takes two Ints and returns their product.",
+      "difficulty": 3,
+      "starterCode": "fun multiply(a: Int, b: Int): Int {\n    // Return a * b\n    \n}\n\nfun main() {\n    println(multiply(6, 7))\n}",
+      "solution": "fun multiply(a: Int, b: Int): Int {\n    return a * b\n}\n\nfun main() {\n    println(multiply(6, 7))\n}",
+      "hints": [
+        "Return a * b",
+        "Use return keyword",
+        "Test with multiply(6, 7) = 42"
+      ],
+      "testCases": [
+        {
+          "description": "Prints 42",
+          "expectedOutput": "42"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,169 @@
+{
+  "partNumber": 6,
+  "partTitle": "Frontend Development with Kotlin/JS",
+  "challenges": [
+    {
+      "id": "6.1.1",
+      "lessonId": "6.1",
+      "title": "Component Props Simulation",
+      "description": "Create a data class to represent component props with a name property. Create an instance and display it.",
+      "difficulty": 1,
+      "starterCode": "// Create a GreetingProps data class\n\nfun main() {\n    val props = GreetingProps(\"Alice\")\n    println(\"Hello, ${props.name}!\")\n}",
+      "solution": "data class GreetingProps(val name: String)\n\nfun main() {\n    val props = GreetingProps(\"Alice\")\n    println(\"Hello, ${props.name}!\")\n}",
+      "hints": [
+        "Use data class for props",
+        "Props typically have val properties",
+        "Access property with dot notation"
+      ],
+      "testCases": [
+        {
+          "description": "Should create and display greeting",
+          "expectedOutput": "Hello, Alice!",
+          "points": 10
+        }
+      ]
+    },
+    {
+      "id": "6.1.2",
+      "lessonId": "6.1",
+      "title": "State Management Simulation",
+      "description": "Simulate React state by creating a Counter class with a count property and increment/decrement methods.",
+      "difficulty": 2,
+      "starterCode": "class Counter {\n    var count: Int = 0\n    \n    // Add increment method\n    \n    // Add decrement method\n}\n\nfun main() {\n    val counter = Counter()\n    println(\"Initial: ${counter.count}\")\n    counter.increment()\n    counter.increment()\n    println(\"After increments: ${counter.count}\")\n    counter.decrement()\n    println(\"After decrement: ${counter.count}\")\n}",
+      "solution": "class Counter {\n    var count: Int = 0\n    \n    fun increment() {\n        count++\n    }\n    \n    fun decrement() {\n        count--\n    }\n}\n\nfun main() {\n    val counter = Counter()\n    println(\"Initial: ${counter.count}\")\n    counter.increment()\n    counter.increment()\n    println(\"After increments: ${counter.count}\")\n    counter.decrement()\n    println(\"After decrement: ${counter.count}\")\n}",
+      "hints": [
+        "count must be var to be mutable",
+        "Use count++ to increment",
+        "Use count-- to decrement"
+      ],
+      "testCases": [
+        {
+          "description": "Initial count should be 0",
+          "expectedOutput": "Initial: 0",
+          "points": 3
+        },
+        {
+          "description": "After two increments should be 2",
+          "expectedOutput": "After increments: 2",
+          "points": 4
+        },
+        {
+          "description": "After decrement should be 1",
+          "expectedOutput": "After decrement: 1",
+          "points": 3
+        }
+      ]
+    },
+    {
+      "id": "6.1.3",
+      "lessonId": "6.1",
+      "title": "Event Handler Simulation",
+      "description": "Create a Button class that stores a click handler lambda and calls it when clicked.",
+      "difficulty": 3,
+      "starterCode": "class Button(val label: String, val onClick: () -> Unit) {\n    fun click() {\n        // Call the onClick handler\n    }\n}\n\nfun main() {\n    val button = Button(\"Click Me\") {\n        println(\"Button was clicked!\")\n    }\n    \n    println(\"Button label: ${button.label}\")\n    button.click()\n}",
+      "solution": "class Button(val label: String, val onClick: () -> Unit) {\n    fun click() {\n        onClick()\n    }\n}\n\nfun main() {\n    val button = Button(\"Click Me\") {\n        println(\"Button was clicked!\")\n    }\n    \n    println(\"Button label: ${button.label}\")\n    button.click()\n}",
+      "hints": [
+        "onClick is a lambda with no parameters",
+        "Call lambda like a function: onClick()",
+        "() -> Unit means function that takes nothing and returns nothing"
+      ],
+      "testCases": [
+        {
+          "description": "Should have correct label",
+          "expectedOutput": "Button label: Click Me",
+          "points": 4
+        },
+        {
+          "description": "Should call click handler",
+          "expectedOutput": "Button was clicked!",
+          "points": 6
+        }
+      ]
+    },
+    {
+      "id": "6.2.1",
+      "lessonId": "6.2",
+      "title": "Form State Management",
+      "description": "Create a FormState data class with name and email fields, and a copy method to update individual fields.",
+      "difficulty": 2,
+      "starterCode": "data class FormState(val name: String = \"\", val email: String = \"\")\n\nfun main() {\n    var formState = FormState()\n    println(\"Initial: $formState\")\n    \n    // Update name\n    formState = formState.copy(name = \"Alice\")\n    println(\"After name update: $formState\")\n    \n    // Update email\n    formState = formState.copy(email = \"alice@example.com\")\n    println(\"After email update: $formState\")\n}",
+      "solution": "data class FormState(val name: String = \"\", val email: String = \"\")\n\nfun main() {\n    var formState = FormState()\n    println(\"Initial: $formState\")\n    \n    formState = formState.copy(name = \"Alice\")\n    println(\"After name update: $formState\")\n    \n    formState = formState.copy(email = \"alice@example.com\")\n    println(\"After email update: $formState\")\n}",
+      "hints": [
+        "Data classes automatically have copy() method",
+        "copy() creates new instance with specified changes",
+        "Use default parameter values for optional fields"
+      ],
+      "testCases": [
+        {
+          "description": "Initial state should be empty",
+          "expectedOutput": "Initial: FormState(name=, email=)",
+          "points": 3
+        },
+        {
+          "description": "Name should update",
+          "expectedOutput": "After name update: FormState(name=Alice, email=)",
+          "points": 3
+        },
+        {
+          "description": "Email should update",
+          "expectedOutput": "After email update: FormState(name=Alice, email=alice@example.com)",
+          "points": 4
+        }
+      ]
+    },
+    {
+      "id": "6.2.2",
+      "lessonId": "6.2",
+      "title": "Form Validation",
+      "description": "Create a validation function for a login form that checks email and password requirements.",
+      "difficulty": 3,
+      "starterCode": "data class LoginForm(val email: String, val password: String)\n\nfun validateLogin(form: LoginForm): Map<String, String> {\n    val errors = mutableMapOf<String, String>()\n    // Add validation logic\n    \n    return errors\n}\n\nfun main() {\n    val form1 = LoginForm(\"invalidemail\", \"short\")\n    println(\"Errors: ${validateLogin(form1)}\")\n    \n    val form2 = LoginForm(\"user@example.com\", \"password123\")\n    println(\"Valid: ${validateLogin(form2).isEmpty()}\")\n}",
+      "solution": "data class LoginForm(val email: String, val password: String)\n\nfun validateLogin(form: LoginForm): Map<String, String> {\n    val errors = mutableMapOf<String, String>()\n    \n    if (!form.email.contains(\"@\")) {\n        errors[\"email\"] = \"Invalid email format\"\n    }\n    \n    if (form.password.length < 8) {\n        errors[\"password\"] = \"Password must be at least 8 characters\"\n    }\n    \n    return errors\n}\n\nfun main() {\n    val form1 = LoginForm(\"invalidemail\", \"short\")\n    println(\"Errors: ${validateLogin(form1)}\")\n    \n    val form2 = LoginForm(\"user@example.com\", \"password123\")\n    println(\"Valid: ${validateLogin(form2).isEmpty()}\")\n}",
+      "hints": [
+        "Use Map<String, String> for field-specific errors",
+        "Key is field name, value is error message",
+        "Check email contains @",
+        "Check password length >= 8"
+      ],
+      "testCases": [
+        {
+          "description": "Should detect validation errors",
+          "expectedOutput": "Errors: {email=Invalid email format, password=Password must be at least 8 characters}",
+          "points": 5
+        },
+        {
+          "description": "Should pass valid form",
+          "expectedOutput": "Valid: true",
+          "points": 5
+        }
+      ]
+    },
+    {
+      "id": "6.2.3",
+      "lessonId": "6.2",
+      "title": "Todo List State",
+      "description": "Create a TodoListState class that manages a list of todos with add, toggle, and delete operations.",
+      "difficulty": 3,
+      "starterCode": "data class Todo(val id: Int, val text: String, var completed: Boolean = false)\n\nclass TodoListState {\n    private val todos = mutableListOf<Todo>()\n    private var nextId = 1\n    \n    fun addTodo(text: String) {\n        // Add new todo\n    }\n    \n    fun toggleTodo(id: Int) {\n        // Toggle completed status\n    }\n    \n    fun getTodos(): List<Todo> = todos.toList()\n}\n\nfun main() {\n    val state = TodoListState()\n    state.addTodo(\"Learn Kotlin\")\n    state.addTodo(\"Build app\")\n    println(\"Todos: ${state.getTodos()}\")\n    state.toggleTodo(1)\n    println(\"After toggle: ${state.getTodos()}\")\n}",
+      "solution": "data class Todo(val id: Int, val text: String, var completed: Boolean = false)\n\nclass TodoListState {\n    private val todos = mutableListOf<Todo>()\n    private var nextId = 1\n    \n    fun addTodo(text: String) {\n        todos.add(Todo(nextId++, text))\n    }\n    \n    fun toggleTodo(id: Int) {\n        todos.find { it.id == id }?.let { it.completed = !it.completed }\n    }\n    \n    fun getTodos(): List<Todo> = todos.toList()\n}\n\nfun main() {\n    val state = TodoListState()\n    state.addTodo(\"Learn Kotlin\")\n    state.addTodo(\"Build app\")\n    println(\"Todos: ${state.getTodos()}\")\n    state.toggleTodo(1)\n    println(\"After toggle: ${state.getTodos()}\")\n}",
+      "hints": [
+        "Use nextId++ to auto-increment IDs",
+        "find() returns first matching element",
+        "Use let to safely operate on nullable result",
+        "Toggle with: completed = !completed"
+      ],
+      "testCases": [
+        {
+          "description": "Should add todos",
+          "expectedOutput": "Todos: [Todo(id=1, text=Learn Kotlin, completed=false), Todo(id=2, text=Build app, completed=false)]",
+          "points": 5
+        },
+        {
+          "description": "Should toggle completion",
+          "expectedOutput": "After toggle: [Todo(id=1, text=Learn Kotlin, completed=true), Todo(id=2, text=Build app, completed=false)]",
+          "points": 5
+        }
+      ]
+    }
+  ]
+}

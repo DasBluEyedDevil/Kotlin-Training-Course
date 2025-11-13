@@ -1,0 +1,130 @@
+{
+  "partNumber": 6,
+  "partTitle": "Frontend Development with Kotlin/JS",
+  "quizzes": [
+    {
+      "lessonId": "6.1",
+      "title": "Introduction to Frontend Development Quiz",
+      "questions": [
+        {
+          "id": "6.1.q1",
+          "type": "multiple_choice",
+          "question": "What is frontend development?",
+          "options": [
+            "Server-side programming",
+            "Database management",
+            "Building the user interface that users interact with",
+            "Network configuration"
+          ],
+          "correctAnswer": 2,
+          "explanation": "Frontend development is building the user interface - everything users see and interact with."
+        },
+        {
+          "id": "6.1.q2",
+          "type": "multiple_choice",
+          "question": "What is React?",
+          "options": [
+            "A database",
+            "A component-based UI library",
+            "A backend framework",
+            "A programming language"
+          ],
+          "correctAnswer": 1,
+          "explanation": "React is a JavaScript library for building component-based user interfaces."
+        },
+        {
+          "id": "6.1.q3",
+          "type": "true_false",
+          "question": "Kotlin/JS allows you to write frontend code in Kotlin that compiles to JavaScript.",
+          "correctAnswer": true,
+          "explanation": "True. Kotlin/JS compiles Kotlin code to JavaScript that runs in browsers."
+        },
+        {
+          "id": "6.1.q4",
+          "type": "multiple_choice",
+          "question": "What is state in React?",
+          "options": [
+            "The physical location of the server",
+            "Data that changes over time and triggers re-renders",
+            "CSS styling",
+            "The HTML structure"
+          ],
+          "correctAnswer": 1,
+          "explanation": "State is data that changes over time. When state changes, React re-renders the component."
+        },
+        {
+          "id": "6.1.q5",
+          "type": "multiple_choice",
+          "question": "What are props in React?",
+          "options": [
+            "CSS properties",
+            "Database properties",
+            "Data passed from parent to child components",
+            "Server endpoints"
+          ],
+          "correctAnswer": 2,
+          "explanation": "Props (properties) are data passed from parent components to child components."
+        }
+      ]
+    },
+    {
+      "lessonId": "6.2",
+      "title": "Advanced Frontend Quiz",
+      "questions": [
+        {
+          "id": "6.2.q1",
+          "type": "multiple_choice",
+          "question": "What is useState used for?",
+          "options": [
+            "Making API calls",
+            "Managing component state",
+            "Routing between pages",
+            "Styling components"
+          ],
+          "correctAnswer": 1,
+          "explanation": "useState is a React hook for managing state within functional components."
+        },
+        {
+          "id": "6.2.q2",
+          "type": "multiple_choice",
+          "question": "What is useEffect used for?",
+          "options": [
+            "Creating variables",
+            "Handling side effects like API calls and subscriptions",
+            "Styling components",
+            "Defining routes"
+          ],
+          "correctAnswer": 1,
+          "explanation": "useEffect handles side effects like data fetching, subscriptions, and DOM manipulation."
+        },
+        {
+          "id": "6.2.q3",
+          "type": "true_false",
+          "question": "Form validation should be done on both frontend and backend.",
+          "correctAnswer": true,
+          "explanation": "True. Always validate on both sides - frontend for UX, backend for security."
+        },
+        {
+          "id": "6.2.q4",
+          "type": "multiple_choice",
+          "question": "What is a custom hook?",
+          "options": [
+            "A fishing tool",
+            "A reusable function that uses React hooks",
+            "A CSS property",
+            "A database query"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Custom hooks are reusable functions that encapsulate logic using React hooks."
+        },
+        {
+          "id": "6.2.q5",
+          "type": "true_false",
+          "question": "In React, you should never mutate state directly - always use setState.",
+          "correctAnswer": true,
+          "explanation": "True. Direct state mutation doesn't trigger re-renders. Always use setState functions."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,141 @@
+{
+  "partNumber": 7,
+  "partTitle": "Full-Stack Capstone Project",
+  "challenges": [
+    {
+      "id": "7.1.1",
+      "lessonId": "7.1",
+      "title": "API Request/Response Models",
+      "description": "Create data classes for a task management API: Task, CreateTaskRequest, and UpdateTaskRequest.",
+      "difficulty": 2,
+      "starterCode": "// Create Task data class with: id, title, description, completed, priority, userId\n\n// Create CreateTaskRequest with: title, description, priority\n\n// Create UpdateTaskRequest with nullable fields: title?, description?, completed?\n\nfun main() {\n    val task = Task(1, \"Learn Kotlin\", \"Complete course\", false, \"high\", 1)\n    val createRequest = CreateTaskRequest(\"New Task\", \"Description\", \"medium\")\n    val updateRequest = UpdateTaskRequest(null, null, true)\n    \n    println(task)\n    println(createRequest)\n    println(updateRequest)\n}",
+      "solution": "data class Task(\n    val id: Int,\n    val title: String,\n    val description: String,\n    val completed: Boolean,\n    val priority: String,\n    val userId: Int\n)\n\ndata class CreateTaskRequest(\n    val title: String,\n    val description: String,\n    val priority: String\n)\n\ndata class UpdateTaskRequest(\n    val title: String?,\n    val description: String?,\n    val completed: Boolean?\n)\n\nfun main() {\n    val task = Task(1, \"Learn Kotlin\", \"Complete course\", false, \"high\", 1)\n    val createRequest = CreateTaskRequest(\"New Task\", \"Description\", \"medium\")\n    val updateRequest = UpdateTaskRequest(null, null, true)\n    \n    println(task)\n    println(createRequest)\n    println(updateRequest)\n}",
+      "hints": [
+        "Use data class for all models",
+        "Task has all required fields",
+        "CreateTaskRequest doesn't include id (server generates it)",
+        "UpdateTaskRequest has nullable fields (only update what's provided)"
+      ],
+      "testCases": [
+        {
+          "description": "Should create task model",
+          "expectedOutput": "Task(id=1, title=Learn Kotlin",
+          "points": 4
+        },
+        {
+          "description": "Should create request models",
+          "expectedOutput": "CreateTaskRequest(title=New Task",
+          "points": 3
+        },
+        {
+          "description": "Should handle nullable updates",
+          "expectedOutput": "UpdateTaskRequest(title=null, description=null, completed=true)",
+          "points": 3
+        }
+      ]
+    },
+    {
+      "id": "7.1.2",
+      "lessonId": "7.1",
+      "title": "Task Repository Pattern",
+      "description": "Create a TaskRepository class with in-memory storage for CRUD operations on tasks.",
+      "difficulty": 4,
+      "starterCode": "data class Task(\n    val id: Int,\n    val title: String,\n    val description: String,\n    var completed: Boolean,\n    val userId: Int\n)\n\nclass TaskRepository {\n    private val tasks = mutableListOf<Task>()\n    private var nextId = 1\n    \n    fun create(title: String, description: String, userId: Int): Task {\n        // Create and add task\n    }\n    \n    fun findAll(userId: Int): List<Task> {\n        // Find all tasks for user\n    }\n    \n    fun findById(id: Int): Task? {\n        // Find task by ID\n    }\n    \n    fun update(id: Int, title: String?, description: String?, completed: Boolean?): Boolean {\n        // Update task fields if not null\n    }\n    \n    fun delete(id: Int): Boolean {\n        // Delete task\n    }\n}\n\nfun main() {\n    val repo = TaskRepository()\n    val task1 = repo.create(\"Task 1\", \"Description 1\", 1)\n    val task2 = repo.create(\"Task 2\", \"Description 2\", 1)\n    \n    println(\"All tasks: ${repo.findAll(1)}\")\n    repo.update(1, null, null, true)\n    println(\"After update: ${repo.findById(1)}\")\n    repo.delete(2)\n    println(\"After delete: ${repo.findAll(1).size}\")\n}",
+      "solution": "data class Task(\n    val id: Int,\n    val title: String,\n    val description: String,\n    var completed: Boolean,\n    val userId: Int\n)\n\nclass TaskRepository {\n    private val tasks = mutableListOf<Task>()\n    private var nextId = 1\n    \n    fun create(title: String, description: String, userId: Int): Task {\n        val task = Task(nextId++, title, description, false, userId)\n        tasks.add(task)\n        return task\n    }\n    \n    fun findAll(userId: Int): List<Task> {\n        return tasks.filter { it.userId == userId }\n    }\n    \n    fun findById(id: Int): Task? {\n        return tasks.find { it.id == id }\n    }\n    \n    fun update(id: Int, title: String?, description: String?, completed: Boolean?): Boolean {\n        val task = findById(id) ?: return false\n        val index = tasks.indexOf(task)\n        tasks[index] = task.copy(\n            title = title ?: task.title,\n            description = description ?: task.description,\n            completed = completed ?: task.completed\n        )\n        return true\n    }\n    \n    fun delete(id: Int): Boolean {\n        return tasks.removeIf { it.id == id }\n    }\n}\n\nfun main() {\n    val repo = TaskRepository()\n    val task1 = repo.create(\"Task 1\", \"Description 1\", 1)\n    val task2 = repo.create(\"Task 2\", \"Description 2\", 1)\n    \n    println(\"All tasks: ${repo.findAll(1)}\")\n    repo.update(1, null, null, true)\n    println(\"After update: ${repo.findById(1)}\")\n    repo.delete(2)\n    println(\"After delete: ${repo.findAll(1).size}\")\n}",
+      "hints": [
+        "Use mutableListOf for storage",
+        "Auto-increment nextId for new tasks",
+        "filter() returns tasks matching userId",
+        "Use Elvis operator ?: to keep existing values on update",
+        "removeIf() returns true if element was removed"
+      ],
+      "testCases": [
+        {
+          "description": "Should create and find all tasks",
+          "expectedOutput": "All tasks: [Task(id=1",
+          "points": 3
+        },
+        {
+          "description": "Should update task",
+          "expectedOutput": "completed=true",
+          "points": 4
+        },
+        {
+          "description": "Should delete task",
+          "expectedOutput": "After delete: 1",
+          "points": 3
+        }
+      ]
+    },
+    {
+      "id": "7.1.3",
+      "lessonId": "7.1",
+      "title": "Authentication Token Management",
+      "description": "Create a simple session manager that generates tokens and validates them.",
+      "difficulty": 3,
+      "starterCode": "import java.util.UUID\n\ndata class Session(val userId: Int, val token: String)\n\nclass SessionManager {\n    private val sessions = mutableMapOf<String, Session>()\n    \n    fun createSession(userId: Int): String {\n        // Generate token and store session\n    }\n    \n    fun validateToken(token: String): Int? {\n        // Return userId if valid, null otherwise\n    }\n    \n    fun removeSession(token: String) {\n        // Remove session\n    }\n}\n\nfun main() {\n    val manager = SessionManager()\n    val token = manager.createSession(1)\n    println(\"Token created: $token\")\n    println(\"User ID: ${manager.validateToken(token)}\")\n    println(\"Invalid token: ${manager.validateToken(\"invalid\")}\")\n    manager.removeSession(token)\n    println(\"After logout: ${manager.validateToken(token)}\")\n}",
+      "solution": "import java.util.UUID\n\ndata class Session(val userId: Int, val token: String)\n\nclass SessionManager {\n    private val sessions = mutableMapOf<String, Session>()\n    \n    fun createSession(userId: Int): String {\n        val token = UUID.randomUUID().toString()\n        sessions[token] = Session(userId, token)\n        return token\n    }\n    \n    fun validateToken(token: String): Int? {\n        return sessions[token]?.userId\n    }\n    \n    fun removeSession(token: String) {\n        sessions.remove(token)\n    }\n}\n\nfun main() {\n    val manager = SessionManager()\n    val token = manager.createSession(1)\n    println(\"Token created: $token\")\n    println(\"User ID: ${manager.validateToken(token)}\")\n    println(\"Invalid token: ${manager.validateToken(\"invalid\")}\")\n    manager.removeSession(token)\n    println(\"After logout: ${manager.validateToken(token)}\")\n}",
+      "hints": [
+        "Use UUID.randomUUID().toString() to generate unique token",
+        "Store sessions in Map with token as key",
+        "Use safe call ?. to handle missing sessions",
+        "remove() deletes from map"
+      ],
+      "testCases": [
+        {
+          "description": "Should create token",
+          "expectedOutput": "Token created:",
+          "points": 3
+        },
+        {
+          "description": "Should validate token and return user ID",
+          "expectedOutput": "User ID: 1",
+          "points": 3
+        },
+        {
+          "description": "Should return null for invalid token",
+          "expectedOutput": "Invalid token: null",
+          "points": 2
+        },
+        {
+          "description": "Should invalidate after logout",
+          "expectedOutput": "After logout: null",
+          "points": 2
+        }
+      ]
+    },
+    {
+      "id": "7.1.4",
+      "lessonId": "7.1",
+      "title": "Full-Stack Integration Simulation",
+      "description": "Simulate a complete flow: create user, login, create task, fetch tasks. This ties together authentication and task management.",
+      "difficulty": 4,
+      "starterCode": "data class User(val id: Int, val username: String, val email: String)\ndata class Task(val id: Int, val title: String, val completed: Boolean, val userId: Int)\n\nclass Application {\n    private val users = mutableMapOf<Int, User>()\n    private val tasks = mutableListOf<Task>()\n    private val sessions = mutableMapOf<String, Int>() // token to userId\n    private var nextUserId = 1\n    private var nextTaskId = 1\n    \n    fun register(username: String, email: String): User {\n        // Create and store user\n    }\n    \n    fun login(userId: Int): String {\n        // Create session and return token\n    }\n    \n    fun createTask(token: String, title: String): Task? {\n        // Validate token, create task\n    }\n    \n    fun getTasks(token: String): List<Task>? {\n        // Validate token, return user's tasks\n    }\n}\n\nfun main() {\n    val app = Application()\n    val user = app.register(\"alice\", \"alice@example.com\")\n    println(\"User registered: $user\")\n    \n    val token = app.login(user.id)\n    println(\"Logged in with token\")\n    \n    app.createTask(token, \"Learn Kotlin\")\n    app.createTask(token, \"Build App\")\n    \n    val tasks = app.getTasks(token)\n    println(\"Tasks: $tasks\")\n}",
+      "solution": "import java.util.UUID\n\ndata class User(val id: Int, val username: String, val email: String)\ndata class Task(val id: Int, val title: String, val completed: Boolean, val userId: Int)\n\nclass Application {\n    private val users = mutableMapOf<Int, User>()\n    private val tasks = mutableListOf<Task>()\n    private val sessions = mutableMapOf<String, Int>() // token to userId\n    private var nextUserId = 1\n    private var nextTaskId = 1\n    \n    fun register(username: String, email: String): User {\n        val user = User(nextUserId++, username, email)\n        users[user.id] = user\n        return user\n    }\n    \n    fun login(userId: Int): String {\n        val token = UUID.randomUUID().toString()\n        sessions[token] = userId\n        return token\n    }\n    \n    fun createTask(token: String, title: String): Task? {\n        val userId = sessions[token] ?: return null\n        val task = Task(nextTaskId++, title, false, userId)\n        tasks.add(task)\n        return task\n    }\n    \n    fun getTasks(token: String): List<Task>? {\n        val userId = sessions[token] ?: return null\n        return tasks.filter { it.userId == userId }\n    }\n}\n\nfun main() {\n    val app = Application()\n    val user = app.register(\"alice\", \"alice@example.com\")\n    println(\"User registered: $user\")\n    \n    val token = app.login(user.id)\n    println(\"Logged in with token\")\n    \n    app.createTask(token, \"Learn Kotlin\")\n    app.createTask(token, \"Build App\")\n    \n    val tasks = app.getTasks(token)\n    println(\"Tasks: $tasks\")\n}",
+      "hints": [
+        "Store users in Map by ID",
+        "Store tasks in List",
+        "Sessions map token to userId",
+        "Validate token by checking if it exists in sessions",
+        "Filter tasks by userId"
+      ],
+      "testCases": [
+        {
+          "description": "Should register user",
+          "expectedOutput": "User registered: User(id=1, username=alice",
+          "points": 2
+        },
+        {
+          "description": "Should login",
+          "expectedOutput": "Logged in with token",
+          "points": 2
+        },
+        {
+          "description": "Should fetch tasks",
+          "expectedOutput": "Tasks: [Task(id=1, title=Learn Kotlin",
+          "points": 6
+        }
+      ]
+    }
+  ]
+}

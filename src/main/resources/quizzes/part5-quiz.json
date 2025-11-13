@@ -1,0 +1,188 @@
+{
+  "partNumber": 5,
+  "partTitle": "Backend Development with Ktor",
+  "quizzes": [
+    {
+      "lessonId": "5.1",
+      "title": "Introduction to Backend Development Quiz",
+      "questions": [
+        {
+          "id": "5.1.q1",
+          "type": "multiple_choice",
+          "question": "What is a backend?",
+          "options": [
+            "The user interface",
+            "Server-side code that handles logic, data, and APIs",
+            "The database only",
+            "The styling of a website"
+          ],
+          "correctAnswer": 1,
+          "explanation": "The backend is server-side code that processes requests, manages data, enforces logic, and provides APIs."
+        },
+        {
+          "id": "5.1.q2",
+          "type": "multiple_choice",
+          "question": "What does REST stand for?",
+          "options": [
+            "Really Easy Server Technology",
+            "Representational State Transfer",
+            "Remote Execution Service Tool",
+            "Rapid Enterprise System Toolkit"
+          ],
+          "correctAnswer": 1,
+          "explanation": "REST stands for Representational State Transfer, a standard for designing web APIs."
+        },
+        {
+          "id": "5.1.q3",
+          "type": "multiple_choice",
+          "question": "Which HTTP method is used to retrieve data?",
+          "options": [
+            "POST",
+            "PUT",
+            "GET",
+            "DELETE"
+          ],
+          "correctAnswer": 2,
+          "explanation": "GET is used to retrieve/read data from the server."
+        },
+        {
+          "id": "5.1.q4",
+          "type": "multiple_choice",
+          "question": "Which HTTP method is used to create new data?",
+          "options": [
+            "GET",
+            "POST",
+            "PUT",
+            "DELETE"
+          ],
+          "correctAnswer": 1,
+          "explanation": "POST is used to create new resources on the server."
+        },
+        {
+          "id": "5.1.q5",
+          "type": "true_false",
+          "question": "PUT is used to update existing data.",
+          "correctAnswer": true,
+          "explanation": "True. PUT is used to update/modify existing resources."
+        }
+      ]
+    },
+    {
+      "lessonId": "5.2",
+      "title": "Databases and Authentication Quiz",
+      "questions": [
+        {
+          "id": "5.2.q1",
+          "type": "multiple_choice",
+          "question": "What does CRUD stand for?",
+          "options": [
+            "Create, Retrieve, Update, Delete",
+            "Create, Read, Update, Delete",
+            "Copy, Read, Upload, Download",
+            "Connect, Run, Upload, Destroy"
+          ],
+          "correctAnswer": 1,
+          "explanation": "CRUD stands for Create, Read, Update, Delete - the four basic database operations."
+        },
+        {
+          "id": "5.2.q2",
+          "type": "multiple_choice",
+          "question": "What is Exposed in Kotlin?",
+          "options": [
+            "A security vulnerability",
+            "A SQL library/ORM for database operations",
+            "A web framework",
+            "A testing tool"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Exposed is a Kotlin SQL library (ORM) that provides a type-safe way to work with databases."
+        },
+        {
+          "id": "5.2.q3",
+          "type": "true_false",
+          "question": "Passwords should be stored as plain text in the database.",
+          "correctAnswer": false,
+          "explanation": "False! Always hash passwords before storing them. Never store plain text passwords."
+        },
+        {
+          "id": "5.2.q4",
+          "type": "multiple_choice",
+          "question": "What is a JWT?",
+          "options": [
+            "Java Web Token",
+            "JSON Web Token",
+            "JavaScript Web Tool",
+            "Just Working Technology"
+          ],
+          "correctAnswer": 1,
+          "explanation": "JWT stands for JSON Web Token, a standard for securely transmitting information as JSON."
+        },
+        {
+          "id": "5.2.q5",
+          "type": "multiple_choice",
+          "question": "What does CORS stand for?",
+          "options": [
+            "Cross-Origin Resource Sharing",
+            "Common Object Request System",
+            "Central Origin Response Server",
+            "Compiled Object Resource Storage"
+          ],
+          "correctAnswer": 0,
+          "explanation": "CORS (Cross-Origin Resource Sharing) allows servers to specify which origins can access their resources."
+        }
+      ]
+    },
+    {
+      "lessonId": "5.3",
+      "title": "Testing and Validation Quiz",
+      "questions": [
+        {
+          "id": "5.3.q1",
+          "type": "multiple_choice",
+          "question": "What is input validation?",
+          "options": [
+            "Checking if input is formatted correctly",
+            "Checking if user data meets requirements before processing",
+            "Encrypting user input",
+            "Storing input in database"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Input validation ensures user data meets requirements (format, length, type) before processing."
+        },
+        {
+          "id": "5.3.q2",
+          "type": "true_false",
+          "question": "You should trust all data coming from users without validation.",
+          "correctAnswer": false,
+          "explanation": "False! Never trust user input. Always validate and sanitize data to prevent security issues."
+        },
+        {
+          "id": "5.3.q3",
+          "type": "multiple_choice",
+          "question": "What HTTP status code indicates a successful request?",
+          "options": [
+            "404",
+            "500",
+            "200",
+            "403"
+          ],
+          "correctAnswer": 2,
+          "explanation": "200 OK indicates a successful HTTP request."
+        },
+        {
+          "id": "5.3.q4",
+          "type": "multiple_choice",
+          "question": "What HTTP status code indicates 'resource not found'?",
+          "options": [
+            "200",
+            "404",
+            "500",
+            "401"
+          ],
+          "correctAnswer": 1,
+          "explanation": "404 Not Found indicates the requested resource doesn't exist."
+        }
+      ]
+    }
+  ]
+}

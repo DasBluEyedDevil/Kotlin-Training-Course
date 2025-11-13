@@ -1,0 +1,234 @@
+{
+  "partNumber": 3,
+  "partTitle": "Object-Oriented Programming",
+  "quizzes": [
+    {
+      "lessonId": "3.1",
+      "title": "Classes and Objects Quiz",
+      "questions": [
+        {
+          "id": "3.1.q1",
+          "type": "multiple_choice",
+          "question": "What is a class?",
+          "options": [
+            "A specific instance of an object",
+            "A blueprint or template for creating objects",
+            "A type of function",
+            "A collection of variables"
+          ],
+          "correctAnswer": 1,
+          "explanation": "A class is a blueprint that defines the structure and behavior for objects. It's like a cookie cutter."
+        },
+        {
+          "id": "3.1.q2",
+          "type": "multiple_choice",
+          "question": "What is an object?",
+          "options": [
+            "A blueprint for creating classes",
+            "A specific instance created from a class",
+            "A type of variable",
+            "A function that returns data"
+          ],
+          "correctAnswer": 1,
+          "explanation": "An object is a specific instance created from a class, like an actual cookie made from a cookie cutter."
+        },
+        {
+          "id": "3.1.q3",
+          "type": "true_false",
+          "question": "Properties are variables that belong to a class.",
+          "correctAnswer": true,
+          "explanation": "True. Properties are variables defined within a class that store data for each object."
+        },
+        {
+          "id": "3.1.q4",
+          "type": "multiple_choice",
+          "question": "What keyword is used to create a new object?",
+          "options": [
+            "create",
+            "new",
+            "object",
+            "No keyword needed - just call the class like a function"
+          ],
+          "correctAnswer": 3,
+          "explanation": "In Kotlin, you don't use 'new'. You create objects by calling the class constructor like a function."
+        }
+      ]
+    },
+    {
+      "lessonId": "3.2",
+      "title": "Null Safety Quiz",
+      "questions": [
+        {
+          "id": "3.2.q1",
+          "type": "multiple_choice",
+          "question": "What does 'null' represent?",
+          "options": [
+            "Zero",
+            "Empty string",
+            "The absence of a value",
+            "False"
+          ],
+          "correctAnswer": 2,
+          "explanation": "null represents the absence of a value - 'nothing' or 'no data'."
+        },
+        {
+          "id": "3.2.q2",
+          "type": "multiple_choice",
+          "question": "How do you declare a nullable type?",
+          "options": [
+            "String null",
+            "String?",
+            "nullable String",
+            "String!"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Add a question mark (?) after the type to make it nullable: String?"
+        },
+        {
+          "id": "3.2.q3",
+          "type": "multiple_choice",
+          "question": "What does the safe call operator (?.) do?",
+          "options": [
+            "Forces unwrapping",
+            "Only calls the method if the object is not null",
+            "Throws an exception",
+            "Converts null to zero"
+          ],
+          "correctAnswer": 1,
+          "explanation": "The safe call operator (?.) only calls the method/property if the object is not null. If null, it returns null."
+        },
+        {
+          "id": "3.2.q4",
+          "type": "multiple_choice",
+          "question": "What does the Elvis operator (?:) do?",
+          "options": [
+            "Plays music",
+            "Provides a default value if the left side is null",
+            "Checks if two values are equal",
+            "Throws an exception"
+          ],
+          "correctAnswer": 1,
+          "explanation": "The Elvis operator (?:) returns the left value if not null, otherwise returns the right value (default)."
+        },
+        {
+          "id": "3.2.q5",
+          "type": "true_false",
+          "question": "The !! operator should be used frequently in production code.",
+          "correctAnswer": false,
+          "explanation": "False. The !! operator forces unwrapping and can cause NullPointerException. Use it sparingly and only when you're certain."
+        }
+      ]
+    },
+    {
+      "lessonId": "3.3",
+      "title": "Inheritance and Polymorphism Quiz",
+      "questions": [
+        {
+          "id": "3.3.q1",
+          "type": "multiple_choice",
+          "question": "What is inheritance?",
+          "options": [
+            "Creating multiple objects",
+            "A class inheriting properties and methods from another class",
+            "Passing parameters to functions",
+            "Creating nullable types"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Inheritance allows a class to inherit properties and methods from another class, promoting code reuse."
+        },
+        {
+          "id": "3.3.q2",
+          "type": "multiple_choice",
+          "question": "What keyword makes a class inheritable?",
+          "options": [
+            "inheritable",
+            "open",
+            "public",
+            "extend"
+          ],
+          "correctAnswer": 1,
+          "explanation": "The 'open' keyword allows a class to be inherited. By default, Kotlin classes are final."
+        },
+        {
+          "id": "3.3.q3",
+          "type": "multiple_choice",
+          "question": "What keyword is used to inherit from a class?",
+          "options": [
+            "extends",
+            "inherits",
+            ": (colon)",
+            "from"
+          ],
+          "correctAnswer": 2,
+          "explanation": "In Kotlin, you use a colon (:) to inherit from a class: class Dog : Animal()"
+        },
+        {
+          "id": "3.3.q4",
+          "type": "true_false",
+          "question": "An abstract class can be instantiated directly.",
+          "correctAnswer": false,
+          "explanation": "False. Abstract classes cannot be instantiated. They're meant to be inherited by other classes."
+        },
+        {
+          "id": "3.3.q5",
+          "type": "multiple_choice",
+          "question": "What is an interface?",
+          "options": [
+            "A concrete class",
+            "A contract that defines what methods a class must implement",
+            "A type of variable",
+            "A loop structure"
+          ],
+          "correctAnswer": 1,
+          "explanation": "An interface is a contract that defines methods a class must implement, without providing implementation details."
+        }
+      ]
+    },
+    {
+      "lessonId": "3.4",
+      "title": "Data Classes Quiz",
+      "questions": [
+        {
+          "id": "3.4.q1",
+          "type": "multiple_choice",
+          "question": "What does the 'data' keyword do?",
+          "options": [
+            "Makes the class store data",
+            "Automatically generates useful methods like equals(), hashCode(), toString()",
+            "Creates a database",
+            "Makes properties nullable"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Data classes automatically generate equals(), hashCode(), toString(), copy(), and component functions."
+        },
+        {
+          "id": "3.4.q2",
+          "type": "true_false",
+          "question": "Two data class instances with the same property values are considered equal.",
+          "correctAnswer": true,
+          "explanation": "True. Data classes implement structural equality - instances with same values are equal."
+        },
+        {
+          "id": "3.4.q3",
+          "type": "multiple_choice",
+          "question": "What does the copy() method do in data classes?",
+          "options": [
+            "Duplicates the class definition",
+            "Creates a new instance with optionally modified properties",
+            "Copies to clipboard",
+            "Makes a backup"
+          ],
+          "correctAnswer": 1,
+          "explanation": "copy() creates a new instance of the data class, allowing you to change specific properties while keeping others the same."
+        },
+        {
+          "id": "3.4.q4",
+          "type": "true_false",
+          "question": "Data classes can have properties defined outside the primary constructor.",
+          "correctAnswer": true,
+          "explanation": "True, but only properties in the primary constructor are used in equals(), hashCode(), etc."
+        }
+      ]
+    }
+  ]
+}

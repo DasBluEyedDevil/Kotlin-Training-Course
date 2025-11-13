@@ -1,0 +1,149 @@
+{
+  "partNumber": 4,
+  "partTitle": "Advanced Kotlin",
+  "quizzes": [
+    {
+      "lessonId": "4.1",
+      "title": "Lambda Expressions Quiz",
+      "questions": [
+        {
+          "id": "4.1.q1",
+          "type": "multiple_choice",
+          "question": "What is a lambda expression?",
+          "options": [
+            "A type of loop",
+            "An anonymous function that can be treated as a value",
+            "A class definition",
+            "A variable type"
+          ],
+          "correctAnswer": 1,
+          "explanation": "A lambda is an anonymous function (function without a name) that can be passed around as a value."
+        },
+        {
+          "id": "4.1.q2",
+          "type": "multiple_choice",
+          "question": "What is the syntax for a simple lambda?",
+          "options": [
+            "lambda(x) -> x * 2",
+            "{ x -> x * 2 }",
+            "fun(x) { x * 2 }",
+            "(x) => x * 2"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Lambda syntax in Kotlin: { parameters -> body }. Example: { x -> x * 2 }"
+        },
+        {
+          "id": "4.1.q3",
+          "type": "true_false",
+          "question": "When a lambda has a single parameter, you can use 'it' instead of naming the parameter.",
+          "correctAnswer": true,
+          "explanation": "True. 'it' is the implicit name of a single parameter: { it * 2 } instead of { x -> x * 2 }"
+        },
+        {
+          "id": "4.1.q4",
+          "type": "multiple_choice",
+          "question": "What is a higher-order function?",
+          "options": [
+            "A function that returns a number",
+            "A function that takes another function as parameter or returns a function",
+            "A function at the top of the file",
+            "A very complex function"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Higher-order functions either take functions as parameters or return functions."
+        }
+      ]
+    },
+    {
+      "lessonId": "4.2",
+      "title": "Extension Functions Quiz",
+      "questions": [
+        {
+          "id": "4.2.q1",
+          "type": "multiple_choice",
+          "question": "What do extension functions allow you to do?",
+          "options": [
+            "Make functions longer",
+            "Add new functionality to existing classes without modifying them",
+            "Extend the program runtime",
+            "Create longer variable names"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Extension functions let you add methods to existing classes without modifying their source code."
+        },
+        {
+          "id": "4.2.q2",
+          "type": "multiple_choice",
+          "question": "How do you define an extension function on String?",
+          "options": [
+            "fun String.myFunction()",
+            "fun myFunction(String)",
+            "extend String.myFunction()",
+            "String fun myFunction()"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Extension function syntax: fun TypeName.functionName(). The type comes before the dot."
+        },
+        {
+          "id": "4.2.q3",
+          "type": "true_false",
+          "question": "Inside an extension function, 'this' refers to the receiver object.",
+          "correctAnswer": true,
+          "explanation": "True. 'this' refers to the instance of the class you're extending."
+        }
+      ]
+    },
+    {
+      "lessonId": "4.3",
+      "title": "Collections and Sequences Quiz",
+      "questions": [
+        {
+          "id": "4.3.q1",
+          "type": "multiple_choice",
+          "question": "What does the filter() function do?",
+          "options": [
+            "Removes all elements",
+            "Keeps only elements that match a condition",
+            "Sorts elements",
+            "Counts elements"
+          ],
+          "correctAnswer": 1,
+          "explanation": "filter() returns a new collection containing only elements that match the given predicate."
+        },
+        {
+          "id": "4.3.q2",
+          "type": "multiple_choice",
+          "question": "What does the map() function do?",
+          "options": [
+            "Creates a map collection",
+            "Transforms each element to a new value",
+            "Filters elements",
+            "Finds the largest element"
+          ],
+          "correctAnswer": 1,
+          "explanation": "map() transforms each element in a collection to a new value using the provided function."
+        },
+        {
+          "id": "4.3.q3",
+          "type": "true_false",
+          "question": "Sequences are evaluated lazily, while lists are evaluated eagerly.",
+          "correctAnswer": true,
+          "explanation": "True. Sequences compute values on-demand (lazy), while lists compute everything immediately (eager)."
+        },
+        {
+          "id": "4.3.q4",
+          "type": "multiple_choice",
+          "question": "What advantage do sequences have over lists for large datasets?",
+          "options": [
+            "They're faster to create",
+            "They use less memory by computing values on-demand",
+            "They're easier to read",
+            "They support more operations"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Sequences are memory-efficient for large datasets because they compute values lazily, only when needed."
+        }
+      ]
+    }
+  ]
+}

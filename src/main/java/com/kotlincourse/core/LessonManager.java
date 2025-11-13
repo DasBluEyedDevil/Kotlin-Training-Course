@@ -268,6 +268,9 @@ public class LessonManager {
 
         addLesson(new Lesson("4.2", "Extension Functions and Coroutines Intro", 4, 2,
                 "lessons/part4/lesson-4.2.md", 35));
+
+        addLesson(new Lesson("4.3", "Collections Deep Dive and Sequences", 4, 3,
+                "lessons/part4/lesson-4.3.md", 40));
     }
 
     /**
@@ -279,6 +282,9 @@ public class LessonManager {
 
         addLesson(new Lesson("5.2", "Databases and Authentication", 5, 2,
                 "lessons/part5/lesson-5.2.md", 40));
+
+        addLesson(new Lesson("5.3", "Testing, Validation, and Error Handling", 5, 3,
+                "lessons/part5/lesson-5.3.md", 40));
     }
 
     /**
@@ -287,6 +293,9 @@ public class LessonManager {
     private void createPart6Lessons() {
         addLesson(new Lesson("6.1", "Introduction to Frontend Development with Kotlin/JS", 6, 1,
                 "lessons/part6/lesson-6.1.md", 45));
+
+        addLesson(new Lesson("6.2", "Advanced Frontend - State, Routing, and Forms", 6, 2,
+                "lessons/part6/lesson-6.2.md", 40));
     }
 
     /**
