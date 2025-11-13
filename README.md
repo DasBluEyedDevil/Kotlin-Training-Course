@@ -9,6 +9,8 @@ A comprehensive, interactive desktop application for learning Kotlin programming
 ## 🌟 Features
 
 - **Interactive Code Playground**: Write and execute Kotlin code directly in the application
+- **45+ Coding Challenges**: Hands-on exercises with starter code, hints, and solutions
+- **110+ Knowledge Quizzes**: Multiple-choice and true/false questions with explanations
 - **Progressive Curriculum**: 7 parts covering fundamentals to full-stack development
 - **Concept-First Learning**: Real-world analogies before technical jargon
 - **Progress Tracking**: Automatic saving of lesson completion and progress
@@ -41,22 +43,22 @@ A comprehensive, interactive desktop application for learning Kotlin programming
 - Data classes and sealed classes
 - **Capstone: Library Management System**
 
-### Part 4: Advanced Kotlin ✅ (2 lessons)
+### Part 4: Advanced Kotlin ✅ (3 lessons)
 - Lambda expressions and higher-order functions
-- Extension functions
-- Coroutines introduction
-- **Capstone: URL Shortener Logic**
+- Extension functions and coroutines
+- Collections deep dive and sequences
+- **Interactive challenges with lambdas and functional programming**
 
-### Part 5: Backend Development ✅ (2 lessons)
+### Part 5: Backend Development ✅ (3 lessons)
 - REST APIs with Ktor
 - Database integration with Exposed
-- Authentication and middleware
+- Testing, validation, and error handling
 - **Complete TODO API implementation**
 
-### Part 6: Frontend Development ✅ (1 lesson)
-- React Kotlin and Kotlin/JS
-- State management
-- API integration
+### Part 6: Frontend Development ✅ (2 lessons)
+- React Kotlin and Kotlin/JS basics
+- Advanced state management, routing, and forms
+- Custom hooks and component patterns
 - **Full interactive UI components**
 
 ### Part 7: Full-Stack Capstone ✅ (1 lesson)
@@ -69,11 +71,15 @@ A comprehensive, interactive desktop application for learning Kotlin programming
 
 ## 📊 Total Course Content
 
-- **26 comprehensive lessons**
-- **7 complete parts**
-- **Multiple capstone projects**
-- **Interactive coding challenges throughout**
-- **~10-12 hours of estimated learning time**
+- **29 comprehensive lessons** across 7 parts
+- **45+ interactive coding challenges** with solutions and hints
+- **110+ assessment questions** (quizzes with explanations)
+- **Multiple capstone projects** (full applications)
+- **~15-20 hours of estimated learning time**
+
+### Interactive Learning Components:
+- ✅ **Coding Challenges**: Part 1 (7), Part 2 (8), Part 3 (7), Part 4 (7), Part 5 (6), Part 6 (6), Part 7 (4)
+- ✅ **Knowledge Quizzes**: Part 1 (25Q), Part 2 (22Q), Part 3 (18Q), Part 4 (11Q), Part 5 (14Q), Part 6 (10Q), Part 7 (10Q)
 
 ---
 
@@ -165,10 +171,30 @@ Kotlin-Training-Course/
 │       │           ├── CodeChallenge.java
 │       │           └── UserProgress.java
 │       └── resources/
-│           ├── lessons/                        # Lesson content
-│           │   └── part1/
-│           │       ├── lesson-1.1.md
-│           │       └── ... (1.2-1.9)
+│           ├── lessons/                        # Lesson content (29 lessons)
+│           │   ├── part1/ (9 lessons)
+│           │   ├── part2/ (7 lessons)
+│           │   ├── part3/ (4 lessons)
+│           │   ├── part4/ (3 lessons)
+│           │   ├── part5/ (3 lessons)
+│           │   ├── part6/ (2 lessons)
+│           │   └── part7/ (1 lesson)
+│           ├── challenges/                     # Interactive coding challenges
+│           │   ├── part1-challenges.json      # 7 challenges
+│           │   ├── part2-challenges.json      # 8 challenges
+│           │   ├── part3-challenges.json      # 7 challenges
+│           │   ├── part4-challenges.json      # 7 challenges
+│           │   ├── part5-challenges.json      # 6 challenges
+│           │   ├── part6-challenges.json      # 6 challenges
+│           │   └── part7-challenges.json      # 4 challenges
+│           ├── quizzes/                        # Knowledge assessment quizzes
+│           │   ├── part1-quiz.json            # 25 questions
+│           │   ├── part2-quiz.json            # 22 questions
+│           │   ├── part3-quiz.json            # 18 questions
+│           │   ├── part4-quiz.json            # 11 questions
+│           │   ├── part5-quiz.json            # 14 questions
+│           │   ├── part6-quiz.json            # 10 questions
+│           │   └── part7-quiz.json            # 10 questions
 │           └── styles/                         # CSS stylesheets
 │               ├── application.css
 │               └── lesson-content.css
@@ -264,12 +290,15 @@ chmod 755 ~/.kotlin-course/
 
 Contributions are welcome! Areas for contribution:
 
-- [ ] Additional lessons (Parts 2-7)
-- [ ] More coding challenges
+- [x] ~~Additional lessons (Parts 2-7)~~ **COMPLETED - All 29 lessons created**
+- [x] ~~More coding challenges~~ **COMPLETED - 45+ challenges across all parts**
+- [x] ~~Knowledge quizzes~~ **COMPLETED - 110+ quiz questions**
+- [ ] Automated challenge validation system
 - [ ] UI/UX improvements
+- [ ] Video content creation
 - [ ] Bug fixes
 - [ ] Documentation improvements
-- [ ] Translations
+- [ ] Translations to other languages
 
 ### Contribution Guidelines
 
@@ -307,16 +336,26 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 🗺️ Roadmap
 
+### Completed ✅
 - [x] Part 1: Absolute Basics (9 lessons)
-- [ ] Part 2: Control Flow
-- [ ] Part 3: Object-Oriented Programming
-- [ ] Part 4: Advanced Kotlin
-- [ ] Part 5: Backend with Ktor
-- [ ] Part 6: Frontend with Kotlin/JS
-- [ ] Part 7: Full-Stack Capstone
-- [ ] Interactive coding challenges with automated validation
+- [x] Part 2: Control Flow (7 lessons)
+- [x] Part 3: Object-Oriented Programming (4 lessons)
+- [x] Part 4: Advanced Kotlin (3 lessons)
+- [x] Part 5: Backend with Ktor (3 lessons)
+- [x] Part 6: Frontend with Kotlin/JS (2 lessons)
+- [x] Part 7: Full-Stack Capstone (1 lesson)
+- [x] 45+ Interactive coding challenges across all parts
+- [x] 110+ Knowledge assessment questions with explanations
+- [x] Progress tracking and persistence
+
+### Future Enhancements 🚀
+- [ ] Automated challenge validation with unit tests
+- [ ] Certificate generation upon course completion
 - [ ] Community lesson sharing platform
 - [ ] Mobile app version (Android)
+- [ ] Video content integration
+- [ ] Live coding sessions recorder
+- [ ] Multi-language support
 
 ---
 
