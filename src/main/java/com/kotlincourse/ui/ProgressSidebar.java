@@ -58,8 +58,9 @@ public class ProgressSidebar {
         List<Integer> partNumbers = lessonManager.getPartNumbers();
 
         for (int partNumber : partNumbers) {
+            String partName = getPartName(partNumber);
             TreeItem<LessonTreeItem> partItem = new TreeItem<>(
-                    new LessonTreeItem("Part " + partNumber + ": The Absolute Basics", null, LessonTreeItemType.PART)
+                    new LessonTreeItem("Part " + partNumber + ": " + partName, null, LessonTreeItemType.PART)
             );
             partItem.setExpanded(true);
 
@@ -135,6 +136,22 @@ public class ProgressSidebar {
 
     public Parent getRoot() {
         return root;
+    }
+
+    /**
+     * Gets the descriptive name for each part
+     */
+    private String getPartName(int partNumber) {
+        switch (partNumber) {
+            case 1: return "The Absolute Basics";
+            case 2: return "Controlling the Flow";
+            case 3: return "Object-Oriented Programming";
+            case 4: return "Advanced Kotlin";
+            case 5: return "Backend Development";
+            case 6: return "Frontend Development";
+            case 7: return "Full-Stack Capstone";
+            default: return "Unknown Part";
+        }
     }
 
     /**
