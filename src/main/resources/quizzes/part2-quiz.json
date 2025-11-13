@@ -1,0 +1,286 @@
+{
+  "partNumber": 2,
+  "partTitle": "Controlling the Flow",
+  "quizzes": [
+    {
+      "lessonId": "2.1",
+      "title": "If Statements Quiz",
+      "questions": [
+        {
+          "id": "2.1.q1",
+          "type": "multiple_choice",
+          "question": "What does an 'if' statement do?",
+          "options": [
+            "Repeats code multiple times",
+            "Makes decisions based on conditions",
+            "Defines a function",
+            "Creates a variable"
+          ],
+          "correctAnswer": 1,
+          "explanation": "An if statement allows your program to make decisions by executing different code based on whether a condition is true or false."
+        },
+        {
+          "id": "2.1.q2",
+          "type": "true_false",
+          "question": "The 'else' block executes when the 'if' condition is true.",
+          "correctAnswer": false,
+          "explanation": "False. The else block executes when the if condition is FALSE."
+        },
+        {
+          "id": "2.1.q3",
+          "type": "multiple_choice",
+          "question": "Which comparison operator checks if two values are equal?",
+          "options": [
+            "=",
+            "==",
+            "===",
+            "equals"
+          ],
+          "correctAnswer": 1,
+          "explanation": "== is the equality comparison operator. A single = is for assignment, not comparison."
+        }
+      ]
+    },
+    {
+      "lessonId": "2.2",
+      "title": "Logical Operators Quiz",
+      "questions": [
+        {
+          "id": "2.2.q1",
+          "type": "multiple_choice",
+          "question": "Which operator represents 'AND' logic?",
+          "options": [
+            "&",
+            "and",
+            "&&",
+            "AND"
+          ],
+          "correctAnswer": 2,
+          "explanation": "&& is the logical AND operator. Both conditions must be true for the result to be true."
+        },
+        {
+          "id": "2.2.q2",
+          "type": "multiple_choice",
+          "question": "Which operator represents 'OR' logic?",
+          "options": [
+            "|",
+            "or",
+            "||",
+            "OR"
+          ],
+          "correctAnswer": 2,
+          "explanation": "|| is the logical OR operator. At least one condition must be true for the result to be true."
+        },
+        {
+          "id": "2.2.q3",
+          "type": "true_false",
+          "question": "The expression (true && false) evaluates to true.",
+          "correctAnswer": false,
+          "explanation": "False. With AND (&&), both conditions must be true. true AND false = false."
+        },
+        {
+          "id": "2.2.q4",
+          "type": "true_false",
+          "question": "The expression (true || false) evaluates to true.",
+          "correctAnswer": true,
+          "explanation": "True. With OR (||), at least one condition must be true. true OR false = true."
+        }
+      ]
+    },
+    {
+      "lessonId": "2.3",
+      "title": "When Expression Quiz",
+      "questions": [
+        {
+          "id": "2.3.q1",
+          "type": "multiple_choice",
+          "question": "What is the 'when' expression best used for?",
+          "options": [
+            "Looping through lists",
+            "Checking multiple conditions in a cleaner way",
+            "Creating variables",
+            "Defining functions"
+          ],
+          "correctAnswer": 1,
+          "explanation": "when is Kotlin's replacement for switch statements, providing a cleaner way to check multiple conditions."
+        },
+        {
+          "id": "2.3.q2",
+          "type": "true_false",
+          "question": "The 'else' branch in a when expression is optional.",
+          "correctAnswer": true,
+          "explanation": "True. The else branch is optional, but it's a good practice to include it as a catch-all."
+        },
+        {
+          "id": "2.3.q3",
+          "type": "multiple_choice",
+          "question": "Can a 'when' expression return a value?",
+          "options": [
+            "No, never",
+            "Yes, always",
+            "Only if it has an else branch",
+            "Only with numbers"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Yes, when expressions can return values, making them very versatile in Kotlin."
+        }
+      ]
+    },
+    {
+      "lessonId": "2.4",
+      "title": "For Loops Quiz",
+      "questions": [
+        {
+          "id": "2.4.q1",
+          "type": "multiple_choice",
+          "question": "What does a 'for' loop do?",
+          "options": [
+            "Makes decisions",
+            "Repeats code a specific number of times",
+            "Creates variables",
+            "Compares values"
+          ],
+          "correctAnswer": 1,
+          "explanation": "A for loop repeats code for each item in a range or collection."
+        },
+        {
+          "id": "2.4.q2",
+          "type": "multiple_choice",
+          "question": "What does '1..5' represent?",
+          "options": [
+            "Numbers 1, 2, 3, 4 (excluding 5)",
+            "Numbers 1, 2, 3, 4, 5",
+            "Numbers 0, 1, 2, 3, 4, 5",
+            "Just the number 1.5"
+          ],
+          "correctAnswer": 1,
+          "explanation": "1..5 is a range that includes both endpoints: 1, 2, 3, 4, and 5."
+        },
+        {
+          "id": "2.4.q3",
+          "type": "true_false",
+          "question": "The keyword 'in' is used in for loops to iterate over ranges and collections.",
+          "correctAnswer": true,
+          "explanation": "True. 'in' is used in for loops: for (i in 1..5) means 'for each i in the range 1 to 5'."
+        }
+      ]
+    },
+    {
+      "lessonId": "2.5",
+      "title": "While Loops Quiz",
+      "questions": [
+        {
+          "id": "2.5.q1",
+          "type": "multiple_choice",
+          "question": "When does a 'while' loop stop?",
+          "options": [
+            "After 10 iterations",
+            "When the condition becomes false",
+            "Never",
+            "When you press a key"
+          ],
+          "correctAnswer": 1,
+          "explanation": "A while loop continues as long as its condition is true, and stops when it becomes false."
+        },
+        {
+          "id": "2.5.q2",
+          "type": "multiple_choice",
+          "question": "What's the difference between 'while' and 'do-while'?",
+          "options": [
+            "There is no difference",
+            "do-while always executes at least once",
+            "while is faster",
+            "do-while can't use conditions"
+          ],
+          "correctAnswer": 1,
+          "explanation": "do-while checks the condition AFTER running the code, so it always runs at least once. while checks BEFORE."
+        },
+        {
+          "id": "2.5.q3",
+          "type": "true_false",
+          "question": "An infinite loop occurs when a while loop's condition never becomes false.",
+          "correctAnswer": true,
+          "explanation": "True. If the condition never becomes false, the loop runs forever (infinite loop)."
+        }
+      ]
+    },
+    {
+      "lessonId": "2.6",
+      "title": "Lists Quiz",
+      "questions": [
+        {
+          "id": "2.6.q1",
+          "type": "multiple_choice",
+          "question": "What function creates an immutable list?",
+          "options": [
+            "mutableListOf()",
+            "listOf()",
+            "arrayOf()",
+            "createList()"
+          ],
+          "correctAnswer": 1,
+          "explanation": "listOf() creates an immutable (read-only) list that cannot be modified."
+        },
+        {
+          "id": "2.6.q2",
+          "type": "multiple_choice",
+          "question": "What function creates a mutable list?",
+          "options": [
+            "listOf()",
+            "mutableListOf()",
+            "arrayOf()",
+            "newList()"
+          ],
+          "correctAnswer": 1,
+          "explanation": "mutableListOf() creates a mutable list that can be modified (add, remove elements)."
+        },
+        {
+          "id": "2.6.q3",
+          "type": "true_false",
+          "question": "List indices start at 0 in Kotlin.",
+          "correctAnswer": true,
+          "explanation": "True. Like most programming languages, Kotlin uses zero-based indexing."
+        }
+      ]
+    },
+    {
+      "lessonId": "2.7",
+      "title": "Maps Quiz",
+      "questions": [
+        {
+          "id": "2.7.q1",
+          "type": "multiple_choice",
+          "question": "What is a Map?",
+          "options": [
+            "A list of numbers",
+            "A collection of key-value pairs",
+            "A type of loop",
+            "A geographic location"
+          ],
+          "correctAnswer": 1,
+          "explanation": "A Map stores data as key-value pairs, like a dictionary where you look up values by their keys."
+        },
+        {
+          "id": "2.7.q2",
+          "type": "multiple_choice",
+          "question": "How do you create an immutable map?",
+          "options": [
+            "mutableMapOf()",
+            "mapOf()",
+            "hashMapOf()",
+            "createMap()"
+          ],
+          "correctAnswer": 1,
+          "explanation": "mapOf() creates an immutable (read-only) map."
+        },
+        {
+          "id": "2.7.q3",
+          "type": "true_false",
+          "question": "In a map, keys must be unique.",
+          "correctAnswer": true,
+          "explanation": "True. Each key in a map must be unique. If you add a duplicate key, it overwrites the previous value."
+        }
+      ]
+    }
+  ]
+}

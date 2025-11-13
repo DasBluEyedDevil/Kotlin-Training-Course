@@ -1,0 +1,124 @@
+{
+  "partNumber": 7,
+  "partTitle": "Full-Stack Capstone Project",
+  "quizzes": [
+    {
+      "lessonId": "7.1",
+      "title": "Full-Stack Integration Quiz",
+      "questions": [
+        {
+          "id": "7.1.q1",
+          "type": "multiple_choice",
+          "question": "What is full-stack development?",
+          "options": [
+            "Only frontend development",
+            "Only backend development",
+            "Development of both frontend and backend",
+            "Database administration"
+          ],
+          "correctAnswer": 2,
+          "explanation": "Full-stack development involves working on both the frontend (UI) and backend (server) parts of an application."
+        },
+        {
+          "id": "7.1.q2",
+          "type": "multiple_choice",
+          "question": "How do frontend and backend communicate?",
+          "options": [
+            "Direct file access",
+            "Through HTTP requests to APIs",
+            "Email",
+            "Database only"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Frontend communicates with backend through HTTP requests to API endpoints (REST, GraphQL, etc.)."
+        },
+        {
+          "id": "7.1.q3",
+          "type": "true_false",
+          "question": "Authentication tokens should be stored securely on the frontend.",
+          "correctAnswer": true,
+          "explanation": "True. Store tokens securely (localStorage, sessionStorage, or httpOnly cookies) and transmit over HTTPS."
+        },
+        {
+          "id": "7.1.q4",
+          "type": "multiple_choice",
+          "question": "What is the purpose of the Authorization header?",
+          "options": [
+            "To specify content type",
+            "To send authentication credentials to the server",
+            "To set cookies",
+            "To compress data"
+          ],
+          "correctAnswer": 1,
+          "explanation": "The Authorization header is used to send authentication tokens/credentials to the backend."
+        },
+        {
+          "id": "7.1.q5",
+          "type": "multiple_choice",
+          "question": "In a typical full-stack architecture, where should business logic primarily reside?",
+          "options": [
+            "Only in the frontend",
+            "Only in the backend",
+            "Backend (with validation on both sides)",
+            "In the database"
+          ],
+          "correctAnswer": 2,
+          "explanation": "Business logic should primarily be in the backend for security, with frontend validation for UX."
+        },
+        {
+          "id": "7.1.q6",
+          "type": "true_false",
+          "question": "You should validate user input on both frontend and backend.",
+          "correctAnswer": true,
+          "explanation": "True. Frontend validation improves UX, but backend validation is essential for security."
+        },
+        {
+          "id": "7.1.q7",
+          "type": "multiple_choice",
+          "question": "What is a JWT token used for?",
+          "options": [
+            "Styling",
+            "Routing",
+            "Stateless authentication",
+            "Database queries"
+          ],
+          "correctAnswer": 2,
+          "explanation": "JWT (JSON Web Token) is used for stateless authentication between client and server."
+        },
+        {
+          "id": "7.1.q8",
+          "type": "multiple_choice",
+          "question": "Which layer is responsible for data persistence?",
+          "options": [
+            "Frontend",
+            "Backend with database",
+            "Browser cache",
+            "CDN"
+          ],
+          "correctAnswer": 1,
+          "explanation": "The backend with its database is responsible for persisting data permanently."
+        },
+        {
+          "id": "7.1.q9",
+          "type": "true_false",
+          "question": "A well-designed API should be versioned (e.g., /api/v1/users).",
+          "correctAnswer": true,
+          "explanation": "True. API versioning allows you to make breaking changes without affecting existing clients."
+        },
+        {
+          "id": "7.1.q10",
+          "type": "multiple_choice",
+          "question": "What is the typical flow when a user logs in?",
+          "options": [
+            "Frontend stores password -> calls backend",
+            "User enters credentials -> backend validates -> returns token -> frontend stores token",
+            "Backend generates random password",
+            "Frontend directly accesses database"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Login flow: User enters credentials → Backend validates → Backend returns token → Frontend stores token for future requests."
+        }
+      ]
+    }
+  ]
+}

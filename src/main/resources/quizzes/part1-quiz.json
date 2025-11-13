@@ -1,0 +1,292 @@
+{
+  "partNumber": 1,
+  "partTitle": "The Absolute Basics",
+  "quizzes": [
+    {
+      "lessonId": "1.1",
+      "title": "What is Programming? - Knowledge Check",
+      "questions": [
+        {
+          "id": "1.1.q1",
+          "type": "multiple_choice",
+          "question": "What is programming?",
+          "options": [
+            "Writing stories for computers",
+            "Giving precise, step-by-step instructions to a computer",
+            "Installing software on a computer",
+            "Designing websites"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Programming is about giving computers precise, step-by-step instructions to accomplish tasks. It's like writing a recipe that a computer follows exactly."
+        },
+        {
+          "id": "1.1.q2",
+          "type": "true_false",
+          "question": "Computers can understand vague or incomplete instructions.",
+          "correctAnswer": false,
+          "explanation": "False. Computers require precise, complete instructions. Unlike humans, they cannot infer meaning or fill in gaps."
+        },
+        {
+          "id": "1.1.q3",
+          "type": "multiple_choice",
+          "question": "Which of the following is a programming language?",
+          "options": [
+            "English",
+            "Spanish",
+            "Kotlin",
+            "Sign Language"
+          ],
+          "correctAnswer": 2,
+          "explanation": "Kotlin is a programming language designed for communicating with computers. Natural languages like English are for human communication."
+        }
+      ]
+    },
+    {
+      "lessonId": "1.3",
+      "title": "Talking to the Computer - println() Quiz",
+      "questions": [
+        {
+          "id": "1.3.q1",
+          "type": "multiple_choice",
+          "question": "What does println() do?",
+          "options": [
+            "Reads input from the user",
+            "Prints text to the screen",
+            "Creates a new variable",
+            "Deletes text"
+          ],
+          "correctAnswer": 1,
+          "explanation": "println() prints (displays) text to the output screen and adds a new line at the end."
+        },
+        {
+          "id": "1.3.q2",
+          "type": "multiple_choice",
+          "question": "How do you print the text 'Hello' in Kotlin?",
+          "options": [
+            "print Hello",
+            "println(Hello)",
+            "println(\"Hello\")",
+            "show(\"Hello\")"
+          ],
+          "correctAnswer": 2,
+          "explanation": "Text (strings) must be enclosed in double quotes. The correct syntax is println(\"Hello\")."
+        },
+        {
+          "id": "1.3.q3",
+          "type": "true_false",
+          "question": "The code println(42) will print the number 42.",
+          "correctAnswer": true,
+          "explanation": "True. Numbers don't need quotes. println(42) will print: 42"
+        }
+      ]
+    },
+    {
+      "lessonId": "1.4",
+      "title": "Variables Quiz",
+      "questions": [
+        {
+          "id": "1.4.q1",
+          "type": "multiple_choice",
+          "question": "Which keyword creates a variable that CANNOT be changed?",
+          "options": [
+            "var",
+            "val",
+            "const",
+            "let"
+          ],
+          "correctAnswer": 1,
+          "explanation": "val creates an immutable (read-only) variable. Once assigned, its value cannot be changed."
+        },
+        {
+          "id": "1.4.q2",
+          "type": "multiple_choice",
+          "question": "Which keyword creates a variable that CAN be changed?",
+          "options": [
+            "val",
+            "var",
+            "final",
+            "mutable"
+          ],
+          "correctAnswer": 1,
+          "explanation": "var creates a mutable variable whose value can be changed after initial assignment."
+        },
+        {
+          "id": "1.4.q3",
+          "type": "true_false",
+          "question": "The code 'val age = 25' creates a variable named 'age' with value 25.",
+          "correctAnswer": true,
+          "explanation": "True. This creates an immutable variable called 'age' and assigns it the value 25."
+        },
+        {
+          "id": "1.4.q4",
+          "type": "multiple_choice",
+          "question": "What happens if you try to change a 'val' variable?",
+          "options": [
+            "It works fine",
+            "The program crashes",
+            "You get a compilation error",
+            "Nothing happens"
+          ],
+          "correctAnswer": 2,
+          "explanation": "Trying to reassign a val variable results in a compilation error. The code won't even compile."
+        }
+      ]
+    },
+    {
+      "lessonId": "1.5",
+      "title": "Data Types Quiz",
+      "questions": [
+        {
+          "id": "1.5.q1",
+          "type": "multiple_choice",
+          "question": "Which type is used for whole numbers?",
+          "options": [
+            "String",
+            "Double",
+            "Int",
+            "Boolean"
+          ],
+          "correctAnswer": 2,
+          "explanation": "Int is used for integer (whole) numbers like 42, -10, 0."
+        },
+        {
+          "id": "1.5.q2",
+          "type": "multiple_choice",
+          "question": "Which type is used for decimal numbers?",
+          "options": [
+            "Int",
+            "Double",
+            "Float",
+            "Decimal"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Double is used for decimal (floating-point) numbers like 3.14, -0.5, 2.0."
+        },
+        {
+          "id": "1.5.q3",
+          "type": "multiple_choice",
+          "question": "Which type is used for text?",
+          "options": [
+            "Text",
+            "String",
+            "Char",
+            "Word"
+          ],
+          "correctAnswer": 1,
+          "explanation": "String is used for text (sequences of characters) enclosed in double quotes."
+        },
+        {
+          "id": "1.5.q4",
+          "type": "true_false",
+          "question": "Boolean type can only be true or false.",
+          "correctAnswer": true,
+          "explanation": "True. Boolean has exactly two possible values: true or false."
+        },
+        {
+          "id": "1.5.q5",
+          "type": "multiple_choice",
+          "question": "What is the result of 10 / 3 in Kotlin (using Int division)?",
+          "options": [
+            "3.333",
+            "3",
+            "3.0",
+            "4"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Integer division discards the decimal part. 10 / 3 = 3 (not 3.333...)."
+        }
+      ]
+    },
+    {
+      "lessonId": "1.7",
+      "title": "Functions Quiz",
+      "questions": [
+        {
+          "id": "1.7.q1",
+          "type": "multiple_choice",
+          "question": "What keyword is used to define a function in Kotlin?",
+          "options": [
+            "function",
+            "def",
+            "fun",
+            "func"
+          ],
+          "correctAnswer": 2,
+          "explanation": "Kotlin uses the 'fun' keyword to define functions."
+        },
+        {
+          "id": "1.7.q2",
+          "type": "true_false",
+          "question": "Functions help you avoid repeating the same code multiple times.",
+          "correctAnswer": true,
+          "explanation": "True. Functions let you write code once and reuse it many times, following the DRY principle."
+        },
+        {
+          "id": "1.7.q3",
+          "type": "multiple_choice",
+          "question": "How do you call a function named 'greet'?",
+          "options": [
+            "call greet",
+            "greet()",
+            "run greet",
+            "execute greet()"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Functions are called by writing their name followed by parentheses: greet()"
+        }
+      ]
+    },
+    {
+      "lessonId": "1.8",
+      "title": "Functions with Parameters Quiz",
+      "questions": [
+        {
+          "id": "1.8.q1",
+          "type": "multiple_choice",
+          "question": "What are parameters?",
+          "options": [
+            "The values a function returns",
+            "The inputs a function accepts",
+            "The name of a function",
+            "Keywords in Kotlin"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Parameters are the inputs that a function accepts. They're like ingredients in a recipe."
+        },
+        {
+          "id": "1.8.q2",
+          "type": "true_false",
+          "question": "A function can have multiple parameters.",
+          "correctAnswer": true,
+          "explanation": "True. Functions can accept zero, one, or many parameters separated by commas."
+        },
+        {
+          "id": "1.8.q3",
+          "type": "multiple_choice",
+          "question": "What does the 'return' keyword do?",
+          "options": [
+            "Ends the program",
+            "Sends a value back from a function",
+            "Starts a loop",
+            "Prints to the screen"
+          ],
+          "correctAnswer": 1,
+          "explanation": "The return keyword sends a value back to the code that called the function."
+        },
+        {
+          "id": "1.8.q4",
+          "type": "multiple_choice",
+          "question": "In 'fun add(a: Int, b: Int): Int', what does ': Int' after the parameters mean?",
+          "options": [
+            "The function takes Int parameters",
+            "The function returns an Int",
+            "The function is named Int",
+            "The function creates an Int variable"
+          ],
+          "correctAnswer": 1,
+          "explanation": "The ': Int' after the parameters specifies the return type - what type of value the function returns."
+        }
+      ]
+    }
+  ]
+}

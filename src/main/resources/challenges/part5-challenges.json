@@ -1,0 +1,160 @@
+{
+  "partNumber": 5,
+  "partTitle": "Backend Development with Ktor",
+  "challenges": [
+    {
+      "id": "5.1.1",
+      "lessonId": "5.1",
+      "title": "Create a Simple Route",
+      "description": "Create a Ktor route that responds to GET /hello with 'Hello, Ktor!' (Conceptual - print the route definition)",
+      "difficulty": 2,
+      "starterCode": "// Simulate Ktor routing structure\nfun main() {\n    // Print what a GET /hello route would look like\n    println(\"Route: GET /hello\")\n    // Print the response\n}",
+      "solution": "fun main() {\n    println(\"Route: GET /hello\")\n    println(\"Response: Hello, Ktor!\")\n}",
+      "hints": [
+        "This is a conceptual exercise",
+        "Print the route method and path",
+        "Print the response text"
+      ],
+      "testCases": [
+        {
+          "description": "Should define the route",
+          "expectedOutput": "Route: GET /hello",
+          "points": 5
+        },
+        {
+          "description": "Should show the response",
+          "expectedOutput": "Response: Hello, Ktor!",
+          "points": 5
+        }
+      ]
+    },
+    {
+      "id": "5.1.2",
+      "lessonId": "5.1",
+      "title": "Data Class for API Response",
+      "description": "Create a data class `ApiResponse` with status (Int) and message (String). Create an instance representing a successful response.",
+      "difficulty": 2,
+      "starterCode": "// Create ApiResponse data class\n\nfun main() {\n    val response = ApiResponse(200, \"Success\")\n    println(\"Status: ${response.status}\")\n    println(\"Message: ${response.message}\")\n}",
+      "solution": "data class ApiResponse(val status: Int, val message: String)\n\nfun main() {\n    val response = ApiResponse(200, \"Success\")\n    println(\"Status: ${response.status}\")\n    println(\"Message: ${response.message}\")\n}",
+      "hints": [
+        "Use data class for API models",
+        "Include status code (Int) and message (String)",
+        "200 is the HTTP status for success"
+      ],
+      "testCases": [
+        {
+          "description": "Should have status 200",
+          "expectedOutput": "Status: 200",
+          "points": 5
+        },
+        {
+          "description": "Should have success message",
+          "expectedOutput": "Message: Success",
+          "points": 5
+        }
+      ]
+    },
+    {
+      "id": "5.1.3",
+      "lessonId": "5.1",
+      "title": "URL Path Parameters",
+      "description": "Simulate extracting a user ID from a URL path like '/users/123'. Parse and print the ID.",
+      "difficulty": 2,
+      "starterCode": "fun main() {\n    val url = \"/users/123\"\n    // Extract the user ID from the URL\n    val userId = \n    \n    println(\"User ID: $userId\")\n}",
+      "solution": "fun main() {\n    val url = \"/users/123\"\n    val userId = url.substringAfterLast(\"/\")\n    \n    println(\"User ID: $userId\")\n}",
+      "hints": [
+        "Use substringAfterLast to get text after last /",
+        "The path is /users/{id}",
+        "Extract the numeric ID"
+      ],
+      "testCases": [
+        {
+          "description": "Should extract user ID 123",
+          "expectedOutput": "User ID: 123",
+          "points": 10
+        }
+      ]
+    },
+    {
+      "id": "5.2.1",
+      "lessonId": "5.2",
+      "title": "User Model with Validation",
+      "description": "Create a User data class with name and email. Add a method `isValid()` that checks if email contains '@'.",
+      "difficulty": 2,
+      "starterCode": "data class User(val name: String, val email: String) {\n    // Add isValid method\n}\n\nfun main() {\n    val user1 = User(\"Alice\", \"alice@example.com\")\n    val user2 = User(\"Bob\", \"invalid-email\")\n    println(\"User1 valid: ${user1.isValid()}\")\n    println(\"User2 valid: ${user2.isValid()}\")\n}",
+      "solution": "data class User(val name: String, val email: String) {\n    fun isValid(): Boolean {\n        return email.contains(\"@\") && name.isNotBlank()\n    }\n}\n\nfun main() {\n    val user1 = User(\"Alice\", \"alice@example.com\")\n    val user2 = User(\"Bob\", \"invalid-email\")\n    println(\"User1 valid: ${user1.isValid()}\")\n    println(\"User2 valid: ${user2.isValid()}\")\n}",
+      "hints": [
+        "Add method inside data class",
+        "Check if email contains @ using contains()",
+        "Also check if name is not blank"
+      ],
+      "testCases": [
+        {
+          "description": "Valid user should return true",
+          "expectedOutput": "User1 valid: true",
+          "points": 5
+        },
+        {
+          "description": "Invalid email should return false",
+          "expectedOutput": "User2 valid: false",
+          "points": 5
+        }
+      ]
+    },
+    {
+      "id": "5.2.2",
+      "lessonId": "5.2",
+      "title": "Simple In-Memory Database",
+      "description": "Create a simple in-memory user database using a mutableListOf. Add methods to add and find users.",
+      "difficulty": 3,
+      "starterCode": "data class User(val id: Int, val name: String, val email: String)\n\nclass UserDatabase {\n    private val users = mutableListOf<User>()\n    \n    fun addUser(user: User) {\n        // Add user to list\n    }\n    \n    fun findById(id: Int): User? {\n        // Find user by ID\n    }\n}\n\nfun main() {\n    val db = UserDatabase()\n    db.addUser(User(1, \"Alice\", \"alice@example.com\"))\n    db.addUser(User(2, \"Bob\", \"bob@example.com\"))\n    \n    println(db.findById(1))\n    println(db.findById(99))\n}",
+      "solution": "data class User(val id: Int, val name: String, val email: String)\n\nclass UserDatabase {\n    private val users = mutableListOf<User>()\n    \n    fun addUser(user: User) {\n        users.add(user)\n    }\n    \n    fun findById(id: Int): User? {\n        return users.find { it.id == id }\n    }\n}\n\nfun main() {\n    val db = UserDatabase()\n    db.addUser(User(1, \"Alice\", \"alice@example.com\"))\n    db.addUser(User(2, \"Bob\", \"bob@example.com\"))\n    \n    println(db.findById(1))\n    println(db.findById(99))\n}",
+      "hints": [
+        "Use mutableListOf to store users",
+        "add() method adds to list",
+        "find() method searches list with predicate",
+        "Return null if not found"
+      ],
+      "testCases": [
+        {
+          "description": "Should find existing user",
+          "expectedOutput": "User(id=1, name=Alice, email=alice@example.com)",
+          "points": 5
+        },
+        {
+          "description": "Should return null for non-existent user",
+          "expectedOutput": "null",
+          "points": 5
+        }
+      ]
+    },
+    {
+      "id": "5.3.1",
+      "lessonId": "5.3",
+      "title": "Request Validation",
+      "description": "Create a function that validates a registration request. Check that username is at least 3 characters and email contains '@'.",
+      "difficulty": 3,
+      "starterCode": "data class RegisterRequest(val username: String, val email: String, val password: String)\n\nfun validateRegistration(request: RegisterRequest): List<String> {\n    val errors = mutableListOf<String>()\n    // Add validation logic\n    \n    return errors\n}\n\nfun main() {\n    val request1 = RegisterRequest(\"ab\", \"invalidemail\", \"pass\")\n    val errors = validateRegistration(request1)\n    println(\"Errors: $errors\")\n    \n    val request2 = RegisterRequest(\"alice\", \"alice@example.com\", \"password123\")\n    val errors2 = validateRegistration(request2)\n    println(\"Valid: ${errors2.isEmpty()}\")\n}",
+      "solution": "data class RegisterRequest(val username: String, val email: String, val password: String)\n\nfun validateRegistration(request: RegisterRequest): List<String> {\n    val errors = mutableListOf<String>()\n    \n    if (request.username.length < 3) {\n        errors.add(\"Username must be at least 3 characters\")\n    }\n    \n    if (!request.email.contains(\"@\")) {\n        errors.add(\"Email must contain @\")\n    }\n    \n    if (request.password.length < 8) {\n        errors.add(\"Password must be at least 8 characters\")\n    }\n    \n    return errors\n}\n\nfun main() {\n    val request1 = RegisterRequest(\"ab\", \"invalidemail\", \"pass\")\n    val errors = validateRegistration(request1)\n    println(\"Errors: $errors\")\n    \n    val request2 = RegisterRequest(\"alice\", \"alice@example.com\", \"password123\")\n    val errors2 = validateRegistration(request2)\n    println(\"Valid: ${errors2.isEmpty()}\")\n}",
+      "hints": [
+        "Create a mutableListOf<String> for errors",
+        "Check username.length >= 3",
+        "Check email.contains(\"@\")",
+        "Check password.length >= 8",
+        "Add error message for each failed check"
+      ],
+      "testCases": [
+        {
+          "description": "Should return errors for invalid data",
+          "expectedOutput": "Errors:",
+          "points": 5
+        },
+        {
+          "description": "Should return empty list for valid data",
+          "expectedOutput": "Valid: true",
+          "points": 5
+        }
+      ]
+    }
+  ]
+}
