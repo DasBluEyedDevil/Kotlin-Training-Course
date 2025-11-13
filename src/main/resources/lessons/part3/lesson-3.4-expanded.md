@@ -1,1183 +1,1095 @@
-# Lesson 3.4: Scope Functions
+# Lesson 2.4: Interfaces and Abstract Classes
 
 **Estimated Time**: 65 minutes
-**Difficulty**: Intermediate
-**Prerequisites**: Lessons 3.1-3.3 (Functional programming, lambdas, collections)
 
 ---
 
 ## Topic Introduction
 
-Scope functions are one of Kotlin's most distinctive features. They're small but incredibly powerful—enabling you to write cleaner, more expressive code.
+You've learned about inheritance and abstract classes. Now let's explore **interfaces**—one of OOP's most powerful tools for designing flexible, maintainable systems.
 
-At first glance, `let`, `run`, `with`, `apply`, and `also` might seem similar. But each has a specific purpose, and mastering them will make your code more idiomatic and elegant.
+An **interface** defines a contract: "Any class that implements me must provide these capabilities." Unlike abstract classes (which you can only inherit from one), a class can implement multiple interfaces, enabling composition of behaviors.
 
-In this lesson, you'll learn:
-- What scope functions are and why they exist
-- The five scope functions: let, run, with, apply, also
-- When to use each one
-- The difference between `this` and `it` context
-- Return value differences
-- Chaining scope functions
-- Real-world use cases
-
-By the end, you'll write fluent, readable Kotlin code!
+This lesson will teach you:
+- How to define and implement interfaces
+- The difference between interfaces and abstract classes
+- When to use each
+- Default interface methods
+- Real-world design patterns
 
 ---
 
-## The Concept: What Are Scope Functions?
+## The Concept
 
-Scope functions execute a block of code within the context of an object. They temporarily change the scope to work on that object.
+### What is an Interface?
 
-### The Problem They Solve
+An **interface** is a contract that defines what a class can do, without specifying how it does it.
 
-**Without scope functions**:
+**Real-World Analogy: Power Outlets**
 
-```kotlin
-val person = Person("Alice", 25)
-person.name = person.name.uppercase()
-person.age = person.age + 1
-println(person)
-val nameLength = person.name.length
+A power outlet is an interface:
+- **Contract**: "I provide electricity through these two/three holes"
+- **Devices** (implementations): Phone chargers, laptops, lamps all plug into the same outlet
+- **Different implementations**: Each device uses the electricity differently, but all follow the outlet interface
+
+```
+  Interface: PowerSource
+       ↓
+  ┌───────────────────────────┐
+  │ fun provideElectricity()  │
+  └───────────────────────────┘
+           ↓         ↓         ↓
+     PhoneCharger  Laptop   Lamp
 ```
 
-**With scope functions**:
+### Why Interfaces?
 
-```kotlin
-val person = Person("Alice", 25).apply {
-    name = name.uppercase()
-    age += 1
-}
-println(person)
-val nameLength = person.name.length
-```
-
-Even better:
-
-```kotlin
-Person("Alice", 25)
-    .apply {
-        name = name.uppercase()
-        age += 1
-    }
-    .also { println(it) }
-    .name
-    .length
-```
-
-**Benefits**:
-- Less repetition (no `person.` everywhere)
-- Clearer intent
-- Chainable operations
-- Scoped changes (visible what's being modified)
+**Problems interfaces solve**:
+1. **Multiple inheritance**: A class can implement multiple interfaces
+2. **Loose coupling**: Code depends on contracts, not implementations
+3. **Testability**: Easy to create mock implementations for testing
+4. **Flexibility**: Swap implementations without changing client code
 
 ---
 
-## The Five Scope Functions: Overview
+## Defining Interfaces
 
-| Function | Context | Return | Common Use |
-|----------|---------|--------|------------|
-| `let` | `it` | Lambda result | Null safety, transformations |
-| `run` | `this` | Lambda result | Object configuration & compute result |
-| `with` | `this` | Lambda result | Multiple operations on object |
-| `apply` | `this` | Object itself | Object configuration |
-| `also` | `it` | Object itself | Side effects (logging, validation) |
-
-### Key Differences
-
-**Context**: How you refer to the object
-- `this`: Receiver (implicit, can omit)
-- `it`: Parameter (explicit, must use `it`)
-
-**Return value**:
-- Lambda result: Returns what the block returns
-- Object itself: Returns the original object (chainable)
-
----
-
-## let: Transform or Process
-
-`let` takes the object as `it` and returns the lambda result.
-
-### Basic Usage
+**Syntax**:
 
 ```kotlin
-val name = "Alice"
-
-val result = name.let {
-    println("Name is: $it")
-    it.uppercase()
-}
-
-println(result)  // ALICE
-```
-
-### Primary Use Case: Null Safety
-
-```kotlin
-var name: String? = "Alice"
-
-// Without let
-if (name != null) {
-    println(name.length)
-    println(name.uppercase())
-}
-
-// With let
-name?.let {
-    println(it.length)
-    println(it.uppercase())
-}
-
-// Only executes if name is not null
-```
-
-### Transforming Nullable Values
-
-```kotlin
-val input: String? = "  Hello  "
-
-val processed = input?.let {
-    it.trim().uppercase()
-} ?: "DEFAULT"
-
-println(processed)  // HELLO
-
-val nullInput: String? = null
-val processedNull = nullInput?.let {
-    it.trim().uppercase()
-} ?: "DEFAULT"
-
-println(processedNull)  // DEFAULT
-```
-
-### Chaining Transformations
-
-```kotlin
-data class Person(val name: String, val age: Int)
-
-val person: Person? = Person("Alice", 25)
-
-val description = person?.let { p ->
-    "Name: ${p.name}"
-}?.let { nameStr ->
-    "$nameStr, Age: ${person?.age}"
-}
-
-println(description)
-// Name: Alice, Age: 25
-```
-
-### Real-World Example: API Response Processing
-
-```kotlin
-data class ApiResponse(val data: String?, val error: String?)
-
-fun processResponse(response: ApiResponse): String {
-    return response.data?.let { data ->
-        // Process successful response
-        data.uppercase()
-    } ?: response.error?.let { error ->
-        // Handle error
-        "Error: $error"
-    } ?: "Unknown error"
-}
-
-val success = ApiResponse("hello", null)
-println(processResponse(success))  // HELLO
-
-val failure = ApiResponse(null, "Not found")
-println(processResponse(failure))  // Error: Not found
-```
-
----
-
-## run: Execute and Return Result
-
-`run` uses `this` as context and returns the lambda result.
-
-### Basic Usage
-
-```kotlin
-val result = "Hello".run {
-    // 'this' is the string
-    println(this.length)
-    this.uppercase()  // Return value
-}
-
-println(result)  // HELLO
-```
-
-### Object Configuration + Computation
-
-```kotlin
-data class Rectangle(var width: Int, var height: Int) {
-    fun area() = width * height
-}
-
-val area = Rectangle(10, 5).run {
-    // Configure
-    width *= 2
-    height *= 2
-    // Compute and return
-    area()
-}
-
-println(area)  // 200
-```
-
-### Multiple Operations, Single Result
-
-```kotlin
-val result = run {
-    val a = 10
-    val b = 20
-    val c = 30
-    a + b + c
-}
-
-println(result)  // 60
-```
-
-### Real-World Example: Complex Calculation
-
-```kotlin
-data class Order(
-    val items: List<Item>,
-    val discount: Double,
-    val taxRate: Double
-)
-
-data class Item(val price: Double, val quantity: Int)
-
-fun Order.calculateTotal() = run {
-    val subtotal = items.sumOf { it.price * it.quantity }
-    val afterDiscount = subtotal * (1 - discount)
-    val withTax = afterDiscount * (1 + taxRate)
-    withTax
-}
-
-val order = Order(
-    items = listOf(
-        Item(10.0, 2),
-        Item(5.0, 3)
-    ),
-    discount = 0.1,
-    taxRate = 0.08
-)
-
-println("Total: ${"%.2f".format(order.calculateTotal())}")
-// Total: 30.02
-```
-
----
-
-## with: Non-Extension Version
-
-`with` is not an extension function; you pass the object as parameter. Uses `this` context.
-
-### Basic Usage
-
-```kotlin
-val person = Person("Alice", 25)
-
-val description = with(person) {
-    // 'this' is person
-    "Name: $name, Age: $age"
-}
-
-println(description)
-// Name: Alice, Age: 25
-```
-
-### Multiple Operations on Object
-
-```kotlin
-class StringBuilder {
-    private val content = mutableListOf<String>()
-
-    fun append(text: String) = content.add(text)
-    fun build() = content.joinToString("")
-}
-
-val html = with(StringBuilder()) {
-    append("<html>")
-    append("<body>")
-    append("<h1>Hello</h1>")
-    append("</body>")
-    append("</html>")
-    build()
-}
-
-println(html)
-// <html><body><h1>Hello</h1></body></html>
-```
-
-### When to Use with vs run
-
-```kotlin
-// Use 'with' when you have an object already
-val person = Person("Alice", 25)
-val info = with(person) {
-    "$name is $age years old"
-}
-
-// Use 'run' for chaining or when creating object inline
-val info2 = Person("Bob", 30).run {
-    "$name is $age years old"
+interface InterfaceName {
+    fun methodName()  // Abstract by default
+    val propertyName: Type  // Must be overridden
 }
 ```
 
-### Real-World Example: Configuration
+**Example: Simple Interface**
 
 ```kotlin
-data class DatabaseConfig(
-    var host: String = "",
-    var port: Int = 0,
-    var username: String = "",
-    var password: String = "",
-    var database: String = ""
-) {
-    fun validate() = host.isNotEmpty() && username.isNotEmpty()
+interface Drawable {
+    fun draw()
 }
 
-val config = DatabaseConfig()
-
-val isValid = with(config) {
-    host = "localhost"
-    port = 5432
-    username = "admin"
-    password = "secret"
-    database = "myapp"
-    validate()
-}
-
-println("Config valid: $isValid")  // true
-```
-
----
-
-## apply: Configure and Return Object
-
-`apply` uses `this` context and returns the object itself (great for chaining!).
-
-### Basic Usage
-
-```kotlin
-data class Person(var name: String, var age: Int)
-
-val person = Person("", 0).apply {
-    name = "Alice"
-    age = 25
-}
-
-println(person)  // Person(name=Alice, age=25)
-```
-
-### Object Initialization
-
-```kotlin
-class User {
-    var name: String = ""
-    var email: String = ""
-    var age: Int = 0
-
-    override fun toString() = "User(name=$name, email=$email, age=$age)"
-}
-
-val user = User().apply {
-    name = "Alice"
-    email = "alice@example.com"
-    age = 25
-}
-
-println(user)
-// User(name=Alice, email=alice@example.com, age=25)
-```
-
-### Builder Pattern
-
-```kotlin
-class StringBuilder {
-    private val content = mutableListOf<String>()
-
-    fun append(text: String) = apply { content.add(text) }
-    fun appendLine(text: String) = apply { content.add("$text\n") }
-    fun clear() = apply { content.clear() }
-    fun build() = content.joinToString("")
-}
-
-val html = StringBuilder()
-    .appendLine("<html>")
-    .appendLine("<body>")
-    .append("<h1>Hello</h1>")
-    .appendLine("</body>")
-    .appendLine("</html>")
-    .build()
-
-println(html)
-```
-
-### Real-World Example: Android View Configuration
-
-```kotlin
-// Simulated Android view
-class TextView {
-    var text: String = ""
-    var textSize: Float = 14f
-    var textColor: String = "black"
-
-    override fun toString() = "TextView(text=$text, size=$textSize, color=$textColor)"
-}
-
-fun createTitleView() = TextView().apply {
-    text = "Welcome!"
-    textSize = 24f
-    textColor = "blue"
-}
-
-val view = createTitleView()
-println(view)
-// TextView(text=Welcome!, size=24.0, color=blue)
-```
-
----
-
-## also: Side Effects, Return Object
-
-`also` uses `it` context and returns the object itself.
-
-### Basic Usage
-
-```kotlin
-val numbers = mutableListOf(1, 2, 3)
-    .also { println("Initial list: $it") }
-    .also { it.add(4) }
-    .also { println("After adding: $it") }
-
-println("Final: $numbers")
-// Initial list: [1, 2, 3]
-// After adding: [1, 2, 3, 4]
-// Final: [1, 2, 3, 4]
-```
-
-### Debugging and Logging
-
-```kotlin
-fun processData(data: String): String {
-    return data
-        .trim()
-        .also { println("After trim: '$it'") }
-        .uppercase()
-        .also { println("After uppercase: '$it'") }
-        .replace(" ", "_")
-        .also { println("After replace: '$it'") }
-}
-
-val result = processData("  hello world  ")
-// After trim: 'hello world'
-// After uppercase: 'HELLO WORLD'
-// After replace: 'HELLO_WORLD'
-```
-
-### Validation with Side Effects
-
-```kotlin
-data class User(val name: String, val email: String, val age: Int)
-
-fun validateUser(user: User): User {
-    return user.also {
-        require(it.name.isNotEmpty()) { "Name cannot be empty" }
-        require(it.email.contains("@")) { "Invalid email" }
-        require(it.age >= 18) { "Must be 18 or older" }
-        println("User validated: ${it.name}")
+class Circle : Drawable {
+    override fun draw() {
+        println("Drawing a circle")
     }
 }
 
-val user = validateUser(User("Alice", "alice@example.com", 25))
-// User validated: Alice
+class Square : Drawable {
+    override fun draw() {
+        println("Drawing a square")
+    }
+}
+
+fun main() {
+    val shapes: List<Drawable> = listOf(Circle(), Square())
+
+    shapes.forEach { shape ->
+        shape.draw()
+    }
+}
 ```
 
-### Real-World Example: File Operations
+**Output**:
+```
+Drawing a circle
+Drawing a square
+```
+
+---
+
+## Implementing Multiple Interfaces
+
+Unlike classes (single inheritance), you can implement multiple interfaces!
 
 ```kotlin
-import java.io.File
+interface Flyable {
+    fun fly()
+}
 
-fun processFile(path: String): List<String> {
-    return File(path)
-        .also { println("Reading file: ${it.absolutePath}") }
-        .also { require(it.exists()) { "File not found" } }
-        .readLines()
-        .also { println("Read ${it.size} lines") }
-        .filter { it.isNotEmpty() }
-        .also { println("After filtering: ${it.size} non-empty lines") }
+interface Swimmable {
+    fun swim()
+}
+
+interface Walkable {
+    fun walk()
+}
+
+class Duck : Flyable, Swimmable, Walkable {
+    override fun fly() {
+        println("Duck is flying")
+    }
+
+    override fun swim() {
+        println("Duck is swimming")
+    }
+
+    override fun walk() {
+        println("Duck is walking")
+    }
+}
+
+class Fish : Swimmable {
+    override fun swim() {
+        println("Fish is swimming")
+    }
+}
+
+class Bird : Flyable, Walkable {
+    override fun fly() {
+        println("Bird is flying")
+    }
+
+    override fun walk() {
+        println("Bird is walking")
+    }
+}
+
+fun main() {
+    val duck = Duck()
+    duck.fly()
+    duck.swim()
+    duck.walk()
+
+    println()
+
+    val fish = Fish()
+    fish.swim()
+
+    println()
+
+    val bird = Bird()
+    bird.fly()
+    bird.walk()
+}
+```
+
+**Output**:
+```
+Duck is flying
+Duck is swimming
+Duck is walking
+
+Fish is swimming
+
+Bird is flying
+Bird is walking
+```
+
+---
+
+## Interface Properties
+
+Interfaces can declare properties, but they can't have backing fields.
+
+```kotlin
+interface Vehicle {
+    val maxSpeed: Int  // Must be overridden
+    val type: String
+        get() = "Generic Vehicle"  // Can provide default
+
+    fun start()
+    fun stop()
+}
+
+class Car(override val maxSpeed: Int) : Vehicle {
+    override val type: String
+        get() = "Car"
+
+    override fun start() {
+        println("Car starting with key")
+    }
+
+    override fun stop() {
+        println("Car stopping")
+    }
+}
+
+class Motorcycle(override val maxSpeed: Int) : Vehicle {
+    override val type: String = "Motorcycle"  // Can also initialize directly
+
+    override fun start() {
+        println("Motorcycle starting with button")
+    }
+
+    override fun stop() {
+        println("Motorcycle stopping")
+    }
+}
+
+fun main() {
+    val car = Car(180)
+    println("${car.type} - Max Speed: ${car.maxSpeed} km/h")
+    car.start()
+
+    val bike = Motorcycle(220)
+    println("${bike.type} - Max Speed: ${bike.maxSpeed} km/h")
+    bike.start()
 }
 ```
 
 ---
 
-## this vs it: Context Objects
+## Default Interface Methods
 
-### Comparison
-
-**`this` (receiver)**:
-- Used by: `run`, `with`, `apply`
-- Can be omitted (implicit)
-- Feels like you "are" the object
-
-**`it` (parameter)**:
-- Used by: `let`, `also`
-- Must be explicit
-- Clearer distinction between outer and inner scope
-
-### Examples
+Kotlin interfaces can have default implementations (unlike Java pre-8):
 
 ```kotlin
-data class Person(var name: String)
+interface Logger {
+    fun log(message: String) {
+        println("[LOG] $message")  // Default implementation
+    }
 
-val person = Person("Alice")
+    fun error(message: String) {
+        println("[ERROR] $message")  // Default implementation
+    }
 
-// 'this' context (apply)
-person.apply {
-    name = name.uppercase()  // 'this' is implicit
-    // Could also write: this.name = this.name.uppercase()
+    fun debug(message: String)  // Must be implemented
 }
 
-// 'it' context (also)
-person.also {
-    it.name = it.name.lowercase()  // 'it' is explicit
+class ConsoleLogger : Logger {
+    override fun debug(message: String) {
+        println("[DEBUG] $message")
+    }
+    // log() and error() use default implementations
+}
+
+class FileLogger : Logger {
+    override fun log(message: String) {
+        println("[FILE LOG] Writing to file: $message")
+    }
+
+    override fun error(message: String) {
+        println("[FILE ERROR] Writing error to file: $message")
+    }
+
+    override fun debug(message: String) {
+        println("[FILE DEBUG] Writing debug to file: $message")
+    }
+}
+
+fun main() {
+    val console = ConsoleLogger()
+    console.log("Application started")
+    console.error("Connection failed")
+    console.debug("Variable value: 42")
+
+    println()
+
+    val file = FileLogger()
+    file.log("Application started")
+    file.error("Connection failed")
+    file.debug("Variable value: 42")
 }
 ```
 
-### When to Use Which
+---
+
+## Abstract Classes vs Interfaces
+
+### When to Use Abstract Classes
+
+Use **abstract classes** when:
+- You have shared **state** (properties with backing fields)
+- You want to provide **common implementation** for subclasses
+- You have a clear "is-a" relationship
+- You need **constructors with parameters**
 
 ```kotlin
-// Use 'this' when configuring object
-val user = User().apply {
-    name = "Alice"  // Clean, no 'this.' needed
-    email = "alice@example.com"
-    age = 25
+abstract class Animal(val name: String, var age: Int) {
+    var energy: Int = 100  // State with backing field
+
+    abstract fun makeSound()
+
+    fun eat() {  // Common implementation
+        energy += 20
+        println("$name is eating. Energy: $energy")
+    }
+
+    fun sleep() {  // Common implementation
+        energy = 100
+        println("$name is sleeping. Energy restored!")
+    }
 }
 
-// Use 'it' when object needs clear reference
-val processed = user.let {
-    saveToDatabase(it)  // Clear what's being passed
-    sendEmail(it)
-    it
+class Dog(name: String, age: Int) : Animal(name, age) {
+    override fun makeSound() {
+        println("$name says: Woof!")
+    }
+}
+```
+
+### When to Use Interfaces
+
+Use **interfaces** when:
+- You want to define **capabilities** or **behaviors**
+- You need **multiple inheritance** of type
+- You don't need shared state
+- You want loose coupling
+
+```kotlin
+interface Flyable {
+    fun fly()
+}
+
+interface Swimmable {
+    fun swim()
+}
+
+// A class can implement multiple interfaces
+class Duck : Flyable, Swimmable {
+    override fun fly() = println("Duck flying")
+    override fun swim() = println("Duck swimming")
+}
+```
+
+### Comparison Table
+
+| Feature | Abstract Class | Interface |
+|---------|---------------|-----------|
+| State (backing fields) | ✅ Yes | ❌ No |
+| Constructor | ✅ Yes | ❌ No |
+| Multiple inheritance | ❌ No (single only) | ✅ Yes (multiple) |
+| Default implementations | ✅ Yes | ✅ Yes (since Kotlin 1.0) |
+| Access modifiers | ✅ Yes (public, protected, private) | ✅ Limited (public only) |
+| When to use | "is-a" relationship | "can-do" capability |
+
+---
+
+## Real-World Example: E-Commerce System
+
+```kotlin
+// Interface for payment processing
+interface PaymentProcessor {
+    fun processPayment(amount: Double): Boolean
+    fun refund(transactionId: String): Boolean
+
+    fun validatePayment(amount: Double): Boolean {
+        return amount > 0  // Default implementation
+    }
+}
+
+// Interface for notification
+interface Notifiable {
+    fun sendNotification(message: String)
+}
+
+// Credit card payment
+class CreditCardProcessor : PaymentProcessor {
+    override fun processPayment(amount: Double): Boolean {
+        if (!validatePayment(amount)) return false
+        println("Processing credit card payment: $$amount")
+        println("Payment successful!")
+        return true
+    }
+
+    override fun refund(transactionId: String): Boolean {
+        println("Refunding transaction: $transactionId")
+        return true
+    }
+}
+
+// PayPal payment
+class PayPalProcessor : PaymentProcessor, Notifiable {
+    override fun processPayment(amount: Double): Boolean {
+        if (!validatePayment(amount)) return false
+        println("Processing PayPal payment: $$amount")
+        sendNotification("Payment processed via PayPal")
+        return true
+    }
+
+    override fun refund(transactionId: String): Boolean {
+        println("Refunding PayPal transaction: $transactionId")
+        sendNotification("Refund processed")
+        return true
+    }
+
+    override fun sendNotification(message: String) {
+        println("📧 Email sent: $message")
+    }
+}
+
+// Bitcoin payment
+class BitcoinProcessor : PaymentProcessor, Notifiable {
+    override fun processPayment(amount: Double): Boolean {
+        if (!validatePayment(amount)) return false
+        println("Processing Bitcoin payment: $$amount")
+        println("Waiting for blockchain confirmation...")
+        sendNotification("Bitcoin payment received")
+        return true
+    }
+
+    override fun refund(transactionId: String): Boolean {
+        println("Bitcoin refunds take 24-48 hours")
+        return false
+    }
+
+    override fun sendNotification(message: String) {
+        println("📱 Push notification: $message")
+    }
+}
+
+fun checkout(processor: PaymentProcessor, amount: Double) {
+    println("\n=== Checkout ===")
+    val success = processor.processPayment(amount)
+
+    if (success) {
+        println("Order confirmed!")
+    } else {
+        println("Payment failed!")
+    }
+}
+
+fun main() {
+    val creditCard = CreditCardProcessor()
+    val paypal = PayPalProcessor()
+    val bitcoin = BitcoinProcessor()
+
+    checkout(creditCard, 99.99)
+    checkout(paypal, 149.99)
+    checkout(bitcoin, 299.99)
 }
 ```
 
 ---
 
-## Return Values: Lambda Result vs Object
+## Exercise 1: Media Player System
 
-### Lambda Result Functions: let, run, with
+**Goal**: Create a flexible media player system using interfaces.
 
-```kotlin
-// let
-val length = "Hello".let {
-    it.length  // Returns Int
-}
-
-// run
-val uppercase = "Hello".run {
-    this.uppercase()  // Returns String
-}
-
-// with
-val chars = with("Hello") {
-    this.length  // Returns Int
-}
-```
-
-### Object Functions: apply, also
-
-```kotlin
-// apply
-val person = Person("Alice", 25).apply {
-    age += 1
-}  // Returns Person
-
-// also
-val list = mutableListOf(1, 2, 3).also {
-    it.add(4)
-}  // Returns MutableList
-```
-
-### Why It Matters for Chaining
-
-```kotlin
-// apply and also return object - chainable!
-val person = Person("Alice", 25)
-    .apply { age += 1 }
-    .also { println("Created: $it") }
-    .apply { name = name.uppercase() }
-
-// let, run, with return result - chains break
-val result = Person("Alice", 25)
-    .run { age + 1 }  // Returns Int, can't call Person methods anymore
-    // .apply { ... }  // ERROR: Int doesn't have apply with Person context
-```
+**Requirements**:
+1. Interface `Playable` with methods: `play()`, `pause()`, `stop()`
+2. Interface `Downloadable` with method: `download()`
+3. Class `Song` implements `Playable` and `Downloadable`
+4. Class `Podcast` implements `Playable` and `Downloadable`
+5. Class `LiveStream` implements only `Playable` (can't download)
+6. Create a playlist that can hold any `Playable` item
 
 ---
 
-## Chaining Scope Functions
-
-Combining scope functions creates fluent APIs.
-
-### Example 1: Data Processing Pipeline
+## Solution: Media Player System
 
 ```kotlin
-data class User(val name: String, val email: String, var validated: Boolean = false)
+interface Playable {
+    val title: String
+    var isPlaying: Boolean
 
-fun createUser(name: String, email: String): User {
-    return User(name, email)
-        .apply {
-            // Configure object
-            validated = email.contains("@") && name.isNotEmpty()
-        }
-        .also {
-            // Side effect: log
-            println("User created: ${it.name}")
-        }
-        .takeIf { it.validated }
-        ?.also {
-            // Only for valid users
-            println("User validated successfully")
-        } ?: throw IllegalArgumentException("Invalid user data")
+    fun play() {
+        isPlaying = true
+        println("▶️  Playing: $title")
+    }
+
+    fun pause() {
+        isPlaying = false
+        println("⏸️  Paused: $title")
+    }
+
+    fun stop() {
+        isPlaying = false
+        println("⏹️  Stopped: $title")
+    }
 }
 
-val user = createUser("Alice", "alice@example.com")
-// User created: Alice
-// User validated successfully
-```
+interface Downloadable {
+    val sizeInMB: Double
 
-### Example 2: Building Complex Objects
-
-```kotlin
-data class Report(
-    var title: String = "",
-    var author: String = "",
-    val sections: MutableList<String> = mutableListOf(),
-    var timestamp: Long = 0
-)
-
-fun generateReport(title: String, author: String): Report {
-    return Report()
-        .apply {
-            this.title = title
-            this.author = author
-            timestamp = System.currentTimeMillis()
-        }
-        .also {
-            println("Generating report: ${it.title}")
-        }
-        .apply {
-            sections.add("Introduction")
-            sections.add("Analysis")
-            sections.add("Conclusion")
-        }
-        .also {
-            println("Added ${it.sections.size} sections")
-        }
+    fun download() {
+        println("⬇️  Downloading... ($sizeInMB MB)")
+        println("✅ Download complete!")
+    }
 }
 
-val report = generateReport("Annual Report", "Alice")
-// Generating report: Annual Report
-// Added 3 sections
-```
+class Song(
+    override val title: String,
+    val artist: String,
+    override val sizeInMB: Double
+) : Playable, Downloadable {
+    override var isPlaying: Boolean = false
 
-### Example 3: Conditional Processing
+    override fun play() {
+        println("🎵 Song")
+        super.play()
+        println("   Artist: $artist")
+    }
+}
 
-```kotlin
-fun processOrder(orderId: Int): String {
-    return fetchOrder(orderId)
-        ?.let { order ->
-            // Transform order
-            order.apply {
-                items = items.filter { it.inStock }
+class Podcast(
+    override val title: String,
+    val host: String,
+    val episode: Int,
+    override val sizeInMB: Double
+) : Playable, Downloadable {
+    override var isPlaying: Boolean = false
+
+    override fun play() {
+        println("🎙️  Podcast")
+        super.play()
+        println("   Host: $host, Episode: $episode")
+    }
+}
+
+class LiveStream(
+    override val title: String,
+    val streamer: String
+) : Playable {
+    override var isPlaying: Boolean = false
+
+    override fun play() {
+        println("📡 Live Stream")
+        super.play()
+        println("   Streamer: $streamer")
+    }
+}
+
+class MediaPlayer {
+    private val playlist = mutableListOf<Playable>()
+    private var currentIndex = 0
+
+    fun addToPlaylist(item: Playable) {
+        playlist.add(item)
+        println("Added to playlist: ${item.title}")
+    }
+
+    fun playAll() {
+        println("\n=== Playing All ===")
+        playlist.forEach { it.play() }
+    }
+
+    fun downloadAll() {
+        println("\n=== Downloading All (if possible) ===")
+        playlist.forEach { item ->
+            if (item is Downloadable) {
+                item.download()
+            } else {
+                println("⚠️  ${item.title} cannot be downloaded (live stream)")
             }
         }
-        ?.takeIf { it.items.isNotEmpty() }
-        ?.also { validateOrder(it) }
-        ?.run { "Order ${this.id} processed successfully" }
-        ?: "Order not found or invalid"
-}
-
-data class Order(val id: Int, var items: List<Item>)
-data class Item(val name: String, val inStock: Boolean)
-
-fun fetchOrder(id: Int): Order? = Order(id, listOf(
-    Item("Book", true),
-    Item("Pen", false),
-    Item("Notebook", true)
-))
-
-fun validateOrder(order: Order) {
-    println("Validating order ${order.id}")
-}
-```
-
----
-
-## Decision Matrix: Which Scope Function to Use?
-
-### Flowchart
-
-```
-Need to transform/compute result?
-├─ Yes → Returns lambda result
-│  ├─ Have object already? → with
-│  ├─ Need null safety? → let
-│  └─ Creating/chaining? → run
-│
-└─ No → Returns object (chainable)
-   ├─ Need configuration? → apply (this)
-   └─ Need side effect? → also (it)
-```
-
-### Quick Reference
-
-| Want to... | Use | Example |
-|------------|-----|---------|
-| Transform nullable value | `let` | `name?.let { it.uppercase() }` |
-| Configure object | `apply` | `Person().apply { name = "Alice" }` |
-| Log/debug without breaking chain | `also` | `.also { println(it) }` |
-| Group operations, compute result | `run` / `with` | `person.run { age + 1 }` |
-| Multiple calls on existing object | `with` | `with(config) { ... }` |
-
----
-
-## Exercise 1: Refactor with Scope Functions
-
-**Goal**: Refactor imperative code using scope functions.
-
-**Task**: Rewrite this code using appropriate scope functions:
-
-```kotlin
-data class Email(
-    var to: String = "",
-    var subject: String = "",
-    var body: String = "",
-    var sent: Boolean = false
-)
-
-fun sendEmail() {
-    val email = Email()
-    email.to = "user@example.com"
-    email.subject = "Welcome"
-    email.body = "Welcome to our service!"
-
-    println("Sending email to: ${email.to}")
-
-    if (email.to.isNotEmpty() && email.subject.isNotEmpty()) {
-        email.sent = true
-        println("Email sent successfully")
-    }
-}
-```
-
----
-
-## Solution 1: Refactor with Scope Functions
-
-```kotlin
-data class Email(
-    var to: String = "",
-    var subject: String = "",
-    var body: String = "",
-    var sent: Boolean = false
-)
-
-fun sendEmailRefactored() {
-    Email()
-        .apply {
-            // Configure email
-            to = "user@example.com"
-            subject = "Welcome"
-            body = "Welcome to our service!"
-        }
-        .also {
-            // Side effect: log
-            println("Sending email to: ${it.to}")
-        }
-        .takeIf { it.to.isNotEmpty() && it.subject.isNotEmpty() }
-        ?.apply {
-            // Mark as sent
-            sent = true
-        }
-        ?.also {
-            // Side effect: confirm
-            println("Email sent successfully")
-        }
-        ?: println("Email validation failed")
-}
-
-fun main() {
-    sendEmailRefactored()
-    // Sending email to: user@example.com
-    // Email sent successfully
-}
-```
-
-**Explanation**:
-- `apply`: Configure the email object
-- `also`: Log without breaking the chain
-- `takeIf`: Conditional processing
-- Chainable, readable, and expressive!
-
----
-
-## Exercise 2: Null Safety with let
-
-**Goal**: Use `let` for safe null handling.
-
-**Task**: Process nullable user input safely:
-
-```kotlin
-fun processUserInput(input: String?): String {
-    // TODO: Use let to safely process input
-    // 1. Trim whitespace
-    // 2. Convert to uppercase
-    // 3. Return processed string or "NO INPUT" if null/empty
-}
-
-fun main() {
-    println(processUserInput("  hello  "))  // Should print: HELLO
-    println(processUserInput(null))         // Should print: NO INPUT
-    println(processUserInput("   "))        // Should print: NO INPUT
-}
-```
-
----
-
-## Solution 2: Null Safety with let
-
-```kotlin
-fun processUserInput(input: String?): String {
-    return input
-        ?.trim()
-        ?.takeIf { it.isNotEmpty() }
-        ?.let { it.uppercase() }
-        ?: "NO INPUT"
-}
-
-// Alternative with more explicit let
-fun processUserInputAlt(input: String?): String {
-    return input?.let { rawInput ->
-        rawInput.trim()
-    }?.let { trimmed ->
-        trimmed.takeIf { it.isNotEmpty() }
-    }?.let { validated ->
-        validated.uppercase()
-    } ?: "NO INPUT"
-}
-
-fun main() {
-    println(processUserInput("  hello  "))  // HELLO
-    println(processUserInput(null))         // NO INPUT
-    println(processUserInput("   "))        // NO INPUT
-
-    println("\nAlternative version:")
-    println(processUserInputAlt("  world  "))  // WORLD
-    println(processUserInputAlt(null))         // NO INPUT
-}
-```
-
-**Explanation**:
-- `?.` safe call operator works with `let`
-- `takeIf` filters out empty strings
-- `let` chains transformations safely
-- Elvis operator (`?:`) provides default
-
----
-
-## Exercise 3: Builder Pattern with apply
-
-**Goal**: Create a fluent builder using `apply`.
-
-**Task**: Build an HTTP request configuration:
-
-```kotlin
-class HttpRequest {
-    var url: String = ""
-    var method: String = "GET"
-    var headers: MutableMap<String, String> = mutableMapOf()
-    var body: String? = null
-
-    fun addHeader(key: String, value: String) {
-        headers[key] = value
-    }
-
-    override fun toString(): String {
-        return "HttpRequest(url=$url, method=$method, headers=$headers, body=$body)"
     }
 }
 
 fun main() {
-    // TODO: Create POST request with headers using apply
+    val player = MediaPlayer()
+
+    val song1 = Song("Bohemian Rhapsody", "Queen", 5.8)
+    val song2 = Song("Imagine", "John Lennon", 3.2)
+    val podcast = Podcast("Tech Talk Daily", "Jane Doe", 42, 25.5)
+    val stream = LiveStream("Gaming Night", "ProGamer123")
+
+    player.addToPlaylist(song1)
+    player.addToPlaylist(song2)
+    player.addToPlaylist(podcast)
+    player.addToPlaylist(stream)
+
+    player.playAll()
+    player.downloadAll()
 }
 ```
 
 ---
 
-## Solution 3: Builder Pattern with apply
+## Exercise 2: Smart Home System
+
+**Goal**: Create a smart home system with different device types.
+
+**Requirements**:
+1. Interface `SmartDevice` with properties: `name`, `isOn`, methods: `turnOn()`, `turnOff()`
+2. Interface `Schedulable` with method: `schedule(time: String)`
+3. Interface `VoiceControllable` with method: `respondToVoice(command: String)`
+4. Class `SmartLight` implements all three interfaces
+5. Class `SmartThermostat` implements `SmartDevice` and `Schedulable`
+6. Class `SmartSpeaker` implements `SmartDevice` and `VoiceControllable`
+7. Create a home controller that manages all devices
+
+---
+
+## Solution: Smart Home System
 
 ```kotlin
-class HttpRequest {
-    var url: String = ""
-    var method: String = "GET"
-    var headers: MutableMap<String, String> = mutableMapOf()
-    var body: String? = null
+interface SmartDevice {
+    val name: String
+    var isOn: Boolean
 
-    fun addHeader(key: String, value: String) = apply {
-        headers[key] = value
+    fun turnOn() {
+        isOn = true
+        println("✅ $name is now ON")
     }
 
-    override fun toString(): String {
-        return "HttpRequest(url=$url, method=$method, headers=$headers, body=$body)"
+    fun turnOff() {
+        isOn = false
+        println("❌ $name is now OFF")
+    }
+
+    fun getStatus(): String {
+        return "$name: ${if (isOn) "ON" else "OFF"}"
+    }
+}
+
+interface Schedulable {
+    fun schedule(time: String)
+}
+
+interface VoiceControllable {
+    fun respondToVoice(command: String)
+}
+
+class SmartLight(
+    override val name: String,
+    var brightness: Int = 100
+) : SmartDevice, Schedulable, VoiceControllable {
+    override var isOn: Boolean = false
+
+    fun setBrightness(level: Int) {
+        require(level in 0..100) { "Brightness must be 0-100" }
+        brightness = level
+        println("💡 $name brightness set to $level%")
+    }
+
+    override fun schedule(time: String) {
+        println("⏰ $name scheduled to turn on at $time")
+    }
+
+    override fun respondToVoice(command: String) {
+        when {
+            "on" in command.lowercase() -> turnOn()
+            "off" in command.lowercase() -> turnOff()
+            "brightness" in command.lowercase() -> {
+                val level = command.filter { it.isDigit() }.toIntOrNull() ?: 50
+                setBrightness(level)
+            }
+            else -> println("🔊 $name: Command not understood")
+        }
+    }
+}
+
+class SmartThermostat(
+    override val name: String,
+    var temperature: Int = 72
+) : SmartDevice, Schedulable {
+    override var isOn: Boolean = false
+
+    fun setTemperature(temp: Int) {
+        require(temp in 60..85) { "Temperature must be 60-85°F" }
+        temperature = temp
+        println("🌡️  $name temperature set to $temp°F")
+    }
+
+    override fun schedule(time: String) {
+        println("⏰ $name scheduled to set temperature at $time")
+    }
+}
+
+class SmartSpeaker(
+    override val name: String,
+    var volume: Int = 50
+) : SmartDevice, VoiceControllable {
+    override var isOn: Boolean = false
+
+    fun setVolume(level: Int) {
+        require(level in 0..100) { "Volume must be 0-100" }
+        volume = level
+        println("🔊 $name volume set to $level")
+    }
+
+    override fun respondToVoice(command: String) {
+        when {
+            "play music" in command.lowercase() -> {
+                if (isOn) println("🎵 Playing music...")
+                else println("❌ Turn me on first!")
+            }
+            "volume" in command.lowercase() -> {
+                val level = command.filter { it.isDigit() }.toIntOrNull() ?: 50
+                setVolume(level)
+            }
+            else -> println("🔊 $name: I can play music or adjust volume")
+        }
+    }
+}
+
+class HomeController {
+    private val devices = mutableListOf<SmartDevice>()
+
+    fun addDevice(device: SmartDevice) {
+        devices.add(device)
+        println("➕ Added ${device.name} to home system")
+    }
+
+    fun turnAllOn() {
+        println("\n=== Turning All Devices ON ===")
+        devices.forEach { it.turnOn() }
+    }
+
+    fun turnAllOff() {
+        println("\n=== Turning All Devices OFF ===")
+        devices.forEach { it.turnOff() }
+    }
+
+    fun showStatus() {
+        println("\n=== Home Status ===")
+        devices.forEach { device ->
+            println(device.getStatus())
+        }
+    }
+
+    fun scheduleAll(time: String) {
+        println("\n=== Scheduling Devices ===")
+        devices.forEach { device ->
+            if (device is Schedulable) {
+                device.schedule(time)
+            }
+        }
+    }
+
+    fun voiceCommand(command: String) {
+        println("\n=== Voice Command: '$command' ===")
+        devices.forEach { device ->
+            if (device is VoiceControllable) {
+                device.respondToVoice(command)
+            }
+        }
     }
 }
 
 fun main() {
-    // Using apply for configuration
-    val request = HttpRequest().apply {
-        url = "https://api.example.com/users"
-        method = "POST"
-        body = """{"name": "Alice", "email": "alice@example.com"}"""
-    }.apply {
-        addHeader("Content-Type", "application/json")
-        addHeader("Authorization", "Bearer token123")
-    }
+    val home = HomeController()
 
-    println(request)
-    // HttpRequest(url=https://api.example.com/users, method=POST,
-    // headers={Content-Type=application/json, Authorization=Bearer token123},
-    // body={"name": "Alice", "email": "alice@example.com"})
+    val livingRoomLight = SmartLight("Living Room Light")
+    val bedroomLight = SmartLight("Bedroom Light")
+    val thermostat = SmartThermostat("Main Thermostat")
+    val speaker = SmartSpeaker("Kitchen Speaker")
 
-    // Alternative: chaining with fluent API
-    val request2 = HttpRequest()
-        .apply {
-            url = "https://api.example.com/products"
-            method = "PUT"
-            body = """{"id": 1, "price": 99.99}"""
-        }
-        .addHeader("Content-Type", "application/json")
-        .addHeader("Accept", "application/json")
-        .also {
-            println("\nCreated request: ${it.method} ${it.url}")
-        }
+    home.addDevice(livingRoomLight)
+    home.addDevice(bedroomLight)
+    home.addDevice(thermostat)
+    home.addDevice(speaker)
 
-    println(request2)
+    home.turnAllOn()
+    home.showStatus()
+
+    home.scheduleAll("7:00 AM")
+
+    home.voiceCommand("turn on")
+    home.voiceCommand("set brightness to 75")
+    home.voiceCommand("play music")
+
+    home.turnAllOff()
+    home.showStatus()
 }
 ```
 
-**Explanation**:
-- `apply` configures the object and returns it
-- Making `addHeader` return `this` with `apply` enables chaining
-- `also` adds logging without breaking the chain
-- Fluent, readable builder pattern
+---
+
+## Exercise 3: Plugin System
+
+**Goal**: Create an extensible plugin system.
+
+**Requirements**:
+1. Interface `Plugin` with properties: `name`, `version`, methods: `initialize()`, `execute()`, `shutdown()`
+2. Interface `Configurable` with method: `configure(settings: Map<String, String>)`
+3. Create 3 different plugin types
+4. Create a `PluginManager` that loads and manages plugins
+
+---
+
+## Solution: Plugin System
+
+```kotlin
+interface Plugin {
+    val name: String
+    val version: String
+
+    fun initialize()
+    fun execute()
+    fun shutdown()
+}
+
+interface Configurable {
+    fun configure(settings: Map<String, String>)
+}
+
+class LoggerPlugin : Plugin, Configurable {
+    override val name = "Logger"
+    override val version = "1.0.0"
+    private var logLevel = "INFO"
+
+    override fun initialize() {
+        println("[$name] Initializing logger plugin...")
+    }
+
+    override fun execute() {
+        println("[$name] Logging at level: $logLevel")
+        println("[$name] Log entry: Application running smoothly")
+    }
+
+    override fun shutdown() {
+        println("[$name] Shutting down logger...")
+    }
+
+    override fun configure(settings: Map<String, String>) {
+        logLevel = settings["logLevel"] ?: "INFO"
+        println("[$name] Configured with log level: $logLevel")
+    }
+}
+
+class DatabasePlugin : Plugin, Configurable {
+    override val name = "Database"
+    override val version = "2.1.0"
+    private var connectionString = ""
+
+    override fun initialize() {
+        println("[$name] Connecting to database...")
+    }
+
+    override fun execute() {
+        println("[$name] Querying database at: $connectionString")
+        println("[$name] Query result: 42 records found")
+    }
+
+    override fun shutdown() {
+        println("[$name] Closing database connection...")
+    }
+
+    override fun configure(settings: Map<String, String>) {
+        connectionString = settings["connectionString"] ?: "localhost:5432"
+        println("[$name] Configured to connect to: $connectionString")
+    }
+}
+
+class CachePlugin : Plugin {
+    override val name = "Cache"
+    override val version = "1.5.2"
+    private val cache = mutableMapOf<String, String>()
+
+    override fun initialize() {
+        println("[$name] Initializing cache system...")
+    }
+
+    override fun execute() {
+        cache["user:1"] = "Alice"
+        cache["user:2"] = "Bob"
+        println("[$name] Cache populated with ${cache.size} items")
+    }
+
+    override fun shutdown() {
+        cache.clear()
+        println("[$name] Cache cleared and shutdown")
+    }
+}
+
+class PluginManager {
+    private val plugins = mutableListOf<Plugin>()
+
+    fun registerPlugin(plugin: Plugin) {
+        plugins.add(plugin)
+        println("\n✅ Registered plugin: ${plugin.name} v${plugin.version}")
+    }
+
+    fun configurePlugin(pluginName: String, settings: Map<String, String>) {
+        val plugin = plugins.find { it.name == pluginName }
+        if (plugin is Configurable) {
+            plugin.configure(settings)
+        } else {
+            println("⚠️  Plugin '$pluginName' is not configurable")
+        }
+    }
+
+    fun initializeAll() {
+        println("\n=== Initializing All Plugins ===")
+        plugins.forEach { it.initialize() }
+    }
+
+    fun executeAll() {
+        println("\n=== Executing All Plugins ===")
+        plugins.forEach { it.execute() }
+    }
+
+    fun shutdownAll() {
+        println("\n=== Shutting Down All Plugins ===")
+        plugins.forEach { it.shutdown() }
+    }
+
+    fun listPlugins() {
+        println("\n=== Installed Plugins ===")
+        plugins.forEach { plugin ->
+            val configurable = if (plugin is Configurable) "(Configurable)" else ""
+            println("${plugin.name} v${plugin.version} $configurable")
+        }
+    }
+}
+
+fun main() {
+    val manager = PluginManager()
+
+    // Register plugins
+    val logger = LoggerPlugin()
+    val database = DatabasePlugin()
+    val cache = CachePlugin()
+
+    manager.registerPlugin(logger)
+    manager.registerPlugin(database)
+    manager.registerPlugin(cache)
+
+    manager.listPlugins()
+
+    // Configure
+    manager.configurePlugin("Logger", mapOf("logLevel" to "DEBUG"))
+    manager.configurePlugin("Database", mapOf("connectionString" to "prod-db.example.com:5432"))
+
+    // Run lifecycle
+    manager.initializeAll()
+    manager.executeAll()
+    manager.shutdownAll()
+}
+```
 
 ---
 
 ## Checkpoint Quiz
 
 ### Question 1
-What's the main difference between `apply` and `also`?
+What is the main difference between an interface and an abstract class?
 
-A) They're the same
-B) `apply` uses `this` context; `also` uses `it` context
-C) `apply` is faster
-D) `also` can't be chained
+A) Interfaces can't have methods
+B) A class can implement multiple interfaces but inherit from only one abstract class
+C) Abstract classes are faster
+D) There is no difference
 
 ### Question 2
-Which scope function should you use for null-safe transformations?
+Can interfaces have properties with backing fields?
 
-A) `apply`
-B) `also`
-C) `let`
-D) `with`
+A) Yes, always
+B) No, never
+C) Only if marked `open`
+D) Only if they're `lateinit`
 
 ### Question 3
-What does `apply` return?
+Can interface methods have default implementations in Kotlin?
 
-A) The lambda result
-B) Unit
-C) The object itself
-D) A boolean
+A) No, never
+B) Yes, always
+C) Yes, but not in Java
+D) Yes, since Kotlin 1.0
 
 ### Question 4
-When should you use `with` vs `run`?
+When should you use an interface instead of an abstract class?
 
-A) They're identical
-B) `with` when you have an object; `run` for chaining or inline creation
-C) `with` is deprecated
-D) `run` only works with strings
+A) When you need constructors
+B) When you need to define capabilities without shared state
+C) When you need multiple inheritance of type
+D) Both B and C
 
 ### Question 5
-What's the primary use case for `also`?
+What's required for a class property declared in an interface?
 
-A) Configuration
-B) Transformation
-C) Side effects (logging, validation) without breaking the chain
-D) Null safety
+A) It must have a backing field
+B) It must be overridden by implementing classes (unless it has a default getter)
+C) It must be mutable
+D) It must be private
 
 ---
 
 ## Quiz Answers
 
-**Question 1: B) `apply` uses `this` context; `also` uses `it` context**
+**Question 1: B) A class can implement multiple interfaces but inherit from only one abstract class**
+
+This is one of the key differences and a major reason to use interfaces.
 
 ```kotlin
-val person = Person("Alice", 25)
+interface Flyable { }
+interface Swimmable { }
 
-// apply: 'this' context (implicit)
-person.apply {
-    name = name.uppercase()  // 'this' omitted
-}
+class Duck : Flyable, Swimmable { }  // ✅ Multiple interfaces
 
-// also: 'it' context (explicit)
-person.also {
-    it.name = it.name.lowercase()
-}
+abstract class Animal { }
+abstract class Vehicle { }
+// class FlyingCar : Animal, Vehicle { }  // ❌ Can't inherit from two classes
 ```
-
-Both return the object, but context differs.
 
 ---
 
-**Question 2: C) `let`**
+**Question 2: B) No, never**
+
+Interfaces can't have backing fields. Properties must either be abstract or have custom getters.
 
 ```kotlin
-val name: String? = "Alice"
-
-// let with safe call
-val result = name?.let {
-    it.uppercase()
-} ?: "NO NAME"
-
-println(result)  // ALICE
-```
-
-`let` is perfect for nullable chains.
-
----
-
-**Question 3: C) The object itself**
-
-```kotlin
-val person = Person("Alice", 25)
-    .apply {
-        age += 1
-    }  // Returns Person
-
-// Can chain because it returns the object
-person
-    .apply { name = name.uppercase() }
-    .also { println(it) }
-```
-
-Returning the object enables chaining.
-
----
-
-**Question 4: B) `with` when you have an object; `run` for chaining or inline creation**
-
-```kotlin
-// with: object already exists
-val person = Person("Alice", 25)
-val info = with(person) {
-    "$name is $age"
-}
-
-// run: chaining or inline
-val info2 = Person("Bob", 30).run {
-    "$name is $age"
+interface Example {
+    val x: Int  // ✅ Abstract (must override)
+    val y: Int
+        get() = 42  // ✅ Custom getter
+    // val z: Int = 10  // ❌ Backing field not allowed
 }
 ```
 
-Functionally similar, but usage context differs.
+---
+
+**Question 3: D) Yes, since Kotlin 1.0**
+
+Kotlin interfaces can have default method implementations from the start.
+
+```kotlin
+interface Logger {
+    fun log(msg: String) {
+        println("[LOG] $msg")  // ✅ Default implementation
+    }
+}
+```
 
 ---
 
-**Question 5: C) Side effects (logging, validation) without breaking the chain**
+**Question 4: D) Both B and C**
+
+Use interfaces when you want to define capabilities ("can-do") without shared state, and when you need multiple inheritance.
 
 ```kotlin
-val result = processData()
-    .also { println("Step 1: $it") }
-    .transform()
-    .also { println("Step 2: $it") }
-    .finalize()
+interface Printable { fun print() }
+interface Scannable { fun scan() }
 
-// 'also' logs without changing the return value
+class AllInOnePrinter : Printable, Scannable {
+    override fun print() { }
+    override fun scan() { }
+}
 ```
 
-Perfect for debugging and logging in chains.
+---
+
+**Question 5: B) It must be overridden by implementing classes (unless it has a default getter)**
+
+Interface properties without default getters must be overridden.
+
+```kotlin
+interface Vehicle {
+    val speed: Int  // Must override
+    val type: String
+        get() = "Generic"  // Has default, override optional
+}
+```
 
 ---
 
 ## What You've Learned
 
-✅ Five scope functions: let, run, with, apply, also
-✅ Context differences: `this` vs `it`
-✅ Return value differences: lambda result vs object
-✅ When to use each scope function
-✅ Chaining scope functions for fluent APIs
-✅ Real-world use cases: null safety, configuration, logging
-✅ Builder pattern with `apply`
+✅ Defining and implementing interfaces
+✅ Multiple interface implementation
+✅ Interface properties (without backing fields)
+✅ Default interface methods
+✅ Interfaces vs abstract classes
+✅ Real-world design patterns with interfaces
 
 ---
 
 ## Next Steps
 
-In **Lesson 3.5: Function Composition and Currying**, you'll explore:
-- Composing functions to build complex operations
-- Currying and partial application
-- Extension functions as functional tools
-- Infix functions for readable DSLs
-- Operator overloading
-- Building domain-specific languages (DSLs)
+In **Lesson 2.5: Data Classes and Sealed Classes**, you'll learn:
+- Data classes for holding data
+- Automatic `equals()`, `hashCode()`, `toString()`, `copy()`
+- Destructuring declarations
+- Sealed classes for restricted hierarchies
+- When to use each special class type
 
-Get ready to take functional programming to the next level!
-
----
-
-## Key Takeaways
-
-**Scope Functions Summary**:
-
-```kotlin
-// let: nullable handling, transformation
-name?.let { it.uppercase() }
-
-// run: configure + compute result
-person.run { age + 1 }
-
-// with: multiple ops on existing object
-with(config) { host = "localhost"; port = 8080 }
-
-// apply: object configuration
-Person().apply { name = "Alice"; age = 25 }
-
-// also: side effects, logging
-data.also { println(it) }
-```
-
-**Decision Tree**:
-1. Need result from operation? → let, run, with
-2. Need object for chaining? → apply, also
-3. Null safety? → let
-4. Configuration? → apply
-5. Logging/side effects? → also
-
-**Best Practices**:
-- Don't overuse—sometimes simple code is clearer
-- Choose based on intent, not just brevity
-- Use meaningful names when using `it` isn't clear
-- Chain thoughtfully—too many levels hurt readability
+You're building a complete OOP toolkit!
 
 ---
 
-**Congratulations on completing Lesson 3.4!** 🎉
+**Congratulations on completing Lesson 2.4!** 🎉
 
-Scope functions are a hallmark of idiomatic Kotlin. Mastering them will make your code more elegant and expressive. Practice using them in your daily coding—they quickly become second nature!
+Interfaces are essential for designing flexible, maintainable systems. You now understand when to use interfaces vs abstract classes!

@@ -1,995 +1,920 @@
-# Lesson 4.1: Generics and Type Parameters
+# Lesson 3.1: Introduction to Functional Programming
 
-**Estimated Time**: 70 minutes
-**Difficulty**: Advanced
-**Prerequisites**: Parts 1-3 (Kotlin fundamentals, OOP, Functional Programming)
+**Estimated Time**: 60 minutes
+**Difficulty**: Intermediate
+**Prerequisites**: Parts 1-2 (Kotlin fundamentals, OOP)
 
 ---
 
 ## Topic Introduction
 
-Welcome to Part 4: Advanced Kotlin Features! You've mastered the fundamentals, object-oriented programming, and functional programming. Now it's time to explore the powerful features that make Kotlin a truly modern language.
+Welcome to Part 3: Functional Programming! You've mastered Kotlin basics and object-oriented programming. Now it's time to explore a powerful programming paradigm that will transform how you write code.
 
-Generics are one of the most important features in Kotlin. They allow you to write flexible, reusable code that works with different types while maintaining type safety. Without generics, you'd need to write the same code multiple times for different types or lose type safety by using `Any`.
+Functional programming (FP) is not just about using functions—it's a different way of thinking about problems. Instead of telling the computer **what to do** step-by-step (imperative), you describe **what you want** (declarative). The result? Code that's shorter, clearer, and easier to test.
 
 In this lesson, you'll learn:
-- Generic classes and functions
-- Type parameters and constraints
-- Variance: `in`, `out`, and invariant types
-- Reified type parameters
-- Star projections
-- Generic constraints with `where`
+- What functional programming really means
+- First-class and higher-order functions
+- Lambda expressions basics
+- Function types in Kotlin
+- How to pass functions as parameters
 
-By the end, you'll write type-safe, reusable code that works with any type!
-
----
-
-## The Concept: Why Generics Matter
-
-### The Problem Without Generics
-
-Imagine you need to create a box that can hold different types of items:
-
-```kotlin
-// ❌ Without generics - need separate classes
-class IntBox(val value: Int)
-class StringBox(val value: String)
-class PersonBox(val value: Person)
-
-// ❌ Or lose type safety
-class AnyBox(val value: Any)
-val box = AnyBox("Hello")
-val str: String = box.value as String  // Unsafe cast!
-```
-
-### The Solution: Generics
-
-```kotlin
-// ✅ With generics - one class, full type safety
-class Box<T>(val value: T)
-
-val intBox = Box(42)           // Box<Int>
-val stringBox = Box("Hello")   // Box<String>
-val personBox = Box(Person())  // Box<Person>
-
-val str: String = stringBox.value  // Type-safe!
-```
-
-Generics let you write code once and use it with many types, while the compiler ensures everything is type-safe.
+By the end, you'll write elegant, functional code that reads like English!
 
 ---
 
-## Generic Classes
+## The Concept: What Is Functional Programming?
 
-### Basic Generic Class
+### The Assembly Line Analogy
 
-A generic class has type parameters in angle brackets:
+Imagine two approaches to making a pizza:
+
+**Imperative Approach** (Traditional Programming):
+```
+1. Take dough → Put on counter
+2. Take sauce → Pour on dough
+3. Take cheese → Sprinkle on sauce
+4. Take pepperoni → Place on cheese
+5. Take pizza → Put in oven
+6. Wait 15 minutes → Take pizza out
+```
+
+**Functional Approach**:
+```
+pizza = take(dough)
+  .add(sauce)
+  .add(cheese)
+  .add(pepperoni)
+  .bake(15)
+```
+
+The functional approach:
+- Chains operations together
+- Each step transforms data and passes it forward
+- Reads more naturally
+- Easier to understand at a glance
+
+### Core Principles of Functional Programming
+
+**1. Functions Are First-Class Citizens**
+
+In FP, functions are values just like numbers or strings. You can:
+- Store them in variables
+- Pass them to other functions
+- Return them from functions
+- Create them on the fly
 
 ```kotlin
-class Container<T>(val item: T) {
-    fun get(): T = item
+// Functions are values!
+val greet = fun(name: String) = "Hello, $name!"
+val result = greet("Alice")  // "Hello, Alice!"
+```
 
-    fun describe() {
-        println("Container holds: $item")
+**2. Higher-Order Functions**
+
+Functions that take other functions as parameters or return functions:
+
+```kotlin
+// Takes a function as parameter
+fun repeat(times: Int, action: () -> Unit) {
+    for (i in 1..times) {
+        action()
     }
 }
 
-fun main() {
-    val numberContainer = Container(42)
-    println(numberContainer.get())  // 42
-
-    val stringContainer = Container("Kotlin")
-    println(stringContainer.get())  // Kotlin
-
-    // Type inference works!
-    val listContainer = Container(listOf(1, 2, 3))
-    println(listContainer.get())  // [1, 2, 3]
-}
+repeat(3) { println("Hello!") }
+// Output:
+// Hello!
+// Hello!
+// Hello!
 ```
 
-### Multiple Type Parameters
+**3. Immutability**
 
-Classes can have multiple type parameters:
+Prefer values that don't change (immutable data):
 
 ```kotlin
-class Pair<A, B>(val first: A, val second: B) {
-    fun display() {
-        println("First: $first, Second: $second")
-    }
-
-    fun swap(): Pair<B, A> = Pair(second, first)
+// ❌ Imperative (mutating)
+var total = 0
+for (num in numbers) {
+    total += num
 }
 
-fun main() {
-    val pair = Pair("Alice", 25)  // Pair<String, Int>
-    pair.display()  // First: Alice, Second: 25
-
-    val swapped = pair.swap()  // Pair<Int, String>
-    swapped.display()  // First: 25, Second: Alice
-}
+// ✅ Functional (immutable)
+val total = numbers.sum()
 ```
 
-### Generic Collections
+**4. Pure Functions**
 
-Kotlin's standard collections are generic:
+Functions with no side effects—same input always gives same output:
 
 ```kotlin
-fun main() {
-    // List<T>
-    val numbers: List<Int> = listOf(1, 2, 3)
-    val words: List<String> = listOf("a", "b", "c")
+// ✅ Pure function
+fun add(a: Int, b: Int): Int = a + b
 
-    // Map<K, V>
-    val ages: Map<String, Int> = mapOf(
-        "Alice" to 25,
-        "Bob" to 30
-    )
-
-    // Set<T>
-    val uniqueNumbers: Set<Int> = setOf(1, 2, 2, 3)  // [1, 2, 3]
-}
+// ❌ Impure function (depends on external state)
+var discount = 0.1
+fun applyDiscount(price: Double): Double = price * (1 - discount)
 ```
 
 ---
 
-## Generic Functions
+## First-Class Functions
 
-Functions can also be generic:
+In Kotlin, functions are **first-class citizens**—they're treated like any other value.
 
-### Basic Generic Function
+### Assigning Functions to Variables
 
 ```kotlin
-fun <T> printItem(item: T) {
-    println("Item: $item")
+// Traditional function declaration
+fun double(x: Int): Int {
+    return x * 2
 }
 
-fun <T> identity(value: T): T = value
+// Assigning function to variable
+val doubleFunc = ::double  // Function reference
 
-fun main() {
-    printItem(42)          // T = Int
-    printItem("Hello")     // T = String
-    printItem(listOf(1,2)) // T = List<Int>
-
-    val num = identity(100)     // Int
-    val str = identity("Kotlin") // String
-}
+println(doubleFunc(5))  // 10
 ```
 
-### Generic Function with Type Inference
+### Anonymous Functions
+
+Functions without names:
 
 ```kotlin
-fun <T> createList(vararg items: T): List<T> {
-    return items.toList()
+// Anonymous function assigned to variable
+val triple = fun(x: Int): Int {
+    return x * 3
 }
 
-fun main() {
-    val numbers = createList(1, 2, 3, 4, 5)
-    val words = createList("apple", "banana", "cherry")
-
-    println(numbers)  // [1, 2, 3, 4, 5]
-    println(words)    // [apple, banana, cherry]
-}
+println(triple(4))  // 12
 ```
 
-### Generic Extension Functions
+### Lambda Expressions (Preview)
+
+Shorter syntax for anonymous functions:
 
 ```kotlin
-fun <T> T.toSingletonList(): List<T> {
-    return listOf(this)
-}
+// Lambda expression
+val square = { x: Int -> x * x }
 
-fun <T> List<T>.secondOrNull(): T? {
-    return if (size >= 2) this[1] else null
-}
-
-fun main() {
-    println(42.toSingletonList())  // [42]
-    println("Hello".toSingletonList())  // [Hello]
-
-    println(listOf(1, 2, 3).secondOrNull())  // 2
-    println(listOf("a").secondOrNull())       // null
-}
+println(square(6))  // 36
 ```
 
----
-
-## Type Constraints
-
-Type constraints restrict which types can be used with generics:
-
-### Upper Bound Constraints
-
-Use `:` to specify an upper bound:
+### Why This Matters
 
 ```kotlin
-// T must be a Number or its subtype
-fun <T : Number> sum(a: T, b: T): Double {
-    return a.toDouble() + b.toDouble()
+// Store different math operations
+val add = { a: Int, b: Int -> a + b }
+val subtract = { a: Int, b: Int -> a - b }
+val multiply = { a: Int, b: Int -> a * b }
+
+// Use them interchangeably
+fun calculate(a: Int, b: Int, operation: (Int, Int) -> Int): Int {
+    return operation(a, b)
 }
 
-fun main() {
-    println(sum(10, 20))      // 30.0
-    println(sum(5.5, 2.3))    // 7.8
-    // println(sum("a", "b")) // ❌ Error: String is not a Number
-}
-```
-
-### Comparable Constraint
-
-```kotlin
-fun <T : Comparable<T>> max(a: T, b: T): T {
-    return if (a > b) a else b
-}
-
-fun main() {
-    println(max(10, 20))           // 20
-    println(max("apple", "banana")) // banana
-    println(max(5.5, 2.3))         // 5.5
-}
-```
-
-### Multiple Constraints with `where`
-
-When you need multiple constraints, use `where`:
-
-```kotlin
-interface Drawable {
-    fun draw()
-}
-
-class Shape(val name: String) : Drawable, Comparable<Shape> {
-    override fun draw() {
-        println("Drawing $name")
-    }
-
-    override fun compareTo(other: Shape): Int {
-        return name.compareTo(other.name)
-    }
-}
-
-fun <T> displayAndCompare(a: T, b: T) where T : Drawable, T : Comparable<T> {
-    a.draw()
-    b.draw()
-    println("${if (a > b) "First" else "Second"} is greater")
-}
-
-fun main() {
-    val circle = Shape("Circle")
-    val square = Shape("Square")
-    displayAndCompare(circle, square)
-    // Drawing Circle
-    // Drawing Square
-    // Second is greater
-}
+println(calculate(10, 5, add))       // 15
+println(calculate(10, 5, subtract))  // 5
+println(calculate(10, 5, multiply))  // 50
 ```
 
 ---
 
-## Variance: In, Out, and Invariant
+## Higher-Order Functions
 
-Variance controls how generic types relate to each other based on their type parameters.
+Functions that work with other functions.
 
-### The Problem: Invariance
-
-By default, generic types are **invariant**:
+### Taking Functions as Parameters
 
 ```kotlin
-open class Animal
-class Dog : Animal()
-class Cat : Animal()
-
-class Box<T>(var item: T)
-
-fun main() {
-    val dogBox: Box<Dog> = Box(Dog())
-    // val animalBox: Box<Animal> = dogBox  // ❌ Error!
-    // Even though Dog is a subtype of Animal,
-    // Box<Dog> is NOT a subtype of Box<Animal>
+fun processNumber(x: Int, transformer: (Int) -> Int): Int {
+    println("Processing $x...")
+    return transformer(x)
 }
+
+// Use it with different transformations
+val result1 = processNumber(5) { it * 2 }     // 10
+val result2 = processNumber(5) { it * it }    // 25
+val result3 = processNumber(5) { it + 100 }   // 105
 ```
 
-### Covariance: `out` Keyword
-
-Use `out` when a type is only produced (output), never consumed:
+### Real-World Example: Custom List Processing
 
 ```kotlin
-class Producer<out T>(private val item: T) {
-    fun produce(): T = item  // ✅ Only returns T
-    // fun consume(item: T) {} // ❌ Can't accept T as parameter
-}
-
-fun main() {
-    val dogProducer: Producer<Dog> = Producer(Dog())
-    val animalProducer: Producer<Animal> = dogProducer  // ✅ Works!
-
-    val animal: Animal = animalProducer.produce()
-}
-```
-
-**Rule**: If a generic class only returns `T` (never accepts it), mark it `out T`.
-
-### Contravariance: `in` Keyword
-
-Use `in` when a type is only consumed (input), never produced:
-
-```kotlin
-interface Consumer<in T> {
-    fun consume(item: T)     // ✅ Only accepts T
-    // fun produce(): T {}   // ❌ Can't return T
-}
-
-class AnimalConsumer : Consumer<Animal> {
-    override fun consume(item: Animal) {
-        println("Consuming animal")
-    }
-}
-
-fun main() {
-    val animalConsumer: Consumer<Animal> = AnimalConsumer()
-    val dogConsumer: Consumer<Dog> = animalConsumer  // ✅ Works!
-
-    dogConsumer.consume(Dog())
-}
-```
-
-**Rule**: If a generic class only accepts `T` (never returns it), mark it `in T`.
-
-### Real-World Example: List vs MutableList
-
-```kotlin
-fun main() {
-    // List<T> is covariant (out T)
-    val dogs: List<Dog> = listOf(Dog(), Dog())
-    val animals: List<Animal> = dogs  // ✅ Works!
-
-    // MutableList<T> is invariant (can't be covariant or contravariant)
-    val mutableDogs: MutableList<Dog> = mutableListOf(Dog())
-    // val mutableAnimals: MutableList<Animal> = mutableDogs  // ❌ Error!
-    // Why? Because MutableList both produces and consumes
-}
-```
-
-### Variance Summary
-
-| Variance | Keyword | Usage | Example |
-|----------|---------|-------|---------|
-| **Covariant** | `out T` | Type is only produced | `List<out T>`, `Producer<out T>` |
-| **Contravariant** | `in T` | Type is only consumed | `Comparable<in T>`, `Consumer<in T>` |
-| **Invariant** | `T` | Type is both produced and consumed | `MutableList<T>`, `Box<T>` |
-
----
-
-## Use-Site Variance: Type Projections
-
-You can specify variance at the use site instead of the declaration site:
-
-```kotlin
-class Box<T>(var item: T)
-
-fun copyFrom(from: Box<out Animal>, to: Box<Animal>) {
-    to.item = from.item  // ✅ Can read from 'from'
-}
-
-fun copyTo(from: Box<Animal>, to: Box<in Animal>) {
-    to.item = from.item  // ✅ Can write to 'to'
-}
-
-fun main() {
-    val dogBox = Box(Dog())
-    val animalBox = Box<Animal>(Cat())
-
-    copyFrom(dogBox, animalBox)  // ✅ Works with out projection
-}
-```
-
----
-
-## Star Projections
-
-Star projection `*` is used when you don't know or care about the type argument:
-
-```kotlin
-fun printList(list: List<*>) {
+fun customFilter(list: List<Int>, predicate: (Int) -> Boolean): List<Int> {
+    val result = mutableListOf<Int>()
     for (item in list) {
-        println(item)  // item is Any?
+        if (predicate(item)) {
+            result.add(item)
+        }
     }
+    return result
 }
 
-fun main() {
-    printList(listOf(1, 2, 3))
-    printList(listOf("a", "b", "c"))
+val numbers = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
 
-    // Star projection on mutable types
-    val anyList: MutableList<*> = mutableListOf(1, 2, 3)
-    // anyList.add(4)  // ❌ Error: can't add to MutableList<*>
-    val item = anyList[0]  // ✅ Can read (as Any?)
-}
+// Filter even numbers
+val evens = customFilter(numbers) { it % 2 == 0 }
+println(evens)  // [2, 4, 6, 8, 10]
+
+// Filter numbers greater than 5
+val bigNumbers = customFilter(numbers) { it > 5 }
+println(bigNumbers)  // [6, 7, 8, 9, 10]
 ```
 
-**Rules for `List<*>`**:
-- Equivalent to `List<out Any?>`
-- You can read items (as `Any?`)
-- For `MutableList<*>`: can't add items, can only read
-
----
-
-## Reified Type Parameters
-
-Normally, type information is erased at runtime. `reified` preserves it:
-
-### The Problem: Type Erasure
+### Returning Functions
 
 ```kotlin
-fun <T> isInstance(value: Any): Boolean {
-    // return value is T  // ❌ Error: Cannot check for instance of erased type
-    return false
-}
-```
-
-### The Solution: Reified
-
-```kotlin
-inline fun <reified T> isInstance(value: Any): Boolean {
-    return value is T  // ✅ Works!
+fun createMultiplier(factor: Int): (Int) -> Int {
+    return { number -> number * factor }
 }
 
-fun main() {
-    println(isInstance<String>("Hello"))  // true
-    println(isInstance<String>(42))       // false
-    println(isInstance<Int>(42))          // true
-}
-```
+val double = createMultiplier(2)
+val triple = createMultiplier(3)
+val tenfold = createMultiplier(10)
 
-### Reified with Class Checking
-
-```kotlin
-inline fun <reified T> createList(size: Int, creator: (Int) -> T): List<T> {
-    return List(size) { creator(it) }
-}
-
-inline fun <reified T> printType(value: T) {
-    println("Type: ${T::class.simpleName}, Value: $value")
-}
-
-fun main() {
-    val numbers = createList(3) { it * 2 }
-    println(numbers)  // [0, 2, 4]
-
-    printType("Hello")  // Type: String, Value: Hello
-    printType(42)       // Type: Int, Value: 42
-}
-```
-
-### Reified with JSON Parsing (Practical Example)
-
-```kotlin
-import kotlin.reflect.KClass
-
-// Simulated JSON parser
-inline fun <reified T : Any> parseJson(json: String): T {
-    println("Parsing JSON to ${T::class.simpleName}")
-    // In real code, you'd use a JSON library
-    return when (T::class) {
-        String::class -> json as T
-        Int::class -> json.toInt() as T
-        else -> throw IllegalArgumentException("Unsupported type")
-    }
-}
-
-fun main() {
-    val str = parseJson<String>("\"Hello\"")
-    val num = parseJson<Int>("42")
-
-    println("String: $str")  // String: "Hello"
-    println("Int: $num")     // Int: 42
-}
-```
-
-**Requirements for `reified`**:
-- Function must be `inline`
-- Can use `is`, `as`, `::class` with type parameter
-- Cannot be used in non-inline functions
-
----
-
-## Generic Constraints with Where
-
-Complex constraints often need the `where` clause:
-
-```kotlin
-interface Closeable {
-    fun close()
-}
-
-interface Readable {
-    fun read(): String
-}
-
-class DataFile : Closeable, Readable {
-    override fun close() {
-        println("Closing file")
-    }
-
-    override fun read(): String {
-        return "File contents"
-    }
-}
-
-fun <T> processResource(resource: T) where T : Closeable, T : Readable {
-    val data = resource.read()
-    println("Data: $data")
-    resource.close()
-}
-
-fun main() {
-    val file = DataFile()
-    processResource(file)
-    // Data: File contents
-    // Closing file
-}
-```
-
-### Multiple Constraints Example
-
-```kotlin
-fun <T> findMax(items: List<T>) where T : Comparable<T>, T : Number {
-    val max = items.maxOrNull()
-    max?.let {
-        println("Max value: $it, Double value: ${it.toDouble()}")
-    }
-}
-
-fun main() {
-    findMax(listOf(1, 5, 3, 9, 2))
-    // Max value: 9, Double value: 9.0
-
-    findMax(listOf(1.5, 2.8, 0.9))
-    // Max value: 2.8, Double value: 2.8
-}
+println(double(5))    // 10
+println(triple(5))    // 15
+println(tenfold(5))   // 50
 ```
 
 ---
 
-## Practical Examples
+## Lambda Expressions Basics
 
-### Generic Repository Pattern
+Lambdas are concise anonymous functions.
+
+### Basic Lambda Syntax
 
 ```kotlin
-interface Entity {
-    val id: Long
-}
+// Full syntax
+val sum = { a: Int, b: Int -> a + b }
+//         { parameters -> body }
 
-data class User(override val id: Long, val name: String) : Entity
-data class Product(override val id: Long, val name: String, val price: Double) : Entity
-
-class Repository<T : Entity> {
-    private val items = mutableListOf<T>()
-
-    fun add(item: T) {
-        items.add(item)
-    }
-
-    fun findById(id: Long): T? {
-        return items.find { it.id == id }
-    }
-
-    fun getAll(): List<T> {
-        return items.toList()
-    }
-
-    fun remove(id: Long): Boolean {
-        return items.removeIf { it.id == id }
-    }
-}
-
-fun main() {
-    val userRepo = Repository<User>()
-    userRepo.add(User(1, "Alice"))
-    userRepo.add(User(2, "Bob"))
-
-    println(userRepo.findById(1))  // User(id=1, name=Alice)
-    println(userRepo.getAll())     // [User(id=1, name=Alice), User(id=2, name=Bob)]
-
-    val productRepo = Repository<Product>()
-    productRepo.add(Product(1, "Laptop", 999.99))
-    productRepo.add(Product(2, "Mouse", 29.99))
-
-    println(productRepo.getAll())
-}
+// Using the lambda
+println(sum(3, 7))  // 10
 ```
 
-### Generic Result Type
+### Lambda Structure
+
+```
+{ parameters -> body }
+  ↓          ↓
+  input      what to do with input
+```
+
+Examples:
 
 ```kotlin
-sealed class Result<out T> {
-    data class Success<T>(val data: T) : Result<T>()
-    data class Error(val message: String) : Result<Nothing>()
-    object Loading : Result<Nothing>()
+// No parameters
+val greet = { println("Hello!") }
+greet()  // Hello!
 
-    fun <R> map(transform: (T) -> R): Result<R> = when (this) {
-        is Success -> Success(transform(data))
-        is Error -> this
-        is Loading -> this
-    }
+// One parameter
+val square = { x: Int -> x * x }
+println(square(4))  // 16
 
-    fun getOrNull(): T? = when (this) {
-        is Success -> data
-        else -> null
-    }
+// Multiple parameters
+val concat = { a: String, b: String -> "$a $b" }
+println(concat("Hello", "World"))  // Hello World
+
+// Multiple statements
+val complexOperation = { x: Int ->
+    val doubled = x * 2
+    val squared = doubled * doubled
+    squared  // Last expression is returned
 }
+println(complexOperation(3))  // 36 (3 * 2 = 6, then 6 * 6 = 36)
+```
 
-fun fetchUser(id: Int): Result<String> {
-    return if (id > 0) {
-        Result.Success("User $id")
-    } else {
-        Result.Error("Invalid user ID")
-    }
-}
+### Type Inference
 
-fun main() {
-    val result1 = fetchUser(42)
-    println(result1.getOrNull())  // User 42
+Kotlin often infers lambda parameter types:
 
-    val result2 = fetchUser(-1)
-    println(result2.getOrNull())  // null
+```kotlin
+// Explicit type
+val numbers = listOf(1, 2, 3, 4, 5)
+val doubled = numbers.map({ x: Int -> x * 2 })
 
-    val mapped = result1.map { it.uppercase() }
-    println(mapped.getOrNull())  // USER 42
-}
+// Type inferred (cleaner!)
+val tripled = numbers.map({ x -> x * 3 })
+
+// Even shorter with 'it' (single parameter)
+val quadrupled = numbers.map({ it * 4 })
+
+// Trailing lambda (move outside parentheses)
+val quintupled = numbers.map { it * 5 }
+
+println(quintupled)  // [5, 10, 15, 20, 25]
 ```
 
 ---
 
-## Exercises
+## Function Types
 
-### Exercise 1: Generic Stack (Medium)
+Every function has a type, just like variables.
 
-Create a generic `Stack<T>` class with push, pop, and peek operations.
+### Basic Function Type Syntax
+
+```kotlin
+// Variable type: (ParameterTypes) -> ReturnType
+
+val greet: (String) -> String = { name -> "Hello, $name!" }
+//         ^^^^^^^^^^^^^^^^     function type
+
+val add: (Int, Int) -> Int = { a, b -> a + b }
+//       ^^^^^^^^^^^^^^^^^   function type
+
+val printMessage: (String) -> Unit = { message -> println(message) }
+//                ^^^^^^^^^^^^^^^^   function type (Unit = no return value)
+```
+
+### Function Type Components
+
+```
+(Int, String) -> Boolean
+ ↓      ↓         ↓
+ param types      return type
+```
+
+### Using Function Types in Declarations
+
+```kotlin
+// Function parameter with function type
+fun applyOperation(x: Int, y: Int, operation: (Int, Int) -> Int): Int {
+    return operation(x, y)
+}
+
+val result1 = applyOperation(10, 5, { a, b -> a + b })   // 15
+val result2 = applyOperation(10, 5, { a, b -> a - b })   // 5
+val result3 = applyOperation(10, 5, { a, b -> a * b })   // 50
+```
+
+### Nullable Function Types
+
+```kotlin
+var operation: ((Int, Int) -> Int)? = null
+
+operation = { a, b -> a + b }
+
+// Safe call with nullable function
+val result = operation?.invoke(5, 3)  // 8
+
+operation = null
+val result2 = operation?.invoke(5, 3)  // null
+```
+
+---
+
+## Passing Functions as Parameters
+
+One of the most powerful FP techniques.
+
+### Example 1: Retry Logic
+
+```kotlin
+fun <T> retry(times: Int, action: () -> T): T? {
+    repeat(times) { attempt ->
+        try {
+            return action()
+        } catch (e: Exception) {
+            println("Attempt ${attempt + 1} failed: ${e.message}")
+            if (attempt == times - 1) throw e
+        }
+    }
+    return null
+}
+
+// Usage
+fun unreliableNetworkCall(): String {
+    if (Math.random() < 0.7) throw Exception("Network error")
+    return "Success!"
+}
+
+val result = retry(3) { unreliableNetworkCall() }
+```
+
+### Example 2: Timing Function Execution
+
+```kotlin
+fun <T> measureTime(label: String, block: () -> T): T {
+    val startTime = System.currentTimeMillis()
+    val result = block()
+    val endTime = System.currentTimeMillis()
+    println("$label took ${endTime - startTime}ms")
+    return result
+}
+
+// Usage
+val sum = measureTime("Calculating sum") {
+    (1..1_000_000).sum()
+}
+// Output: Calculating sum took 42ms
+```
+
+### Example 3: List Transformation
+
+```kotlin
+fun List<Int>.customMap(transform: (Int) -> Int): List<Int> {
+    val result = mutableListOf<Int>()
+    for (item in this) {
+        result.add(transform(item))
+    }
+    return result
+}
+
+val numbers = listOf(1, 2, 3, 4, 5)
+
+val doubled = numbers.customMap { it * 2 }
+println(doubled)  // [2, 4, 6, 8, 10]
+
+val squared = numbers.customMap { it * it }
+println(squared)  // [1, 4, 9, 16, 25]
+```
+
+---
+
+## Practical Examples: Real-World Use Cases
+
+### Example 1: Form Validation
+
+```kotlin
+data class User(val name: String, val email: String, val age: Int)
+
+typealias Validator<T> = (T) -> Boolean
+
+fun <T> validate(value: T, validators: List<Validator<T>>): Boolean {
+    return validators.all { it(value) }
+}
+
+val nameValidator: Validator<String> = { it.length >= 3 }
+val emailValidator: Validator<String> = { it.contains("@") }
+val ageValidator: Validator<Int> = { it >= 18 }
+
+// Validate name
+val validName = validate("John", listOf(nameValidator))
+println("Name valid: $validName")  // true
+
+// Validate email
+val validEmail = validate("john@example.com", listOf(emailValidator))
+println("Email valid: $validEmail")  // true
+
+// Validate age
+val validAge = validate(25, listOf(ageValidator))
+println("Age valid: $validAge")  // true
+```
+
+### Example 2: Event Handling
+
+```kotlin
+class Button(val label: String) {
+    private var clickHandler: (() -> Unit)? = null
+
+    fun onClick(handler: () -> Unit) {
+        clickHandler = handler
+    }
+
+    fun click() {
+        println("Button '$label' clicked")
+        clickHandler?.invoke()
+    }
+}
+
+// Usage
+val saveButton = Button("Save")
+saveButton.onClick {
+    println("Saving data...")
+}
+
+val cancelButton = Button("Cancel")
+cancelButton.onClick {
+    println("Operation cancelled")
+}
+
+saveButton.click()
+// Output:
+// Button 'Save' clicked
+// Saving data...
+
+cancelButton.click()
+// Output:
+// Button 'Cancel' clicked
+// Operation cancelled
+```
+
+### Example 3: Strategy Pattern with Functions
+
+```kotlin
+class PriceCalculator {
+    fun calculatePrice(
+        basePrice: Double,
+        quantity: Int,
+        discountStrategy: (Double, Int) -> Double
+    ): Double {
+        return discountStrategy(basePrice, quantity)
+    }
+}
+
+// Different discount strategies
+val noDiscount = { price: Double, qty: Int -> price * qty }
+val bulkDiscount = { price: Double, qty: Int ->
+    if (qty >= 10) price * qty * 0.9 else price * qty
+}
+val loyaltyDiscount = { price: Double, qty: Int -> price * qty * 0.85 }
+
+val calculator = PriceCalculator()
+
+println(calculator.calculatePrice(100.0, 5, noDiscount))        // 500.0
+println(calculator.calculatePrice(100.0, 15, bulkDiscount))     // 1350.0
+println(calculator.calculatePrice(100.0, 5, loyaltyDiscount))   // 425.0
+```
+
+---
+
+## Exercise 1: Function Calculator
+
+**Goal**: Create a calculator that uses functions for operations.
 
 **Requirements**:
-- `push(item: T)` - add item to top
-- `pop(): T?` - remove and return top item
-- `peek(): T?` - return top item without removing
-- `isEmpty(): Boolean` - check if stack is empty
-- `size: Int` - number of items in stack
+1. Create a function `calculate` that takes two numbers and an operation function
+2. Define operation functions for: add, subtract, multiply, divide
+3. Use the calculator with different operations
 
-**Solution**:
-
+**Starter Code**:
 ```kotlin
-class Stack<T> {
-    private val items = mutableListOf<T>()
-
-    fun push(item: T) {
-        items.add(item)
-    }
-
-    fun pop(): T? {
-        return if (items.isNotEmpty()) {
-            items.removeAt(items.size - 1)
-        } else {
-            null
-        }
-    }
-
-    fun peek(): T? {
-        return items.lastOrNull()
-    }
-
-    fun isEmpty(): Boolean {
-        return items.isEmpty()
-    }
-
-    val size: Int
-        get() = items.size
-
-    override fun toString(): String {
-        return items.toString()
-    }
+fun calculate(a: Int, b: Int, operation: (Int, Int) -> Int): Int {
+    // TODO: Implement
 }
 
 fun main() {
-    val stack = Stack<Int>()
-    stack.push(1)
-    stack.push(2)
-    stack.push(3)
-
-    println("Stack: $stack")        // Stack: [1, 2, 3]
-    println("Size: ${stack.size}")  // Size: 3
-    println("Peek: ${stack.peek()}") // Peek: 3
-    println("Pop: ${stack.pop()}")   // Pop: 3
-    println("Pop: ${stack.pop()}")   // Pop: 2
-    println("Size: ${stack.size}")   // Size: 1
-
-    val stringStack = Stack<String>()
-    stringStack.push("Hello")
-    stringStack.push("World")
-    println(stringStack.pop())  // World
-    println(stringStack.pop())  // Hello
-    println(stringStack.pop())  // null
+    // TODO: Define operations and use calculator
 }
 ```
 
-### Exercise 2: Generic Tree with Comparable (Hard)
+---
 
-Create a generic binary search tree that stores comparable items.
+## Solution 1: Function Calculator
+
+```kotlin
+fun calculate(a: Int, b: Int, operation: (Int, Int) -> Int): Int {
+    return operation(a, b)
+}
+
+fun main() {
+    // Define operations as lambdas
+    val add = { a: Int, b: Int -> a + b }
+    val subtract = { a: Int, b: Int -> a - b }
+    val multiply = { a: Int, b: Int -> a * b }
+    val divide = { a: Int, b: Int -> if (b != 0) a / b else 0 }
+
+    val x = 20
+    val y = 4
+
+    println("$x + $y = ${calculate(x, y, add)}")         // 24
+    println("$x - $y = ${calculate(x, y, subtract)}")    // 16
+    println("$x * $y = ${calculate(x, y, multiply)}")    // 80
+    println("$x / $y = ${calculate(x, y, divide)}")      // 5
+
+    // Can also use lambdas directly
+    println("$x % $y = ${calculate(x, y) { a, b -> a % b }}")  // 0
+}
+```
+
+**Explanation**:
+- We define operation functions as lambda expressions
+- Each lambda takes two Ints and returns an Int
+- The `calculate` function is generic—it works with any operation
+- We can pass pre-defined operations or create them inline
+
+---
+
+## Exercise 2: Custom List Filter
+
+**Goal**: Build a reusable filter function for lists.
 
 **Requirements**:
-- `insert(value: T)` - add value to tree
-- `contains(value: T): Boolean` - check if value exists
-- `toSortedList(): List<T>` - return sorted list of all values
+1. Create a function `filterList` that takes a list and a predicate function
+2. The predicate determines which elements to keep
+3. Test with different predicates (even numbers, > 10, etc.)
 
-**Solution**:
-
+**Starter Code**:
 ```kotlin
-class BinarySearchTree<T : Comparable<T>> {
-    private var root: Node<T>? = null
-
-    private class Node<T>(val value: T) {
-        var left: Node<T>? = null
-        var right: Node<T>? = null
-    }
-
-    fun insert(value: T) {
-        root = insertRec(root, value)
-    }
-
-    private fun insertRec(node: Node<T>?, value: T): Node<T> {
-        if (node == null) {
-            return Node(value)
-        }
-
-        when {
-            value < node.value -> node.left = insertRec(node.left, value)
-            value > node.value -> node.right = insertRec(node.right, value)
-        }
-
-        return node
-    }
-
-    fun contains(value: T): Boolean {
-        return containsRec(root, value)
-    }
-
-    private fun containsRec(node: Node<T>?, value: T): Boolean {
-        if (node == null) return false
-
-        return when {
-            value == node.value -> true
-            value < node.value -> containsRec(node.left, value)
-            else -> containsRec(node.right, value)
-        }
-    }
-
-    fun toSortedList(): List<T> {
-        val result = mutableListOf<T>()
-        inOrderTraversal(root, result)
-        return result
-    }
-
-    private fun inOrderTraversal(node: Node<T>?, result: MutableList<T>) {
-        if (node != null) {
-            inOrderTraversal(node.left, result)
-            result.add(node.value)
-            inOrderTraversal(node.right, result)
-        }
-    }
+fun filterList(list: List<Int>, predicate: (Int) -> Boolean): List<Int> {
+    // TODO: Implement
 }
 
 fun main() {
-    val tree = BinarySearchTree<Int>()
-    tree.insert(5)
-    tree.insert(3)
-    tree.insert(7)
-    tree.insert(1)
-    tree.insert(9)
-
-    println("Contains 3: ${tree.contains(3)}")  // true
-    println("Contains 6: ${tree.contains(6)}")  // false
-    println("Sorted: ${tree.toSortedList()}")   // [1, 3, 5, 7, 9]
-
-    val stringTree = BinarySearchTree<String>()
-    stringTree.insert("dog")
-    stringTree.insert("cat")
-    stringTree.insert("elephant")
-    stringTree.insert("ant")
-
-    println("Sorted: ${stringTree.toSortedList()}")
-    // [ant, cat, dog, elephant]
+    val numbers = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+    // TODO: Filter with different predicates
 }
 ```
 
-### Exercise 3: Generic Cache with Constraints (Hard)
+---
 
-Create a generic cache that stores serializable items with expiration.
+## Solution 2: Custom List Filter
+
+```kotlin
+fun filterList(list: List<Int>, predicate: (Int) -> Boolean): List<Int> {
+    val result = mutableListOf<Int>()
+    for (item in list) {
+        if (predicate(item)) {
+            result.add(item)
+        }
+    }
+    return result
+}
+
+fun main() {
+    val numbers = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25)
+
+    // Filter even numbers
+    val evens = filterList(numbers) { it % 2 == 0 }
+    println("Even numbers: $evens")  // [2, 4, 6, 8, 10, 20]
+
+    // Filter numbers greater than 10
+    val bigNumbers = filterList(numbers) { it > 10 }
+    println("Numbers > 10: $bigNumbers")  // [15, 20, 25]
+
+    // Filter numbers divisible by 5
+    val divisibleBy5 = filterList(numbers) { it % 5 == 0 }
+    println("Divisible by 5: $divisibleBy5")  // [5, 10, 15, 20, 25]
+
+    // Filter numbers in range 3..7
+    val inRange = filterList(numbers) { it in 3..7 }
+    println("In range 3-7: $inRange")  // [3, 4, 5, 6, 7]
+}
+```
+
+**Explanation**:
+- `filterList` iterates through the list
+- For each item, it calls the predicate function
+- If predicate returns true, item is included in result
+- Different predicates give different filtered results
+
+---
+
+## Exercise 3: Function Builder
+
+**Goal**: Create a function that returns different functions based on input.
 
 **Requirements**:
-- Type must be serializable (toString/equals)
-- `put(key: String, value: T, ttlSeconds: Int)` - store with expiration
-- `get(key: String): T?` - retrieve if not expired
-- `clear()` - remove all entries
-- `size: Int` - number of valid entries
+1. Create `createGreeter` that takes a greeting style
+2. Return appropriate greeting function
+3. Styles: "formal", "casual", "enthusiastic"
 
-**Solution**:
+**Starter Code**:
+```kotlin
+fun createGreeter(style: String): (String) -> String {
+    // TODO: Return different greeting functions based on style
+}
+
+fun main() {
+    // TODO: Test different greeting styles
+}
+```
+
+---
+
+## Solution 3: Function Builder
 
 ```kotlin
-import java.time.Instant
-
-class Cache<T : Any> {
-    private data class CacheEntry<T>(
-        val value: T,
-        val expiresAt: Long
-    ) {
-        fun isExpired(): Boolean {
-            return System.currentTimeMillis() > expiresAt
-        }
-    }
-
-    private val storage = mutableMapOf<String, CacheEntry<T>>()
-
-    fun put(key: String, value: T, ttlSeconds: Int = 60) {
-        val expiresAt = System.currentTimeMillis() + (ttlSeconds * 1000)
-        storage[key] = CacheEntry(value, expiresAt)
-        cleanupExpired()
-    }
-
-    fun get(key: String): T? {
-        val entry = storage[key] ?: return null
-
-        return if (entry.isExpired()) {
-            storage.remove(key)
-            null
-        } else {
-            entry.value
-        }
-    }
-
-    fun clear() {
-        storage.clear()
-    }
-
-    val size: Int
-        get() {
-            cleanupExpired()
-            return storage.size
-        }
-
-    private fun cleanupExpired() {
-        storage.entries.removeIf { it.value.isExpired() }
-    }
-
-    fun getAllKeys(): Set<String> {
-        cleanupExpired()
-        return storage.keys.toSet()
+fun createGreeter(style: String): (String) -> String {
+    return when (style) {
+        "formal" -> { name -> "Good day, $name. How may I assist you?" }
+        "casual" -> { name -> "Hey $name! What's up?" }
+        "enthusiastic" -> { name -> "OH WOW! Hi $name!!! So great to see you!!!" }
+        else -> { name -> "Hello, $name." }
     }
 }
 
 fun main() {
-    val cache = Cache<String>()
+    val formalGreeter = createGreeter("formal")
+    val casualGreeter = createGreeter("casual")
+    val enthusiasticGreeter = createGreeter("enthusiastic")
 
-    cache.put("user1", "Alice", 2)
-    cache.put("user2", "Bob", 5)
+    val person = "Alice"
 
-    println("Get user1: ${cache.get("user1")}")  // Alice
-    println("Size: ${cache.size}")                // 2
+    println(formalGreeter(person))
+    // Output: Good day, Alice. How may I assist you?
 
-    // Wait for expiration (in real code)
-    Thread.sleep(2100)
+    println(casualGreeter(person))
+    // Output: Hey Alice! What's up?
 
-    println("Get user1 after expiration: ${cache.get("user1")}")  // null
-    println("Get user2: ${cache.get("user2")}")   // Bob
-    println("Size: ${cache.size}")                // 1
+    println(enthusiasticGreeter(person))
+    // Output: OH WOW! Hi Alice!!! So great to see you!!!
 
-    // Works with any type
-    val numberCache = Cache<Int>()
-    numberCache.put("count", 42, 10)
-    println("Count: ${numberCache.get("count")}")  // 42
-
-    cache.clear()
-    println("Size after clear: ${cache.size}")  // 0
+    // Can also create and use immediately
+    println(createGreeter("unknown")(person))
+    // Output: Hello, Alice.
 }
 ```
+
+**Explanation**:
+- `createGreeter` is a factory function that returns functions
+- Based on style parameter, it returns different greeting implementations
+- Each returned function has the same signature: `(String) -> String`
+- This demonstrates functions returning functions—powerful abstraction!
 
 ---
 
 ## Checkpoint Quiz
 
-Test your understanding of generics!
+Test your understanding of functional programming concepts!
 
-### Question 1: Type Parameter Syntax
+### Question 1
+What does it mean that functions are "first-class citizens" in Kotlin?
 
-What does this function signature mean?
-```kotlin
-fun <T : Number> average(values: List<T>): Double
-```
+A) Functions must be declared before variables
+B) Functions can be treated as values—stored in variables, passed as parameters, and returned from functions
+C) Functions are more important than other code elements
+D) Functions always execute first in a program
 
-**A)** T can be any type
-**B)** T must be Number or its subtype
-**C)** T must be exactly Number
-**D)** T can be Number or Any
+### Question 2
+What is a higher-order function?
 
-**Answer**: **B** - The `: Number` constraint means T must be Number or any of its subtypes (Int, Double, Float, etc.)
+A) A function declared at the top of a file
+B) A function with more parameters than usual
+C) A function that takes another function as a parameter or returns a function
+D) A function that runs faster than normal functions
 
----
+### Question 3
+What is the correct syntax for a lambda expression that doubles a number?
 
-### Question 2: Variance
+A) `lambda x -> x * 2`
+B) `{ x -> x * 2 }`
+C) `func(x) { x * 2 }`
+D) `double(x) = x * 2`
 
-Which statement is correct about variance?
+### Question 4
+What is the function type of: `{ a: Int, b: Int -> a + b }`?
 
-**A)** `out` is used when a type is only consumed
-**B)** `in` is used when a type is only produced
-**C)** `out` makes a type covariant (producer)
-**D)** Invariant types can be used as both covariant and contravariant
+A) `(Int) -> Int`
+B) `(Int, Int) -> Unit`
+C) `(Int, Int) -> Int`
+D) `() -> Int`
 
-**Answer**: **C** - `out` makes a type covariant, meaning it can only be produced/returned, not consumed. `in` makes it contravariant (consumer).
+### Question 5
+What does the `it` keyword represent in a lambda?
 
----
-
-### Question 3: Reified Type Parameters
-
-What is required to use reified type parameters?
-
-**A)** The function must be suspend
-**B)** The function must be inline
-**C)** The class must be open
-**D)** The type must be nullable
-
-**Answer**: **B** - Reified type parameters require the function to be `inline` so the compiler can substitute the actual type at call sites.
-
----
-
-### Question 4: Star Projection
-
-What can you do with a `MutableList<*>`?
-
-**A)** Add and remove elements
-**B)** Only add elements
-**C)** Only read elements
-**D)** Nothing at all
-
-**Answer**: **C** - `MutableList<*>` can only read elements (as `Any?`). You cannot add elements because the compiler doesn't know the actual type.
+A) The function itself
+B) The single parameter when a lambda has exactly one parameter
+C) The return value
+D) The iteration count in a loop
 
 ---
 
-### Question 5: Multiple Constraints
+## Quiz Answers
 
-How do you specify multiple type constraints?
+**Question 1: B) Functions can be treated as values—stored in variables, passed as parameters, and returned from functions**
+
+First-class functions mean functions are treated like any other value in the language:
 
 ```kotlin
-fun <T> process(item: T) where T : _____, T : _____
+// Store in variable
+val greet = { name: String -> "Hello, $name!" }
+
+// Pass as parameter
+fun execute(action: () -> Unit) = action()
+
+// Return from function
+fun getOperation() = { x: Int -> x * 2 }
 ```
 
-**A)** Separate with commas inside angle brackets
-**B)** Use `where` clause with commas
-**C)** Use multiple angle brackets
-**D)** Not possible in Kotlin
-
-**Answer**: **B** - Multiple constraints use the `where` clause: `fun <T> process(item: T) where T : Constraint1, T : Constraint2`
+This is fundamental to functional programming and enables powerful abstractions.
 
 ---
 
-## Summary
+**Question 2: C) A function that takes another function as a parameter or returns a function**
 
-Congratulations! You've mastered Kotlin generics. Here's what you learned:
+Higher-order functions work with other functions:
 
-✅ **Generic Classes and Functions** - Write reusable code for any type
-✅ **Type Constraints** - Restrict types with upper bounds
-✅ **Variance** - Understand `out` (covariant), `in` (contravariant), and invariant
-✅ **Reified Type Parameters** - Preserve type information at runtime
-✅ **Star Projections** - Work with unknown types safely
-✅ **Generic Constraints** - Use `where` for multiple bounds
+```kotlin
+// Takes function as parameter
+fun applyTwice(x: Int, f: (Int) -> Int): Int {
+    return f(f(x))
+}
 
-### Key Takeaways
+// Returns a function
+fun createMultiplier(n: Int): (Int) -> Int {
+    return { x -> x * n }
+}
 
-1. **Generics provide type safety** without code duplication
-2. **Use `out`** when you only return a type (producer)
-3. **Use `in`** when you only accept a type (consumer)
-4. **`reified` requires `inline`** but gives runtime type access
-5. **Star projection `*`** is useful when the exact type doesn't matter
+val result = applyTwice(5) { it * 2 }  // 20
+val triple = createMultiplier(3)
+```
 
-### Next Steps
-
-In the next lesson, we'll dive into **Coroutines Fundamentals** - Kotlin's powerful approach to asynchronous programming. You'll learn how to write concurrent code that's easy to read and maintain!
+This enables generic, reusable code patterns.
 
 ---
 
-**Practice Challenge**: Create a generic `Pool<T>` class that manages reusable objects (like database connections). Implement `acquire()` to get an object and `release(obj: T)` to return it to the pool.
+**Question 3: B) `{ x -> x * 2 }`**
+
+Lambda syntax in Kotlin:
+
+```kotlin
+{ parameters -> body }
+
+// Examples:
+{ x -> x * 2 }              // One parameter
+{ a, b -> a + b }           // Two parameters
+{ it * 2 }                  // 'it' for single parameter
+{ x: Int -> x * 2 }         // Explicit type
+```
+
+Curly braces delimit the lambda, arrow separates parameters from body.
+
+---
+
+**Question 4: C) `(Int, Int) -> Int`**
+
+Function type syntax: `(ParameterTypes) -> ReturnType`
+
+```kotlin
+{ a: Int, b: Int -> a + b }
+  ↓       ↓          ↓
+  Int    Int        Int (return type)
+
+Type: (Int, Int) -> Int
+```
+
+This describes a function taking two Ints and returning an Int.
+
+---
+
+**Question 5: B) The single parameter when a lambda has exactly one parameter**
+
+`it` is shorthand for the single parameter:
+
+```kotlin
+// Explicit parameter
+numbers.map({ x -> x * 2 })
+
+// Using 'it'
+numbers.map({ it * 2 })
+
+// Even shorter
+numbers.map { it * 2 }
+
+// But with multiple parameters, must use names:
+numbers.fold(0) { acc, n -> acc + n }  // Can't use 'it' here
+```
+
+Only works with single-parameter lambdas.
+
+---
+
+## What You've Learned
+
+✅ Core principles of functional programming (first-class functions, immutability, pure functions)
+✅ First-class functions—treating functions as values
+✅ Higher-order functions—functions that work with other functions
+✅ Lambda expression syntax and usage
+✅ Function types and type signatures
+✅ Passing functions as parameters
+✅ Returning functions from functions
+✅ Practical applications: validation, event handling, strategy pattern
+
+---
+
+## Next Steps
+
+In **Lesson 3.2: Lambda Expressions and Anonymous Functions**, you'll master:
+- Advanced lambda syntax variations
+- The `it` keyword and trailing lambda syntax
+- Anonymous functions vs lambdas
+- Function references and member references
+- When to use each approach
+
+Get ready to write even more elegant functional code!
+
+---
+
+## Key Takeaways
+
+**Functional Programming Benefits**:
+- More concise code
+- Easier to test (pure functions)
+- Better composability
+- Natural parallelization
+- Reduced bugs from mutable state
+
+**When to Use Functional Style**:
+- ✅ Data transformations (map, filter, reduce)
+- ✅ Event handling
+- ✅ Configuration and customization
+- ✅ Collections processing
+- ❌ Performance-critical tight loops (sometimes)
+- ❌ State machines with complex mutable state
+
+**Remember**:
+- Functions are values—treat them as such
+- Higher-order functions enable powerful abstractions
+- Lambdas make functional code concise
+- Start thinking "what" instead of "how"
+
+---
+
+**Congratulations on completing Lesson 3.1!** 🎉
+
+You've taken your first steps into functional programming. This paradigm will make your code more elegant and expressive. Keep practicing—functional thinking becomes natural with use!

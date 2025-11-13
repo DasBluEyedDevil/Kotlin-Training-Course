@@ -1,1136 +1,1140 @@
-# Lesson 4.5: Annotations and Reflection
+# Lesson 3.5: Function Composition and Currying
 
-**Estimated Time**: 70 minutes
+**Estimated Time**: 60 minutes
 **Difficulty**: Advanced
-**Prerequisites**: Parts 1-3, Lesson 4.1 (Generics)
+**Prerequisites**: Lessons 3.1-3.4 (Functional programming fundamentals)
 
 ---
 
 ## Topic Introduction
 
-Annotations and reflection are powerful metaprogramming tools that allow you to write code that examines and modifies other code at runtime. Annotations provide metadata about your code, while reflection lets you inspect and manipulate classes, functions, and properties dynamically.
+You've learned functional programming basics, lambdas, collections, and scope functions. Now it's time to explore advanced functional techniques that enable powerful abstractions.
 
-These features are essential for building frameworks, libraries, serialization systems, dependency injection containers, and testing frameworks.
+Function composition and currying are techniques that let you build complex functionality from simple building blocks. They're the foundation of elegant, reusable code.
 
 In this lesson, you'll learn:
-- Built-in annotations (`@JvmName`, `@JvmStatic`, `@Deprecated`, etc.)
-- Creating custom annotations
-- Annotation targets and retention
-- Reflection basics with `KClass`, `KFunction`, `KProperty`
-- Inspecting classes and members at runtime
-- Practical use cases and patterns
+- Function composition (combining functions)
+- Currying and partial application
+- Extension functions as functional tools
+- Infix functions for readable code
+- Operator overloading
+- Building domain-specific languages (DSLs)
 
-By the end, you'll build systems that adapt dynamically at runtime!
+By the end, you'll create expressive, composable APIs!
 
 ---
 
-## The Concept: Metadata and Introspection
+## The Concept: Building with Functions
 
-### Why Annotations?
+### The LEGO Analogy
 
-Annotations attach metadata to code elements:
+Imagine building with LEGO:
+- **Small pieces**: Individual functions (single responsibility)
+- **Combining pieces**: Function composition (build complex structures)
+- **Specialized tools**: Extension functions, operators
 
 ```kotlin
-@Deprecated("Use newFunction() instead", ReplaceWith("newFunction()"))
-fun oldFunction() {
-    println("Old way")
-}
+// Individual functions (LEGO pieces)
+fun trim(s: String) = s.trim()
+fun uppercase(s: String) = s.uppercase()
+fun addExclamation(s: String) = "$s!"
 
-fun newFunction() {
-    println("New way")
-}
+// Composition (building something bigger)
+fun enthusiasticProcess(s: String) = addExclamation(uppercase(trim(s)))
+
+val result = enthusiasticProcess("  hello  ")
+println(result)  // HELLO!
 ```
 
-### Why Reflection?
-
-Reflection lets you inspect code structure at runtime:
+**Better with composition**:
 
 ```kotlin
-data class User(val name: String, val age: Int)
-
-fun main() {
-    val user = User("Alice", 25)
-    val kClass = user::class
-
-    println("Class: ${kClass.simpleName}")
-    println("Properties:")
-    kClass.memberProperties.forEach { prop ->
-        println("  ${prop.name} = ${prop.get(user)}")
-    }
-}
-// Output:
-// Class: User
-// Properties:
-//   age = 25
-//   name = Alice
+val process = ::trim then ::uppercase then ::addExclamation
+val result = process("  hello  ")
+println(result)  // HELLO!
 ```
 
 ---
 
-## Built-in Annotations
+## Function Composition
 
-Kotlin provides several useful annotations.
+Combining functions to create new functions.
 
-### @Deprecated
+### Mathematical Foundation
 
-Mark code as deprecated with migration hints:
+In math: `(f ∘ g)(x) = f(g(x))`
 
 ```kotlin
-@Deprecated(
-    message = "Use calculateTotal() instead",
-    replaceWith = ReplaceWith("calculateTotal(items)"),
-    level = DeprecationLevel.WARNING
-)
-fun calculate(items: List<Int>): Int {
-    return items.sum()
+// g(x) then f(result)
+fun compose(f: (Int) -> Int, g: (Int) -> Int): (Int) -> Int {
+    return { x -> f(g(x)) }
 }
 
-fun calculateTotal(items: List<Int>): Int {
-    return items.sum()
-}
+val double = { x: Int -> x * 2 }
+val increment = { x: Int -> x + 1 }
 
-fun main() {
-    val items = listOf(1, 2, 3)
-    calculate(items)  // ⚠️ Warning in IDE
-    calculateTotal(items)  // ✅ No warning
-}
+// Compose: first increment, then double
+val incrementThenDouble = compose(double, increment)
+
+println(incrementThenDouble(5))  // (5 + 1) * 2 = 12
 ```
 
-**Deprecation Levels**:
-- `WARNING` - shows warning (default)
-- `ERROR` - compilation error
-- `HIDDEN` - not visible to code
-
-### @Suppress
-
-Suppress compiler warnings:
+### Generic Composition
 
 ```kotlin
-@Suppress("UNCHECKED_CAST", "UNUSED_PARAMETER")
-fun example(param: Any): String {
-    val unused = "not used"
-    return param as String
+// Generic composition for any types
+fun <A, B, C> compose(f: (B) -> C, g: (A) -> B): (A) -> C {
+    return { x -> f(g(x)) }
 }
+
+val trim: (String) -> String = { it.trim() }
+val length: (String) -> Int = { it.length }
+
+val trimAndLength = compose(length, trim)
+
+println(trimAndLength("  hello  "))  // 5
 ```
 
-### JVM Interoperability Annotations
+### Infix Composition Operator
 
-#### @JvmName
-
-Change the JVM name of a function:
+Make composition more readable with `infix`:
 
 ```kotlin
-@JvmName("calculateSum")
-fun sum(numbers: List<Int>): Int {
-    return numbers.sum()
+infix fun <A, B, C> ((B) -> C).compose(other: (A) -> B): (A) -> C {
+    return { x -> this(other(x)) }
 }
 
-// In Java: calculateSum(list)
+// Or "andThen" for more intuitive reading
+infix fun <A, B, C> ((A) -> B).andThen(other: (B) -> C): (A) -> C {
+    return { x -> other(this(x)) }
+}
+
+// Usage
+val trim: (String) -> String = { it.trim() }
+val uppercase: (String) -> String = { it.uppercase() }
+val length: (String) -> Int = { it.length }
+
+// Read as: trim, then uppercase, then get length
+val process = trim andThen uppercase andThen length
+
+println(process("  hello  "))  // 5
 ```
 
-#### @JvmStatic
-
-Generate static method for companion object:
+### Practical Example: Data Transformation Pipeline
 
 ```kotlin
-class Utils {
-    companion object {
-        @JvmStatic
-        fun format(text: String): String {
-            return text.uppercase()
-        }
-
-        fun helper() = "Helper"
-    }
+// Individual transformations
+val validateEmail: (String) -> String? = { email ->
+    if (email.contains("@")) email else null
 }
 
-// In Java:
-// Utils.format("hello")  // ✅ Works (static)
-// Utils.helper()         // ❌ Doesn't work (not static)
-// Utils.Companion.helper()  // ✅ Works
-```
-
-#### @JvmField
-
-Expose property as public field (no getter/setter):
-
-```kotlin
-class Config {
-    @JvmField
-    var timeout: Int = 5000
-
-    var retries: Int = 3
+val normalizeEmail: (String) -> String = { email ->
+    email.trim().lowercase()
 }
 
-// In Java:
-// config.timeout (direct field access)
-// config.getRetries() (getter method)
-```
-
-#### @JvmOverloads
-
-Generate overloaded methods for default parameters:
-
-```kotlin
-class Greeter {
-    @JvmOverloads
-    fun greet(name: String, greeting: String = "Hello", punctuation: String = "!") {
-        println("$greeting, $name$punctuation")
-    }
+val extractDomain: (String) -> String = { email ->
+    email.substringAfter("@")
 }
 
-// Generates in Java:
-// greet(String name)
-// greet(String name, String greeting)
-// greet(String name, String greeting, String punctuation)
-```
-
-### @Throws
-
-Declare checked exceptions (for Java interop):
-
-```kotlin
-import java.io.IOException
-
-@Throws(IOException::class)
-fun readFile(path: String): String {
-    throw IOException("File not found")
+// Composition
+infix fun <A, B, C> ((A) -> B?).thenIfNotNull(other: (B) -> C): (A) -> C? {
+    return { x -> this(x)?.let(other) }
 }
 
-// In Java, this is a checked exception
+val processPipeline = validateEmail thenIfNotNull normalizeEmail
+
+val email1 = processPipeline("  USER@EXAMPLE.COM  ")
+println(email1)  // user@example.com
+
+val email2 = processPipeline("invalid")
+println(email2)  // null
 ```
 
 ---
 
-## Creating Custom Annotations
+## Currying
 
-### Basic Annotation
+Transforming a function with multiple parameters into a sequence of functions, each taking a single parameter.
+
+### Basic Currying
 
 ```kotlin
-annotation class Important
+// Regular function
+fun add(a: Int, b: Int): Int = a + b
 
-@Important
-fun criticalFunction() {
-    println("This is important!")
+// Curried version
+fun curriedAdd(a: Int): (Int) -> Int {
+    return { b -> a + b }
 }
 
-@Important
-class CriticalClass
+// Usage
+val add5 = curriedAdd(5)
+println(add5(3))   // 8
+println(add5(10))  // 15
+
+// Or in one line
+println(curriedAdd(10)(5))  // 15
 ```
 
-### Annotations with Parameters
+### Generic Currying Helper
 
 ```kotlin
-annotation class Author(
-    val name: String,
-    val date: String
-)
-
-@Author(name = "Alice", date = "2024-01-15")
-fun featureFunction() {
-    println("Feature implementation")
+fun <A, B, C> curry(f: (A, B) -> C): (A) -> (B) -> C {
+    return { a -> { b -> f(a, b) } }
 }
+
+// Usage
+val add = { a: Int, b: Int -> a + b }
+val curriedAdd = curry(add)
+
+val add10 = curriedAdd(10)
+println(add10(5))  // 15
 ```
 
-### Annotation with Multiple Parameters
+### Three-Parameter Currying
 
 ```kotlin
-annotation class Route(
-    val path: String,
-    val method: String = "GET",
-    val requiresAuth: Boolean = false
-)
-
-@Route("/users", method = "GET", requiresAuth = true)
-fun getUsers() {
-    println("Fetching users")
+fun <A, B, C, D> curry(f: (A, B, C) -> D): (A) -> (B) -> (C) -> D {
+    return { a -> { b -> { c -> f(a, b, c) } } }
 }
 
-@Route("/users", method = "POST")
-fun createUser() {
-    println("Creating user")
-}
+val multiply = { a: Int, b: Int, c: Int -> a * b * c }
+val curriedMultiply = curry(multiply)
+
+val multiplyBy2 = curriedMultiply(2)
+val multiplyBy2And3 = multiplyBy2(3)
+println(multiplyBy2And3(4))  // 24
+
+// Or all at once
+println(curriedMultiply(2)(3)(4))  // 24
 ```
 
----
-
-## Annotation Targets
-
-Specify where an annotation can be used:
+### Practical Example: Configuration Builder
 
 ```kotlin
-@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
-annotation class Audited
-
-@Target(AnnotationTarget.PROPERTY)
-annotation class Required
-
-@Target(AnnotationTarget.VALUE_PARAMETER)
-annotation class NotBlank
-
-@Audited  // ✅ OK on class
-class Service {
-    @Required  // ✅ OK on property
-    val name: String = ""
-
-    @Audited  // ✅ OK on function
-    fun process(@NotBlank input: String) {  // ✅ OK on parameter
-        println(input)
-    }
-}
-```
-
-**Common Targets**:
-- `CLASS` - classes, interfaces, objects
-- `FUNCTION` - functions
-- `PROPERTY` - properties
-- `FIELD` - backing fields
-- `VALUE_PARAMETER` - function parameters
-- `CONSTRUCTOR` - constructors
-- `EXPRESSION` - expressions
-- `FILE` - file
-
-### Use-Site Targets
-
-Specify exactly which part to annotate:
-
-```kotlin
-class Example(
-    @field:Required val name: String,  // Annotate the backing field
-    @get:Required val age: Int,        // Annotate the getter
-    @param:NotBlank val email: String  // Annotate constructor parameter
-)
-```
-
----
-
-## Annotation Retention
-
-Control when annotations are available:
-
-```kotlin
-@Retention(AnnotationRetention.SOURCE)
-annotation class CompileTimeOnly
-
-@Retention(AnnotationRetention.BINARY)
-annotation class InBinary
-
-@Retention(AnnotationRetention.RUNTIME)
-annotation class InRuntime
-```
-
-**Retention Policies**:
-- `SOURCE` - discarded after compilation (e.g., `@Suppress`)
-- `BINARY` - stored in binary but not available via reflection
-- `RUNTIME` - available at runtime via reflection (default)
-
----
-
-## Reflection Basics
-
-Reflection allows inspecting and manipulating code at runtime.
-
-### Getting Class References
-
-```kotlin
-// From instance
-val user = User("Alice", 25)
-val kClass1 = user::class
-
-// From class
-val kClass2 = User::class
-
-// From Java class
-val javaClass = User::class.java
-val kClass3 = javaClass.kotlin
-
-println(kClass1.simpleName)  // User
-println(kClass1.qualifiedName)  // com.example.User
-```
-
-### KClass - Class Metadata
-
-```kotlin
-import kotlin.reflect.full.*
-
-data class Person(val name: String, val age: Int) {
-    fun greet() = "Hello, I'm $name"
+// Regular function with many parameters
+fun sendEmail(
+    to: String,
+    subject: String,
+    body: String,
+    priority: String,
+    attachments: List<String>
+) {
+    println("Sending email:")
+    println("  To: $to")
+    println("  Subject: $subject")
+    println("  Body: $body")
+    println("  Priority: $priority")
+    println("  Attachments: $attachments")
 }
 
-fun main() {
-    val kClass = Person::class
-
-    println("Simple name: ${kClass.simpleName}")
-    println("Qualified name: ${kClass.qualifiedName}")
-    println("Is data class: ${kClass.isData}")
-    println("Is final: ${kClass.isFinal}")
-
-    println("\nConstructors:")
-    kClass.constructors.forEach { constructor ->
-        println("  Parameters: ${constructor.parameters.map { it.name }}")
-    }
-
-    println("\nMember properties:")
-    kClass.memberProperties.forEach { prop ->
-        println("  ${prop.name}: ${prop.returnType}")
-    }
-
-    println("\nMember functions:")
-    kClass.memberFunctions.forEach { func ->
-        println("  ${func.name}")
-    }
-}
-```
-
-### KProperty - Property Reflection
-
-```kotlin
-import kotlin.reflect.full.*
-
-class Settings {
-    var theme: String = "light"
-    var fontSize: Int = 14
-    val isModified: Boolean = false
-}
-
-fun main() {
-    val settings = Settings()
-    val kClass = Settings::class
-
-    kClass.memberProperties.forEach { prop ->
-        println("Property: ${prop.name}")
-        println("  Type: ${prop.returnType}")
-        println("  Is mutable: ${prop is kotlin.reflect.KMutableProperty<*>}")
-
-        // Get value
-        val value = prop.get(settings)
-        println("  Value: $value")
-
-        // Set value (if mutable)
-        if (prop is kotlin.reflect.KMutableProperty<*>) {
-            when (prop.name) {
-                "theme" -> prop.setter.call(settings, "dark")
-                "fontSize" -> prop.setter.call(settings, 16)
-            }
-        }
-    }
-
-    println("\nAfter modification:")
-    println("Theme: ${settings.theme}")
-    println("Font size: ${settings.fontSize}")
-}
-```
-
-### KFunction - Function Reflection
-
-```kotlin
-import kotlin.reflect.full.*
-
-class Calculator {
-    fun add(a: Int, b: Int): Int = a + b
-
-    fun multiply(a: Int, b: Int, c: Int = 1): Int = a * b * c
-}
-
-fun main() {
-    val calc = Calculator()
-    val kClass = Calculator::class
-
-    val addFunction = kClass.memberFunctions.find { it.name == "add" }!!
-
-    println("Function: ${addFunction.name}")
-    println("Parameters: ${addFunction.parameters.map { it.name }}")
-    println("Return type: ${addFunction.returnType}")
-
-    // Call function
-    val result = addFunction.call(calc, 5, 3)
-    println("Result: $result")  // 8
-
-    // Call with named parameters
-    val multiplyFunction = kClass.memberFunctions.find { it.name == "multiply" }!!
-    val result2 = multiplyFunction.callBy(
-        mapOf(
-            multiplyFunction.parameters[0] to calc,  // instance
-            multiplyFunction.parameters[1] to 2,      // a
-            multiplyFunction.parameters[2] to 3       // b (c uses default)
-        )
-    )
-    println("Multiply result: $result2")  // 6
-}
-```
-
----
-
-## Reading Annotations at Runtime
-
-```kotlin
-@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY)
-@Retention(AnnotationRetention.RUNTIME)
-annotation class Validate(val min: Int = 0, val max: Int = 100)
-
-@Target(AnnotationTarget.CLASS)
-@Retention(AnnotationRetention.RUNTIME)
-annotation class Entity(val tableName: String)
-
-@Entity(tableName = "users")
-data class User(
-    val name: String,
-
-    @Validate(min = 18, max = 120)
-    val age: Int
-)
-
-fun main() {
-    val kClass = User::class
-
-    // Read class annotation
-    val entityAnnotation = kClass.annotations.find { it is Entity } as? Entity
-    println("Table name: ${entityAnnotation?.tableName}")
-
-    // Read property annotations
-    kClass.memberProperties.forEach { prop ->
-        val validateAnnotation = prop.annotations.find { it is Validate } as? Validate
-        if (validateAnnotation != null) {
-            println("${prop.name}: min=${validateAnnotation.min}, max=${validateAnnotation.max}")
-        }
-    }
-}
-```
-
-### Finding Annotated Members
-
-```kotlin
-import kotlin.reflect.full.*
-
-@Target(AnnotationTarget.FUNCTION)
-@Retention(AnnotationRetention.RUNTIME)
-annotation class Test
-
-class TestSuite {
-    @Test
-    fun test1() = println("Running test 1")
-
-    @Test
-    fun test2() = println("Running test 2")
-
-    fun helper() = println("Helper function")
-}
-
-fun main() {
-    val testSuite = TestSuite()
-    val kClass = TestSuite::class
-
-    val testFunctions = kClass.memberFunctions.filter { function ->
-        function.annotations.any { it is Test }
-    }
-
-    println("Running ${testFunctions.size} tests:")
-    testFunctions.forEach { function ->
-        function.call(testSuite)
-    }
-}
-// Output:
-// Running 2 tests:
-// Running test 1
-// Running test 2
-```
-
----
-
-## Practical Use Cases
-
-### Use Case 1: Simple Validation Framework
-
-```kotlin
-import kotlin.reflect.full.*
-
-@Target(AnnotationTarget.PROPERTY)
-@Retention(AnnotationRetention.RUNTIME)
-annotation class Min(val value: Int)
-
-@Target(AnnotationTarget.PROPERTY)
-@Retention(AnnotationRetention.RUNTIME)
-annotation class Max(val value: Int)
-
-@Target(AnnotationTarget.PROPERTY)
-@Retention(AnnotationRetention.RUNTIME)
-annotation class NotBlank
-
-data class UserRegistration(
-    @NotBlank
-    val username: String,
-
-    @NotBlank
-    val email: String,
-
-    @Min(18) @Max(120)
-    val age: Int,
-
-    @Min(8)
-    val passwordLength: Int
-)
-
-object Validator {
-    fun validate(obj: Any): List<String> {
-        val errors = mutableListOf<String>()
-        val kClass = obj::class
-
-        kClass.memberProperties.forEach { prop ->
-            val value = prop.get(obj)
-
-            // Check @NotBlank
-            if (prop.annotations.any { it is NotBlank }) {
-                if (value is String && value.isBlank()) {
-                    errors.add("${prop.name} cannot be blank")
-                }
-            }
-
-            // Check @Min
-            prop.annotations.filterIsInstance<Min>().forEach { min ->
-                if (value is Int && value < min.value) {
-                    errors.add("${prop.name} must be at least ${min.value}")
-                }
-            }
-
-            // Check @Max
-            prop.annotations.filterIsInstance<Max>().forEach { max ->
-                if (value is Int && value > max.value) {
-                    errors.add("${prop.name} must be at most ${max.value}")
-                }
-            }
-        }
-
-        return errors
-    }
-}
-
-fun main() {
-    val validUser = UserRegistration("alice", "alice@example.com", 25, 10)
-    println("Valid user errors: ${Validator.validate(validUser)}")
-
-    val invalidUser = UserRegistration("", "email@example.com", 15, 6)
-    println("Invalid user errors:")
-    Validator.validate(invalidUser).forEach { println("  - $it") }
-}
-```
-
-### Use Case 2: Simple Serialization
-
-```kotlin
-import kotlin.reflect.full.*
-
-@Target(AnnotationTarget.PROPERTY)
-@Retention(AnnotationRetention.RUNTIME)
-annotation class JsonField(val name: String)
-
-data class Product(
-    @JsonField("product_id")
-    val id: Int,
-
-    @JsonField("product_name")
-    val name: String,
-
-    val price: Double  // Uses property name
-)
-
-object SimpleJsonSerializer {
-    fun toJson(obj: Any): String {
-        val kClass = obj::class
-        val properties = kClass.memberProperties
-
-        val fields = properties.map { prop ->
-            val jsonName = prop.annotations
-                .filterIsInstance<JsonField>()
-                .firstOrNull()?.name
-                ?: prop.name
-
-            val value = prop.get(obj)
-            val jsonValue = when (value) {
-                is String -> "\"$value\""
-                else -> value.toString()
-            }
-
-            "\"$jsonName\": $jsonValue"
-        }
-
-        return "{ ${fields.joinToString(", ")} }"
-    }
-}
-
-fun main() {
-    val product = Product(1, "Laptop", 999.99)
-    val json = SimpleJsonSerializer.toJson(product)
-    println(json)
-    // { "product_id": 1, "product_name": "Laptop", "price": 999.99 }
-}
-```
-
-### Use Case 3: Dependency Injection Container
-
-```kotlin
-import kotlin.reflect.full.*
-
-@Target(AnnotationTarget.PROPERTY)
-@Retention(AnnotationRetention.RUNTIME)
-annotation class Inject
-
-class Database {
-    fun query(sql: String) = "Result for: $sql"
-}
-
-class UserRepository {
-    @Inject
-    lateinit var database: Database
-
-    fun findUser(id: Int): String {
-        return database.query("SELECT * FROM users WHERE id = $id")
-    }
-}
-
-class Container {
-    private val instances = mutableMapOf<kotlin.reflect.KClass<*>, Any>()
-
-    fun <T : Any> register(kClass: kotlin.reflect.KClass<T>, instance: T) {
-        instances[kClass] = instance
-    }
-
-    fun <T : Any> get(kClass: kotlin.reflect.KClass<T>): T {
-        @Suppress("UNCHECKED_CAST")
-        return instances[kClass] as T
-    }
-
-    fun <T : Any> inject(obj: T) {
-        val kClass = obj::class
-
-        kClass.memberProperties.forEach { prop ->
-            if (prop.annotations.any { it is Inject }) {
-                if (prop is kotlin.reflect.KMutableProperty<*>) {
-                    val dependency = instances[prop.returnType.classifier as kotlin.reflect.KClass<*>]
-                    if (dependency != null) {
-                        prop.setter.call(obj, dependency)
-                    }
-                }
+// Curried version for reusability
+fun emailSender(to: String) = { subject: String ->
+    { body: String ->
+        { priority: String ->
+            { attachments: List<String> ->
+                sendEmail(to, subject, body, priority, attachments)
             }
         }
     }
 }
 
+// Create specialized senders
+val sendToAdmin = emailSender("admin@example.com")
+val sendAlertToAdmin = sendToAdmin("ALERT")
+
+// Use it
+sendAlertToAdmin("System down")("HIGH")(emptyList())
+
+// Or create even more specialized versions
+val sendHighPriorityAlert = sendToAdmin("ALERT")("System issue")("HIGH")
+sendHighPriorityAlert(listOf("log.txt"))
+```
+
+---
+
+## Partial Application
+
+Fixing some arguments of a function, creating a new function.
+
+### Manual Partial Application
+
+```kotlin
+fun greet(greeting: String, name: String): String {
+    return "$greeting, $name!"
+}
+
+// Partially apply the greeting
+fun greetWith(greeting: String): (String) -> String {
+    return { name -> greet(greeting, name) }
+}
+
+val sayHello = greetWith("Hello")
+val sayGoodbye = greetWith("Goodbye")
+
+println(sayHello("Alice"))     // Hello, Alice!
+println(sayGoodbye("Bob"))     // Goodbye, Bob!
+```
+
+### Generic Partial Application Helper
+
+```kotlin
+fun <A, B, C> partial1(f: (A, B) -> C, a: A): (B) -> C {
+    return { b -> f(a, b) }
+}
+
+fun <A, B, C> partial2(f: (A, B) -> C, b: B): (A) -> C {
+    return { a -> f(a, b) }
+}
+
+// Usage
+val multiply = { a: Int, b: Int -> a * b }
+
+val double = partial1(multiply, 2)
+println(double(5))  // 10
+
+val multiplyBy10 = partial2(multiply, 10)
+println(multiplyBy10(5))  // 50
+```
+
+### Practical Example: Database Queries
+
+```kotlin
+// Generic query function
+fun query(
+    database: String,
+    table: String,
+    columns: List<String>,
+    where: String
+): String {
+    return "SELECT ${columns.joinToString()} FROM $database.$table WHERE $where"
+}
+
+// Partially apply database
+fun queriesFor(database: String) = { table: String, columns: List<String>, where: String ->
+    query(database, table, columns, where)
+}
+
+// Partially apply database and table
+fun tableQueries(database: String, table: String) = { columns: List<String>, where: String ->
+    query(database, table, columns, where)
+}
+
+// Usage
+val prodQueries = queriesFor("production")
+val userQuery = prodQueries("users", listOf("id", "name", "email"), "active = true")
+println(userQuery)
+// SELECT id, name, email FROM production.users WHERE active = true
+
+val userTableQueries = tableQueries("production", "users")
+val activeUsers = userTableQueries(listOf("*"), "active = true")
+println(activeUsers)
+// SELECT * FROM production.users WHERE active = true
+```
+
+---
+
+## Extension Functions as Functional Tools
+
+Extension functions enable functional-style APIs.
+
+### Pipeline Operations
+
+```kotlin
+// Extension functions for string processing
+fun String.trimAndLower() = this.trim().lowercase()
+fun String.removeSpaces() = this.replace(" ", "")
+fun String.addPrefix(prefix: String) = "$prefix$this"
+fun String.addSuffix(suffix: String) = "$this$suffix"
+
+// Usage: fluent pipeline
+val result = "  Hello World  "
+    .trimAndLower()
+    .removeSpaces()
+    .addPrefix("[")
+    .addSuffix("]")
+
+println(result)  // [helloworld]
+```
+
+### Collection Extensions
+
+```kotlin
+// Custom collection operations
+fun <T> List<T>.second(): T? = this.getOrNull(1)
+fun <T> List<T>.secondOrNull(): T? = this.getOrNull(1)
+
+fun <T> List<T>.takeIfNotEmpty(): List<T>? =
+    if (this.isNotEmpty()) this else null
+
+fun <T> List<T>.splitAt(index: Int): Pair<List<T>, List<T>> =
+    this.take(index) to this.drop(index)
+
+// Usage
+val numbers = listOf(1, 2, 3, 4, 5)
+
+println(numbers.second())  // 2
+val (left, right) = numbers.splitAt(2)
+println("Left: $left, Right: $right")  // Left: [1, 2], Right: [3, 4, 5]
+```
+
+### Higher-Order Extension Functions
+
+```kotlin
+// Retry logic as extension
+fun <T> (() -> T).retry(times: Int): T? {
+    repeat(times) { attempt ->
+        try {
+            return this()
+        } catch (e: Exception) {
+            if (attempt == times - 1) throw e
+            println("Attempt ${attempt + 1} failed, retrying...")
+        }
+    }
+    return null
+}
+
+// Measure execution time
+fun <T> (() -> T).measureTimeMillis(): Pair<T, Long> {
+    val start = System.currentTimeMillis()
+    val result = this()
+    val elapsed = System.currentTimeMillis() - start
+    return result to elapsed
+}
+
+// Usage
+val (result, time) = {
+    Thread.sleep(100)
+    "Done"
+}.measureTimeMillis()
+
+println("Result: $result, Time: ${time}ms")
+```
+
+---
+
+## Infix Functions
+
+Make function calls read like natural language.
+
+### Basic Infix
+
+```kotlin
+infix fun Int.times(str: String): String {
+    return str.repeat(this)
+}
+
+println(3 times "Ha")  // HaHaHa
+
+infix fun String.onto(list: MutableList<String>) {
+    list.add(this)
+}
+
+val items = mutableListOf<String>()
+"apple" onto items
+"banana" onto items
+println(items)  // [apple, banana]
+```
+
+### Building Readable DSLs
+
+```kotlin
+// Test assertions
+infix fun <T> T.shouldBe(expected: T) {
+    if (this != expected) {
+        throw AssertionError("Expected $expected but got $this")
+    }
+}
+
+infix fun String.shouldContain(substring: String) {
+    if (!this.contains(substring)) {
+        throw AssertionError("'$this' should contain '$substring'")
+    }
+}
+
+// Usage (reads like English!)
+val name = "Alice"
+name shouldBe "Alice"
+name shouldContain "ice"
+
+val result = 2 + 2
+result shouldBe 4
+```
+
+### Practical Example: Query DSL
+
+```kotlin
+data class Query(val table: String, val conditions: List<String> = emptyList())
+
+infix fun String.from(table: String) = Query(table)
+
+infix fun Query.where(condition: String) = this.copy(
+    conditions = this.conditions + condition
+)
+
+infix fun Query.and(condition: String) = this.copy(
+    conditions = this.conditions + condition
+)
+
+fun Query.build(): String {
+    val whereCl= if (conditions.isNotEmpty()) {
+        " WHERE ${conditions.joinToString(" AND ")}"
+    } else ""
+    return "SELECT $table FROM $table$whereClause"
+}
+
+// Usage: reads like SQL!
+val query = "users" from "users_table" where "age > 18" and "active = true"
+println(query.build())
+// SELECT users FROM users_table WHERE age > 18 AND active = true
+```
+
+---
+
+## Operator Overloading
+
+Define how operators work with custom types.
+
+### Arithmetic Operators
+
+```kotlin
+data class Vector(val x: Double, val y: Double) {
+    operator fun plus(other: Vector) = Vector(x + other.x, y + other.y)
+    operator fun minus(other: Vector) = Vector(x - other.x, y - other.y)
+    operator fun times(scalar: Double) = Vector(x * scalar, y * scalar)
+
+    fun length() = Math.sqrt(x * x + y * y)
+}
+
+val v1 = Vector(1.0, 2.0)
+val v2 = Vector(3.0, 4.0)
+
+val sum = v1 + v2
+println("Sum: $sum")  // Vector(x=4.0, y=6.0)
+
+val scaled = v1 * 2.0
+println("Scaled: $scaled")  // Vector(x=2.0, y=4.0)
+```
+
+### Comparison Operators
+
+```kotlin
+data class Money(val amount: Double, val currency: String) {
+    operator fun compareTo(other: Money): Int {
+        require(currency == other.currency) { "Cannot compare different currencies" }
+        return amount.compareTo(other.amount)
+    }
+
+    operator fun plus(other: Money): Money {
+        require(currency == other.currency) { "Cannot add different currencies" }
+        return Money(amount + other.amount, currency)
+    }
+}
+
+val m1 = Money(100.0, "USD")
+val m2 = Money(50.0, "USD")
+
+println(m1 > m2)   // true
+println(m1 + m2)   // Money(amount=150.0, currency=USD)
+```
+
+### Invoke Operator (Callable Objects)
+
+```kotlin
+class Multiplier(val factor: Int) {
+    operator fun invoke(value: Int): Int = value * factor
+}
+
+val triple = Multiplier(3)
+println(triple(10))  // 30
+println(triple(5))   // 15
+
+// Function-like object!
+```
+
+### Index Access Operator
+
+```kotlin
+class Grid(val width: Int, val height: Int) {
+    private val data = Array(width * height) { 0 }
+
+    operator fun get(x: Int, y: Int): Int {
+        return data[y * width + x]
+    }
+
+    operator fun set(x: Int, y: Int, value: Int) {
+        data[y * width + x] = value
+    }
+}
+
+val grid = Grid(3, 3)
+grid[1, 2] = 42
+println(grid[1, 2])  // 42
+```
+
+---
+
+## Building a Simple DSL
+
+Combine everything to create a domain-specific language.
+
+### HTML Builder DSL
+
+```kotlin
+@DslMarker
+annotation class HtmlTagMarker
+
+@HtmlTagMarker
+abstract class Tag(val name: String) {
+    val children = mutableListOf<Tag>()
+    val attributes = mutableMapOf<String, String>()
+
+    protected fun <T : Tag> initTag(tag: T, init: T.() -> Unit): T {
+        tag.init()
+        children.add(tag)
+        return tag
+    }
+
+    fun render(): String {
+        val attrs = if (attributes.isEmpty()) "" else {
+            attributes.entries.joinToString(" ", " ") { "${it.key}=\"${it.value}\"" }
+        }
+        val content = children.joinToString("") { it.render() }
+        return "<$name$attrs>$content</$name>"
+    }
+}
+
+class HTML : Tag("html") {
+    fun head(init: Head.() -> Unit) = initTag(Head(), init)
+    fun body(init: Body.() -> Unit) = initTag(Body(), init)
+}
+
+class Head : Tag("head") {
+    fun title(init: Title.() -> Unit) = initTag(Title(), init)
+}
+
+class Title : Tag("title") {
+    operator fun String.unaryPlus() {
+        children.add(Text(this))
+    }
+}
+
+class Body : Tag("body") {
+    fun h1(init: H1.() -> Unit) = initTag(H1(), init)
+    fun p(init: P.() -> Unit) = initTag(P(), init)
+}
+
+class H1 : Tag("h1") {
+    operator fun String.unaryPlus() {
+        children.add(Text(this))
+    }
+}
+
+class P : Tag("p") {
+    operator fun String.unaryPlus() {
+        children.add(Text(this))
+    }
+}
+
+class Text(val content: String) : Tag("") {
+    override fun render() = content
+}
+
+fun html(init: HTML.() -> Unit): HTML {
+    val html = HTML()
+    html.init()
+    return html
+}
+
+// Usage: beautiful DSL!
+val page = html {
+    head {
+        title { +"My Page" }
+    }
+    body {
+        h1 { +"Welcome!" }
+        p { +"This is a paragraph." }
+        p { +"Another paragraph." }
+    }
+}
+
+println(page.render())
+// <html><head><title>My Page</title></head><body><h1>Welcome!</h1><p>This is a paragraph.</p><p>Another paragraph.</p></body></html>
+```
+
+---
+
+## Exercise 1: Function Composition
+
+**Goal**: Implement function composition operators.
+
+**Task**: Create `andThen` and `compose` operators for functions.
+
+```kotlin
+// TODO: Implement these
+infix fun <A, B, C> ((A) -> B).andThen(other: (B) -> C): (A) -> C {
+    // Your code here
+}
+
+infix fun <A, B, C> ((B) -> C).compose(other: (A) -> B): (A) -> C {
+    // Your code here
+}
+
 fun main() {
-    val container = Container()
-    container.register(Database::class, Database())
+    val trim: (String) -> String = { it.trim() }
+    val uppercase: (String) -> String = { it.uppercase() }
+    val addExclamation: (String) -> String = { "$it!" }
 
-    val repository = UserRepository()
-    container.inject(repository)
-
-    println(repository.findUser(1))
-    // Result for: SELECT * FROM users WHERE id = 1
+    // TODO: Test both operators
 }
 ```
 
 ---
 
-## Exercises
-
-### Exercise 1: Test Runner (Medium)
-
-Create a simple test runner using annotations.
-
-**Requirements**:
-- `@Test` for test methods
-- `@BeforeEach` for setup
-- `@AfterEach` for cleanup
-- Run all tests and report results
-
-**Solution**:
+## Solution 1: Function Composition
 
 ```kotlin
-import kotlin.reflect.full.*
-
-@Target(AnnotationTarget.FUNCTION)
-@Retention(AnnotationRetention.RUNTIME)
-annotation class Test
-
-@Target(AnnotationTarget.FUNCTION)
-@Retention(AnnotationRetention.RUNTIME)
-annotation class BeforeEach
-
-@Target(AnnotationTarget.FUNCTION)
-@Retention(AnnotationRetention.RUNTIME)
-annotation class AfterEach
-
-class TestRunner {
-    fun run(testClass: Any) {
-        val kClass = testClass::class
-
-        val beforeEach = kClass.memberFunctions.find { it.annotations.any { a -> a is BeforeEach } }
-        val afterEach = kClass.memberFunctions.find { it.annotations.any { a -> a is AfterEach } }
-        val tests = kClass.memberFunctions.filter { it.annotations.any { a -> a is Test } }
-
-        var passed = 0
-        var failed = 0
-
-        println("Running ${tests.size} tests:\n")
-
-        tests.forEach { test ->
-            try {
-                beforeEach?.call(testClass)
-                test.call(testClass)
-                afterEach?.call(testClass)
-
-                println("✅ ${test.name} - PASSED")
-                passed++
-            } catch (e: Exception) {
-                println("❌ ${test.name} - FAILED: ${e.message}")
-                failed++
-            }
-        }
-
-        println("\n$passed passed, $failed failed")
-    }
+infix fun <A, B, C> ((A) -> B).andThen(other: (B) -> C): (A) -> C {
+    return { x -> other(this(x)) }
 }
 
-class CalculatorTests {
-    private var calculator: Calculator? = null
-
-    @BeforeEach
-    fun setup() {
-        calculator = Calculator()
-        println("  [Setup]")
-    }
-
-    @AfterEach
-    fun cleanup() {
-        calculator = null
-        println("  [Cleanup]")
-    }
-
-    @Test
-    fun testAdd() {
-        val result = calculator!!.add(2, 3)
-        if (result != 5) throw AssertionError("Expected 5, got $result")
-    }
-
-    @Test
-    fun testMultiply() {
-        val result = calculator!!.multiply(2, 3)
-        if (result != 6) throw AssertionError("Expected 6, got $result")
-    }
-
-    @Test
-    fun testFailing() {
-        throw AssertionError("This test always fails")
-    }
-}
-
-class Calculator {
-    fun add(a: Int, b: Int) = a + b
-    fun multiply(a: Int, b: Int) = a * b
+infix fun <A, B, C> ((B) -> C).compose(other: (A) -> B): (A) -> C {
+    return { x -> this(other(x)) }
 }
 
 fun main() {
-    val runner = TestRunner()
-    runner.run(CalculatorTests())
+    val trim: (String) -> String = { it.trim() }
+    val uppercase: (String) -> String = { it.uppercase() }
+    val addExclamation: (String) -> String = { "$it!" }
+
+    // andThen: left to right
+    val process1 = trim andThen uppercase andThen addExclamation
+    println(process1("  hello  "))  // HELLO!
+
+    // compose: right to left
+    val process2 = addExclamation compose uppercase compose trim
+    println(process2("  world  "))  // WORLD!
+
+    // Practical example: data processing
+    val validate: (String) -> String? = { if (it.isNotEmpty()) it else null }
+    val normalize: (String) -> String = { it.trim().lowercase() }
+    val hash: (String) -> Int = { it.hashCode() }
+
+    val pipeline = normalize andThen hash
+    println("Hash: ${pipeline("  HELLO  ")}")  // Hash of "hello"
 }
 ```
 
-### Exercise 2: Query Builder (Hard)
+**Explanation**:
+- `andThen`: Read left-to-right (intuitive)
+- `compose`: Mathematical notation (right-to-left)
+- Both achieve the same result, different reading order
 
-Create a query builder using annotations and reflection.
+---
 
-**Requirements**:
-- `@Table` for table name
-- `@Column` for column mapping
-- Generate SELECT, INSERT queries
+## Exercise 2: Currying Implementation
 
-**Solution**:
+**Goal**: Implement a curry function for 2-parameter functions.
+
+**Task**:
 
 ```kotlin
-import kotlin.reflect.full.*
-
-@Target(AnnotationTarget.CLASS)
-@Retention(AnnotationRetention.RUNTIME)
-annotation class Table(val name: String)
-
-@Target(AnnotationTarget.PROPERTY)
-@Retention(AnnotationRetention.RUNTIME)
-annotation class Column(val name: String)
-
-@Target(AnnotationTarget.PROPERTY)
-@Retention(AnnotationRetention.RUNTIME)
-annotation class PrimaryKey
-
-@Table("users")
-data class User(
-    @PrimaryKey
-    @Column("user_id")
-    val id: Int,
-
-    @Column("user_name")
-    val name: String,
-
-    @Column("user_email")
-    val email: String
-)
-
-object QueryBuilder {
-    fun <T : Any> selectAll(kClass: kotlin.reflect.KClass<T>): String {
-        val table = kClass.annotations.filterIsInstance<Table>().first().name
-
-        val columns = kClass.memberProperties.map { prop ->
-            prop.annotations.filterIsInstance<Column>().firstOrNull()?.name ?: prop.name
-        }
-
-        return "SELECT ${columns.joinToString(", ")} FROM $table"
-    }
-
-    fun <T : Any> selectById(kClass: kotlin.reflect.KClass<T>, id: Any): String {
-        val table = kClass.annotations.filterIsInstance<Table>().first().name
-
-        val pkProp = kClass.memberProperties.find { prop ->
-            prop.annotations.any { it is PrimaryKey }
-        }!!
-
-        val pkColumn = pkProp.annotations.filterIsInstance<Column>().first().name
-
-        return "SELECT * FROM $table WHERE $pkColumn = $id"
-    }
-
-    fun insert(obj: Any): String {
-        val kClass = obj::class
-        val table = kClass.annotations.filterIsInstance<Table>().first().name
-
-        val columns = mutableListOf<String>()
-        val values = mutableListOf<String>()
-
-        kClass.memberProperties.forEach { prop ->
-            val columnName = prop.annotations.filterIsInstance<Column>().firstOrNull()?.name
-                ?: prop.name
-
-            val value = prop.get(obj)
-            val valueStr = when (value) {
-                is String -> "'$value'"
-                else -> value.toString()
-            }
-
-            columns.add(columnName)
-            values.add(valueStr)
-        }
-
-        return "INSERT INTO $table (${columns.joinToString(", ")}) VALUES (${values.joinToString(", ")})"
-    }
+fun <A, B, C> curry(f: (A, B) -> C): (A) -> (B) -> C {
+    // TODO: Implement
 }
 
 fun main() {
-    println(QueryBuilder.selectAll(User::class))
-    // SELECT user_id, user_name, user_email FROM users
+    val add = { a: Int, b: Int -> a + b }
+    val multiply = { a: Int, b: Int -> a * b }
 
-    println(QueryBuilder.selectById(User::class, 1))
-    // SELECT * FROM users WHERE user_id = 1
-
-    val user = User(1, "Alice", "alice@example.com")
-    println(QueryBuilder.insert(user))
-    // INSERT INTO users (user_id, user_name, user_email) VALUES (1, 'Alice', 'alice@example.com')
+    // TODO: Test currying
 }
 ```
 
-### Exercise 3: Object Mapper (Hard)
+---
 
-Create an object mapper that converts between objects and maps.
-
-**Requirements**:
-- Convert object to Map<String, Any?>
-- Convert Map<String, Any?> to object
-- Support custom field names
-- Handle nested objects
-
-**Solution**:
+## Solution 2: Currying Implementation
 
 ```kotlin
-import kotlin.reflect.full.*
-import kotlin.reflect.KClass
+fun <A, B, C> curry(f: (A, B) -> C): (A) -> (B) -> C {
+    return { a -> { b -> f(a, b) } }
+}
 
-@Target(AnnotationTarget.PROPERTY)
-@Retention(AnnotationRetention.RUNTIME)
-annotation class Field(val name: String = "")
-
-data class Address(
-    @Field("street_name")
-    val street: String,
-
-    val city: String
-)
-
-data class Person(
-    @Field("full_name")
-    val name: String,
-
-    val age: Int,
-
-    val address: Address
-)
-
-object ObjectMapper {
-    fun toMap(obj: Any): Map<String, Any?> {
-        val kClass = obj::class
-        val map = mutableMapOf<String, Any?>()
-
-        kClass.memberProperties.forEach { prop ->
-            val fieldName = prop.annotations.filterIsInstance<Field>().firstOrNull()?.name?.takeIf { it.isNotEmpty() }
-                ?: prop.name
-
-            val value = prop.get(obj)
-
-            map[fieldName] = when {
-                value == null -> null
-                isPrimitive(value) -> value
-                else -> toMap(value)  // Nested object
-            }
-        }
-
-        return map
-    }
-
-    fun <T : Any> fromMap(map: Map<String, Any?>, kClass: KClass<T>): T {
-        val constructor = kClass.constructors.first()
-        val args = constructor.parameters.associateWith { param ->
-            val prop = kClass.memberProperties.find { it.name == param.name }
-
-            val fieldName = prop?.annotations?.filterIsInstance<Field>()?.firstOrNull()?.name?.takeIf { it.isNotEmpty() }
-                ?: param.name
-
-            val value = map[fieldName]
-
-            when {
-                value == null -> null
-                param.type.classifier == String::class -> value.toString()
-                param.type.classifier == Int::class -> (value as? Number)?.toInt()
-                else -> {
-                    // Nested object
-                    @Suppress("UNCHECKED_CAST")
-                    fromMap(value as Map<String, Any?>, param.type.classifier as KClass<Any>)
-                }
-            }
-        }
-
-        return constructor.callBy(args)
-    }
-
-    private fun isPrimitive(value: Any): Boolean {
-        return value is String || value is Number || value is Boolean
-    }
+// Bonus: Uncurry
+fun <A, B, C> uncurry(f: (A) -> (B) -> C): (A, B) -> C {
+    return { a, b -> f(a)(b) }
 }
 
 fun main() {
-    val person = Person(
-        name = "Alice",
-        age = 30,
-        address = Address("123 Main St", "Springfield")
-    )
+    val add = { a: Int, b: Int -> a + b }
+    val multiply = { a: Int, b: Int -> a * b }
 
-    val map = ObjectMapper.toMap(person)
-    println("To Map:")
-    println(map)
-    // {full_name=Alice, age=30, address={street_name=123 Main St, city=Springfield}}
+    // Curry add
+    val curriedAdd = curry(add)
+    val add10 = curriedAdd(10)
+    println(add10(5))   // 15
+    println(add10(20))  // 30
 
-    val restored = ObjectMapper.fromMap(map, Person::class)
-    println("\nFrom Map:")
-    println(restored)
-    // Person(name=Alice, age=30, address=Address(street=123 Main St, city=Springfield))
+    // Curry multiply
+    val curriedMultiply = curry(multiply)
+    val double = curriedMultiply(2)
+    val triple = curriedMultiply(3)
+    println(double(7))  // 14
+    println(triple(7))  // 21
+
+    // Practical: Specialized formatters
+    val format = { prefix: String, value: String -> "$prefix: $value" }
+    val curriedFormat = curry(format)
+
+    val errorFormatter = curriedFormat("ERROR")
+    val infoFormatter = curriedFormat("INFO")
+
+    println(errorFormatter("Something went wrong"))  // ERROR: Something went wrong
+    println(infoFormatter("Process started"))        // INFO: Process started
+
+    // Uncurry example
+    val uncurriedAdd = uncurry(curriedAdd)
+    println(uncurriedAdd(5, 3))  // 8
 }
 ```
+
+**Explanation**:
+- Currying transforms multi-parameter functions into chains
+- Creates specialized versions by fixing parameters
+- Useful for configuration and creating function families
+
+---
+
+## Exercise 3: DSL Builder
+
+**Goal**: Create a simple DSL for building configurations.
+
+**Task**:
+
+```kotlin
+// TODO: Implement a configuration DSL
+class ServerConfig {
+    var host: String = ""
+    var port: Int = 0
+    val routes = mutableListOf<Route>()
+
+    fun route(path: String, init: Route.() -> Unit) {
+        // TODO
+    }
+}
+
+class Route(val path: String) {
+    var method: String = "GET"
+    var handler: String = ""
+}
+
+fun server(init: ServerConfig.() -> Unit): ServerConfig {
+    // TODO
+}
+
+fun main() {
+    // Should work like this:
+    val config = server {
+        host = "localhost"
+        port = 8080
+        route("/users") {
+            method = "GET"
+            handler = "listUsers"
+        }
+        route("/users") {
+            method = "POST"
+            handler = "createUser"
+        }
+    }
+}
+```
+
+---
+
+## Solution 3: DSL Builder
+
+```kotlin
+class ServerConfig {
+    var host: String = ""
+    var port: Int = 0
+    val routes = mutableListOf<Route>()
+
+    fun route(path: String, init: Route.() -> Unit) {
+        val route = Route(path)
+        route.init()
+        routes.add(route)
+    }
+
+    override fun toString(): String {
+        return """
+            Server Configuration:
+              Host: $host
+              Port: $port
+              Routes:
+                ${routes.joinToString("\n    ") { it.toString() }}
+        """.trimIndent()
+    }
+}
+
+class Route(val path: String) {
+    var method: String = "GET"
+    var handler: String = ""
+
+    override fun toString() = "$method $path -> $handler"
+}
+
+fun server(init: ServerConfig.() -> Unit): ServerConfig {
+    val config = ServerConfig()
+    config.init()
+    return config
+}
+
+fun main() {
+    val config = server {
+        host = "localhost"
+        port = 8080
+
+        route("/users") {
+            method = "GET"
+            handler = "listUsers"
+        }
+
+        route("/users") {
+            method = "POST"
+            handler = "createUser"
+        }
+
+        route("/users/{id}") {
+            method = "GET"
+            handler = "getUser"
+        }
+
+        route("/users/{id}") {
+            method = "PUT"
+            handler = "updateUser"
+        }
+
+        route("/users/{id}") {
+            method = "DELETE"
+            handler = "deleteUser"
+        }
+    }
+
+    println(config)
+    /*
+    Server Configuration:
+      Host: localhost
+      Port: 8080
+      Routes:
+        GET /users -> listUsers
+        POST /users -> createUser
+        GET /users/{id} -> getUser
+        PUT /users/{id} -> updateUser
+        DELETE /users/{id} -> deleteUser
+    */
+}
+```
+
+**Explanation**:
+- DSL provides type-safe configuration
+- Lambda with receiver (`init: ServerConfig.() -> Unit`) enables clean syntax
+- Nested structures through builder pattern
+- Reads almost like a configuration file!
 
 ---
 
 ## Checkpoint Quiz
 
-### Question 1: Annotation Retention
+### Question 1
+What is function composition?
 
-What does `@Retention(AnnotationRetention.RUNTIME)` mean?
+A) Writing functions inside other functions
+B) Combining functions to create new functions where output of one becomes input of another
+C) Making functions larger
+D) Commenting functions
 
-**A)** Annotation is discarded after compilation
-**B)** Annotation is available at runtime via reflection
-**C)** Annotation only works at compile time
-**D)** Annotation is stored in source code only
+### Question 2
+What is currying?
 
-**Answer**: **B** - `RUNTIME` retention makes annotations available at runtime for reflection.
+A) Converting a multi-parameter function into a sequence of single-parameter functions
+B) Making functions run faster
+C) A cooking technique
+D) Error handling
 
----
+### Question 3
+What does the `infix` keyword do?
 
-### Question 2: KClass
+A) Makes functions run in the background
+B) Allows calling functions without dot notation and parentheses (binary operation style)
+C) Makes functions faster
+D) Prevents function calls
 
-How do you get a KClass reference from an instance?
+### Question 4
+What is operator overloading?
 
-**A)** `instance.class`
-**B)** `instance::class`
-**C)** `instance.getClass()`
-**D)** `classOf(instance)`
+A) Using too many operators
+B) Defining custom behavior for operators like +, -, *, / on custom types
+C) A performance optimization
+D) A deprecated feature
 
-**Answer**: **B** - Use `instance::class` to get KClass from an instance.
+### Question 5
+What is a DSL (Domain-Specific Language)?
 
----
-
-### Question 3: @JvmStatic
-
-What does `@JvmStatic` do?
-
-**A)** Makes a property immutable
-**B)** Generates a static method for Java interop
-**C)** Prevents inheritance
-**D)** Makes a class final
-
-**Answer**: **B** - `@JvmStatic` generates a static method in the companion object for Java interoperability.
-
----
-
-### Question 4: Reflection Performance
-
-What's a disadvantage of reflection?
-
-**A)** It's type-safe
-**B)** It's slower than direct access
-**C)** It can't access private members
-**D)** It only works with data classes
-
-**Answer**: **B** - Reflection is slower than direct access because it involves runtime type checking and dynamic invocation.
+A) A new programming language
+B) An API designed to read like natural language for a specific domain
+C) A debugging tool
+D) A database query language
 
 ---
 
-### Question 5: Annotation Targets
+## Quiz Answers
 
-Which target allows annotating a property's backing field?
+**Question 1: B) Combining functions to create new functions where output of one becomes input of another**
 
-**A)** `@field:`
-**B)** `@property:`
-**C)** `@get:`
-**D)** `@param:`
+```kotlin
+val trim = { s: String -> s.trim() }
+val uppercase = { s: String -> s.uppercase() }
 
-**Answer**: **A** - Use `@field:` to annotate the backing field of a property.
+// Compose: output of trim goes into uppercase
+val trimAndUpper = { s: String -> uppercase(trim(s)) }
 
----
+println(trimAndUpper("  hello  "))  // HELLO
+```
 
-## Summary
-
-Congratulations! You've mastered annotations and reflection in Kotlin. Here's what you learned:
-
-✅ **Built-in Annotations** - `@Deprecated`, `@JvmStatic`, `@JvmOverloads`, etc.
-✅ **Custom Annotations** - Creating annotations with parameters
-✅ **Annotation Targets** - Controlling where annotations can be used
-✅ **Retention Policies** - SOURCE, BINARY, RUNTIME
-✅ **Reflection** - `KClass`, `KFunction`, `KProperty`
-✅ **Practical Uses** - Validation, serialization, dependency injection
-
-### Key Takeaways
-
-1. **Annotations** provide metadata for code elements
-2. **`@Retention(RUNTIME)`** needed for reflection access
-3. **`@Target`** controls where annotations apply
-4. **Reflection** enables dynamic code inspection
-5. **Use sparingly** - reflection has performance overhead
-
-### Next Steps
-
-In the next lesson, we'll explore **DSLs and Type-Safe Builders** - creating beautiful, type-safe domain-specific languages in Kotlin!
+Composition builds complex operations from simple parts.
 
 ---
 
-**Practice Challenge**: Build a configuration validator that reads annotations and validates configuration objects, generating detailed error reports with field names and constraints.
+**Question 2: A) Converting a multi-parameter function into a sequence of single-parameter functions**
+
+```kotlin
+// Normal function
+fun add(a: Int, b: Int) = a + b
+
+// Curried version
+fun curriedAdd(a: Int) = { b: Int -> a + b }
+
+val add5 = curriedAdd(5)
+println(add5(3))  // 8
+```
+
+Currying enables partial application and function specialization.
+
+---
+
+**Question 3: B) Allows calling functions without dot notation and parentheses (binary operation style)**
+
+```kotlin
+infix fun Int.times(str: String) = str.repeat(this)
+
+// Regular call
+println(3.times("Ha"))
+
+// Infix call
+println(3 times "Ha")  // More readable!
+```
+
+Makes code read more naturally.
+
+---
+
+**Question 4: B) Defining custom behavior for operators like +, -, *, / on custom types**
+
+```kotlin
+data class Vector(val x: Int, val y: Int) {
+    operator fun plus(other: Vector) = Vector(x + other.x, y + other.y)
+}
+
+val v1 = Vector(1, 2)
+val v2 = Vector(3, 4)
+val sum = v1 + v2  // Uses our custom plus operator
+println(sum)  // Vector(x=4, y=6)
+```
+
+Enables intuitive syntax for custom types.
+
+---
+
+**Question 5: B) An API designed to read like natural language for a specific domain**
+
+```kotlin
+// DSL for HTML
+html {
+    head {
+        title { +"My Page" }
+    }
+    body {
+        h1 { +"Welcome" }
+    }
+}
+
+// Reads like HTML structure!
+```
+
+DSLs make code expressive and domain-specific.
+
+---
+
+## What You've Learned
+
+✅ Function composition (combining functions)
+✅ Currying (transforming multi-parameter functions)
+✅ Partial application (fixing some parameters)
+✅ Extension functions as functional tools
+✅ Infix functions for readable code
+✅ Operator overloading for custom types
+✅ Building domain-specific languages (DSLs)
+✅ Advanced functional programming techniques
+
+---
+
+## Next Steps
+
+In **Lesson 3.6: Part 3 Capstone - Data Processing Pipeline**, you'll:
+- Build a complete functional programming project
+- Process CSV data with functional operations
+- Create reusable pipeline components
+- Apply everything you've learned
+- Build statistics and reporting features
+
+Time to put it all together!
+
+---
+
+## Key Takeaways
+
+**Function Composition**:
+```kotlin
+val process = trim andThen uppercase andThen addPrefix
+```
+Build complex operations from simple building blocks.
+
+**Currying**:
+```kotlin
+val curriedAdd = { a: Int -> { b: Int -> a + b } }
+val add10 = curriedAdd(10)
+```
+Create specialized functions from general ones.
+
+**Infix & Operators**:
+```kotlin
+infix fun Int.times(str: String) = str.repeat(this)
+3 times "Ha"  // HaHaHa
+```
+Make code read naturally.
+
+**DSLs**:
+```kotlin
+server {
+    host = "localhost"
+    port = 8080
+    route("/api") { ... }
+}
+```
+Type-safe, readable configuration.
+
+---
+
+**Congratulations on completing Lesson 3.5!** 🎉
+
+You've mastered advanced functional programming techniques! These concepts enable powerful abstractions and elegant APIs. Now you're ready to build real-world functional applications in the capstone project!

@@ -1,1069 +1,1183 @@
-# Lesson 4.4: Delegation and Lazy Initialization
+# Lesson 3.4: Scope Functions
 
 **Estimated Time**: 65 minutes
-**Difficulty**: Advanced
-**Prerequisites**: Parts 1-3
+**Difficulty**: Intermediate
+**Prerequisites**: Lessons 3.1-3.3 (Functional programming, lambdas, collections)
 
 ---
 
 ## Topic Introduction
 
-In software development, you often want to reuse behavior from other classes or defer expensive operations until they're needed. Kotlin provides powerful delegation mechanisms that make these patterns simple and type-safe.
+Scope functions are one of Kotlin's most distinctive features. They're small but incredibly powerful—enabling you to write cleaner, more expressive code.
 
-Delegation is the design pattern where an object handles a request by delegating to a helper object (delegate). Instead of inheritance, you compose objects and delegate behavior. Kotlin provides first-class language support for this pattern.
+At first glance, `let`, `run`, `with`, `apply`, and `also` might seem similar. But each has a specific purpose, and mastering them will make your code more idiomatic and elegant.
 
 In this lesson, you'll learn:
-- Class delegation with the `by` keyword
-- Property delegation patterns
-- Lazy initialization with `lazy`
-- Observable properties
-- Custom delegates
-- Standard delegates: `notNull`, `vetoable`, `observable`
+- What scope functions are and why they exist
+- The five scope functions: let, run, with, apply, also
+- When to use each one
+- The difference between `this` and `it` context
+- Return value differences
+- Chaining scope functions
+- Real-world use cases
 
-By the end, you'll write cleaner, more maintainable code using delegation!
+By the end, you'll write fluent, readable Kotlin code!
 
 ---
 
-## The Concept: Why Delegation Matters
+## The Concept: What Are Scope Functions?
 
-### The Problem: Code Duplication
+Scope functions execute a block of code within the context of an object. They temporarily change the scope to work on that object.
 
-Without delegation:
+### The Problem They Solve
+
+**Without scope functions**:
 
 ```kotlin
-interface Printer {
-    fun print(message: String)
-}
-
-class ConsolePrinter : Printer {
-    override fun print(message: String) {
-        println("Console: $message")
-    }
-}
-
-class Logger : Printer {
-    private val printer = ConsolePrinter()
-
-    override fun print(message: String) {
-        printer.print(message)  // Just forwarding!
-    }
-
-    fun log(message: String) {
-        print("[LOG] $message")
-    }
-}
+val person = Person("Alice", 25)
+person.name = person.name.uppercase()
+person.age = person.age + 1
+println(person)
+val nameLength = person.name.length
 ```
 
-### The Solution: Class Delegation
+**With scope functions**:
 
 ```kotlin
-class Logger(printer: Printer) : Printer by printer {
-    fun log(message: String) {
-        print("[LOG] $message")
-    }
+val person = Person("Alice", 25).apply {
+    name = name.uppercase()
+    age += 1
 }
+println(person)
+val nameLength = person.name.length
+```
 
-fun main() {
-    val logger = Logger(ConsolePrinter())
-    logger.print("Hello")     // Delegated to ConsolePrinter
-    logger.log("Important")   // [LOG] Important
-}
+Even better:
+
+```kotlin
+Person("Alice", 25)
+    .apply {
+        name = name.uppercase()
+        age += 1
+    }
+    .also { println(it) }
+    .name
+    .length
 ```
 
 **Benefits**:
-- No boilerplate forwarding code
-- Composition over inheritance
-- Clear separation of concerns
+- Less repetition (no `person.` everywhere)
+- Clearer intent
+- Chainable operations
+- Scoped changes (visible what's being modified)
 
 ---
 
-## Class Delegation
+## The Five Scope Functions: Overview
 
-The `by` keyword delegates interface implementation to another object.
+| Function | Context | Return | Common Use |
+|----------|---------|--------|------------|
+| `let` | `it` | Lambda result | Null safety, transformations |
+| `run` | `this` | Lambda result | Object configuration & compute result |
+| `with` | `this` | Lambda result | Multiple operations on object |
+| `apply` | `this` | Object itself | Object configuration |
+| `also` | `it` | Object itself | Side effects (logging, validation) |
 
-### Basic Class Delegation
+### Key Differences
+
+**Context**: How you refer to the object
+- `this`: Receiver (implicit, can omit)
+- `it`: Parameter (explicit, must use `it`)
+
+**Return value**:
+- Lambda result: Returns what the block returns
+- Object itself: Returns the original object (chainable)
+
+---
+
+## let: Transform or Process
+
+`let` takes the object as `it` and returns the lambda result.
+
+### Basic Usage
 
 ```kotlin
-interface Database {
-    fun save(data: String)
-    fun load(): String
+val name = "Alice"
+
+val result = name.let {
+    println("Name is: $it")
+    it.uppercase()
 }
 
-class RealDatabase : Database {
-    private var storage = ""
-
-    override fun save(data: String) {
-        storage = data
-        println("Saved: $data")
-    }
-
-    override fun load(): String {
-        println("Loading: $storage")
-        return storage
-    }
-}
-
-class CachedDatabase(db: Database) : Database by db {
-    private var cache: String? = null
-
-    // Override specific methods
-    override fun load(): String {
-        if (cache != null) {
-            println("Returning from cache")
-            return cache!!
-        }
-
-        val data = (this as Database).let {
-            // Call delegated load through explicit reference
-            RealDatabase::class.java.getMethod("load").invoke(db) as String
-        }
-
-        cache = data
-        return data
-    }
-}
-
-fun main() {
-    val db = CachedDatabase(RealDatabase())
-    db.save("Important data")
-    println(db.load())  // Loads from database
-    println(db.load())  // Returns from cache
-}
+println(result)  // ALICE
 ```
 
-### Multiple Interface Delegation
+### Primary Use Case: Null Safety
 
 ```kotlin
-interface CanFly {
-    fun fly()
+var name: String? = "Alice"
+
+// Without let
+if (name != null) {
+    println(name.length)
+    println(name.uppercase())
 }
 
-interface CanSwim {
-    fun swim()
+// With let
+name?.let {
+    println(it.length)
+    println(it.uppercase())
 }
 
-class Bird : CanFly {
-    override fun fly() {
-        println("Flying in the sky")
-    }
-}
-
-class Fish : CanSwim {
-    override fun swim() {
-        println("Swimming in water")
-    }
-}
-
-class Duck(
-    flyer: CanFly,
-    swimmer: CanSwim
-) : CanFly by flyer, CanSwim by swimmer
-
-fun main() {
-    val duck = Duck(Bird(), Fish())
-    duck.fly()   // Flying in the sky
-    duck.swim()  // Swimming in water
-}
+// Only executes if name is not null
 ```
 
-### Real-World Example: Window Decoration
+### Transforming Nullable Values
 
 ```kotlin
-interface Window {
-    fun draw()
-    fun getDescription(): String
+val input: String? = "  Hello  "
+
+val processed = input?.let {
+    it.trim().uppercase()
+} ?: "DEFAULT"
+
+println(processed)  // HELLO
+
+val nullInput: String? = null
+val processedNull = nullInput?.let {
+    it.trim().uppercase()
+} ?: "DEFAULT"
+
+println(processedNull)  // DEFAULT
+```
+
+### Chaining Transformations
+
+```kotlin
+data class Person(val name: String, val age: Int)
+
+val person: Person? = Person("Alice", 25)
+
+val description = person?.let { p ->
+    "Name: ${p.name}"
+}?.let { nameStr ->
+    "$nameStr, Age: ${person?.age}"
 }
 
-class SimpleWindow : Window {
-    override fun draw() {
-        println("Drawing window")
-    }
+println(description)
+// Name: Alice, Age: 25
+```
 
-    override fun getDescription(): String = "Simple window"
+### Real-World Example: API Response Processing
+
+```kotlin
+data class ApiResponse(val data: String?, val error: String?)
+
+fun processResponse(response: ApiResponse): String {
+    return response.data?.let { data ->
+        // Process successful response
+        data.uppercase()
+    } ?: response.error?.let { error ->
+        // Handle error
+        "Error: $error"
+    } ?: "Unknown error"
 }
 
-class ScrollableWindow(window: Window) : Window by window {
-    override fun draw() {
-        window.draw()
-        println("Adding scrollbars")
-    }
+val success = ApiResponse("hello", null)
+println(processResponse(success))  // HELLO
 
-    override fun getDescription(): String = "${window.getDescription()} with scrollbars"
-}
-
-class BorderedWindow(window: Window) : Window by window {
-    override fun draw() {
-        window.draw()
-        println("Adding border")
-    }
-
-    override fun getDescription(): String = "${window.getDescription()} with border"
-}
-
-fun main() {
-    val window = BorderedWindow(ScrollableWindow(SimpleWindow()))
-    window.draw()
-    println(window.getDescription())
-}
-// Output:
-// Drawing window
-// Adding scrollbars
-// Adding border
-// Simple window with scrollbars with border
+val failure = ApiResponse(null, "Not found")
+println(processResponse(failure))  // Error: Not found
 ```
 
 ---
 
-## Property Delegation
+## run: Execute and Return Result
 
-Property delegation allows you to delegate the implementation of property accessors.
+`run` uses `this` as context and returns the lambda result.
 
-### Syntax
+### Basic Usage
 
 ```kotlin
-class Example {
-    var property: String by DelegateClass()
+val result = "Hello".run {
+    // 'this' is the string
+    println(this.length)
+    this.uppercase()  // Return value
 }
+
+println(result)  // HELLO
 ```
 
-The delegate must provide `getValue` and `setValue` operators:
+### Object Configuration + Computation
 
 ```kotlin
-class DelegateClass {
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): String {
-        return "Value of ${property.name}"
-    }
-
-    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: String) {
-        println("Setting ${property.name} to $value")
-    }
+data class Rectangle(var width: Int, var height: Int) {
+    fun area() = width * height
 }
+
+val area = Rectangle(10, 5).run {
+    // Configure
+    width *= 2
+    height *= 2
+    // Compute and return
+    area()
+}
+
+println(area)  // 200
 ```
 
----
-
-## Lazy Initialization
-
-`lazy` creates a property that's initialized only when first accessed.
-
-### Basic Lazy
+### Multiple Operations, Single Result
 
 ```kotlin
-class HeavyObject {
-    init {
-        println("HeavyObject created")
-    }
-
-    fun doWork() {
-        println("Working...")
-    }
+val result = run {
+    val a = 10
+    val b = 20
+    val c = 30
+    a + b + c
 }
 
-class MyClass {
-    val heavy: HeavyObject by lazy {
-        println("Initializing heavy object")
-        HeavyObject()
-    }
-}
-
-fun main() {
-    println("Creating MyClass")
-    val obj = MyClass()
-
-    println("MyClass created")
-    println("Accessing heavy")
-    obj.heavy.doWork()  // Initialized here
-
-    println("Accessing again")
-    obj.heavy.doWork()  // Uses cached value
-}
-// Output:
-// Creating MyClass
-// MyClass created
-// Accessing heavy
-// Initializing heavy object
-// HeavyObject created
-// Working...
-// Accessing again
-// Working...
+println(result)  // 60
 ```
 
-### Lazy Thread Safety
+### Real-World Example: Complex Calculation
 
 ```kotlin
-class Example {
-    // Thread-safe (default)
-    val safeLazy: String by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
-        expensiveComputation()
-    }
-
-    // Not thread-safe (faster)
-    val unsafeLazy: String by lazy(LazyThreadSafetyMode.NONE) {
-        expensiveComputation()
-    }
-
-    // Published - initialized once, but may race
-    val publishedLazy: String by lazy(LazyThreadSafetyMode.PUBLICATION) {
-        expensiveComputation()
-    }
-}
-
-fun expensiveComputation(): String {
-    Thread.sleep(1000)
-    return "Result"
-}
-```
-
-### Practical Example: Database Connection
-
-```kotlin
-class DatabaseConnection {
-    init {
-        println("Connecting to database...")
-        Thread.sleep(1000)
-        println("Connected!")
-    }
-
-    fun query(sql: String): String {
-        return "Result for: $sql"
-    }
-}
-
-class Repository {
-    private val db: DatabaseConnection by lazy {
-        println("Lazy initialization triggered")
-        DatabaseConnection()
-    }
-
-    fun getData(): String {
-        return db.query("SELECT * FROM users")
-    }
-}
-
-fun main() {
-    println("Creating repository")
-    val repo = Repository()
-
-    println("Repository created (DB not connected yet)")
-
-    println("\nFetching data...")
-    println(repo.getData())
-}
-// Output:
-// Creating repository
-// Repository created (DB not connected yet)
-//
-// Fetching data...
-// Lazy initialization triggered
-// Connecting to database...
-// Connected!
-// Result for: SELECT * FROM users
-```
-
----
-
-## Observable Properties
-
-Observable delegates notify you when a property changes.
-
-### Delegates.observable
-
-```kotlin
-import kotlin.properties.Delegates
-
-class User {
-    var name: String by Delegates.observable("Initial") { property, oldValue, newValue ->
-        println("${property.name} changed from '$oldValue' to '$newValue'")
-    }
-
-    var age: Int by Delegates.observable(0) { _, old, new ->
-        println("Age changed from $old to $new")
-    }
-}
-
-fun main() {
-    val user = User()
-
-    user.name = "Alice"
-    user.name = "Bob"
-    user.age = 25
-    user.age = 26
-}
-// Output:
-// name changed from 'Initial' to 'Alice'
-// name changed from 'Alice' to 'Bob'
-// Age changed from 0 to 25
-// Age changed from 25 to 26
-```
-
-### Delegates.vetoable
-
-Veto (reject) property changes based on a condition:
-
-```kotlin
-class Account {
-    var balance: Double by Delegates.vetoable(0.0) { _, oldValue, newValue ->
-        println("Attempting to change balance from $oldValue to $newValue")
-
-        // Veto negative balances
-        if (newValue < 0) {
-            println("❌ Rejected: balance cannot be negative")
-            false  // Reject change
-        } else {
-            println("✅ Accepted")
-            true  // Accept change
-        }
-    }
-}
-
-fun main() {
-    val account = Account()
-
-    account.balance = 100.0  // ✅ Accepted
-    println("Balance: ${account.balance}")
-
-    account.balance = -50.0  // ❌ Rejected
-    println("Balance: ${account.balance}")  // Still 100.0
-
-    account.balance = 200.0  // ✅ Accepted
-    println("Balance: ${account.balance}")
-}
-```
-
----
-
-## Delegates.notNull
-
-For non-null properties that can't be initialized immediately:
-
-```kotlin
-import kotlin.properties.Delegates
-
-class Configuration {
-    var apiKey: String by Delegates.notNull()
-    var apiSecret: String by Delegates.notNull()
-
-    fun initialize(key: String, secret: String) {
-        apiKey = key
-        apiSecret = secret
-    }
-}
-
-fun main() {
-    val config = Configuration()
-
-    // println(config.apiKey)  // ❌ Throws IllegalStateException
-
-    config.initialize("key123", "secret456")
-
-    println(config.apiKey)     // ✅ Works: key123
-    println(config.apiSecret)  // ✅ Works: secret456
-}
-```
-
----
-
-## Custom Delegates
-
-Create your own property delegates by implementing `getValue` and `setValue`.
-
-### Read-Only Delegate
-
-```kotlin
-import kotlin.reflect.KProperty
-
-class Uppercase {
-    private var value: String = ""
-
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): String {
-        return value.uppercase()
-    }
-
-    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: String) {
-        this.value = value
-    }
-}
-
-class Example {
-    var text: String by Uppercase()
-}
-
-fun main() {
-    val example = Example()
-    example.text = "hello world"
-    println(example.text)  // HELLO WORLD
-
-    example.text = "kotlin is awesome"
-    println(example.text)  // KOTLIN IS AWESOME
-}
-```
-
-### Logged Property Delegate
-
-```kotlin
-class Logged<T>(private var value: T) {
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): T {
-        println("Getting ${property.name} = $value")
-        return value
-    }
-
-    operator fun setValue(thisRef: Any?, property: KProperty<*>, newValue: T) {
-        println("Setting ${property.name} from $value to $newValue")
-        value = newValue
-    }
-}
-
-class Person {
-    var name: String by Logged("Unknown")
-    var age: Int by Logged(0)
-}
-
-fun main() {
-    val person = Person()
-
-    person.name = "Alice"
-    println(person.name)
-
-    person.age = 25
-    println(person.age)
-}
-// Output:
-// Setting name from Unknown to Alice
-// Getting name = Alice
-// Alice
-// Setting age from 0 to 25
-// Getting age = 25
-// 25
-```
-
-### Range-Validated Delegate
-
-```kotlin
-class RangeValidator<T : Comparable<T>>(
-    private var value: T,
-    private val range: ClosedRange<T>
-) {
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): T {
-        return value
-    }
-
-    operator fun setValue(thisRef: Any?, property: KProperty<*>, newValue: T) {
-        if (newValue in range) {
-            value = newValue
-        } else {
-            throw IllegalArgumentException(
-                "${property.name} must be in $range, got $newValue"
-            )
-        }
-    }
-}
-
-fun <T : Comparable<T>> rangeValidator(initial: T, range: ClosedRange<T>) =
-    RangeValidator(initial, range)
-
-class Temperature {
-    var celsius: Double by rangeValidator(0.0, -273.15..1000.0)
-}
-
-fun main() {
-    val temp = Temperature()
-
-    temp.celsius = 25.0
-    println(temp.celsius)  // 25.0
-
-    temp.celsius = 100.0
-    println(temp.celsius)  // 100.0
-
-    // temp.celsius = -300.0  // ❌ Throws exception
-}
-```
-
----
-
-## Map-Based Delegation
-
-Delegate properties to a map:
-
-```kotlin
-class User(map: Map<String, Any?>) {
-    val name: String by map
-    val age: Int by map
-    val email: String by map
-}
-
-fun main() {
-    val user = User(
-        mapOf(
-            "name" to "Alice",
-            "age" to 25,
-            "email" to "alice@example.com"
-        )
-    )
-
-    println(user.name)   // Alice
-    println(user.age)    // 25
-    println(user.email)  // alice@example.com
-}
-```
-
-### Mutable Map Delegation
-
-```kotlin
-class MutableUser(val map: MutableMap<String, Any?>) {
-    var name: String by map
-    var age: Int by map
-}
-
-fun main() {
-    val user = MutableUser(mutableMapOf())
-
-    user.name = "Bob"
-    user.age = 30
-
-    println(user.map)  // {name=Bob, age=30}
-
-    user.map["name"] = "Alice"
-    println(user.name)  // Alice
-}
-```
-
-### Practical Example: JSON-like Configuration
-
-```kotlin
-class Config(private val properties: MutableMap<String, Any?> = mutableMapOf()) {
-    var serverUrl: String by properties
-    var port: Int by properties
-    var timeout: Long by properties
-    var enableLogging: Boolean by properties
-
-    fun toMap(): Map<String, Any?> = properties.toMap()
-}
-
-fun main() {
-    val config = Config()
-
-    config.serverUrl = "https://api.example.com"
-    config.port = 8080
-    config.timeout = 5000L
-    config.enableLogging = true
-
-    println(config.toMap())
-    // {serverUrl=https://api.example.com, port=8080, timeout=5000, enableLogging=true}
-}
-```
-
----
-
-## Providing Delegates
-
-Create delegate providers that can initialize delegates with custom logic:
-
-```kotlin
-import kotlin.properties.ReadWriteProperty
-import kotlin.reflect.KProperty
-
-class ResourceDelegate<T>(private val resource: T) : ReadWriteProperty<Any?, T> {
-    private var value: T = resource
-
-    override fun getValue(thisRef: Any?, property: KProperty<*>): T {
-        println("Accessing resource: ${property.name}")
-        return value
-    }
-
-    override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
-        println("Updating resource: ${property.name}")
-        this.value = value
-    }
-}
-
-class ResourceProvider<T>(private val resource: T) {
-    operator fun provideDelegate(thisRef: Any?, property: KProperty<*>): ResourceDelegate<T> {
-        println("Providing delegate for ${property.name}")
-        return ResourceDelegate(resource)
-    }
-}
-
-class Example {
-    var resource: String by ResourceProvider("Initial")
-}
-
-fun main() {
-    val example = Example()
-    // Output: Providing delegate for resource
-
-    example.resource = "Updated"
-    // Output: Updating resource: resource
-
-    println(example.resource)
-    // Output: Accessing resource: resource
-    // Updated
-}
-```
-
----
-
-## Exercises
-
-### Exercise 1: Thread-Safe Cache (Medium)
-
-Create a thread-safe caching delegate.
-
-**Requirements**:
-- Cache computed values
-- Thread-safe access
-- Optional expiration time
-- Lazy computation
-
-**Solution**:
-
-```kotlin
-import kotlin.properties.ReadOnlyProperty
-import kotlin.reflect.KProperty
-
-class CachedValue<T>(
-    private val ttlMillis: Long = Long.MAX_VALUE,
-    private val compute: () -> T
-) : ReadOnlyProperty<Any?, T> {
-    private var value: T? = null
-    private var timestamp: Long = 0
-    private val lock = Any()
-
-    override fun getValue(thisRef: Any?, property: KProperty<*>): T {
-        synchronized(lock) {
-            val now = System.currentTimeMillis()
-
-            if (value == null || (now - timestamp) > ttlMillis) {
-                println("Computing ${property.name}")
-                value = compute()
-                timestamp = now
-            } else {
-                println("Returning cached ${property.name}")
-            }
-
-            return value!!
-        }
-    }
-}
-
-fun <T> cached(ttlMillis: Long = Long.MAX_VALUE, compute: () -> T) =
-    CachedValue(ttlMillis, compute)
-
-class DataService {
-    val expensiveData: String by cached(ttlMillis = 2000) {
-        println("Fetching expensive data...")
-        Thread.sleep(1000)
-        "Expensive Result"
-    }
-
-    val userData: String by cached {
-        println("Fetching user data...")
-        Thread.sleep(500)
-        "User Data"
-    }
-}
-
-fun main() {
-    val service = DataService()
-
-    println(service.expensiveData)
-    Thread.sleep(500)
-    println(service.expensiveData)  // Cached
-
-    Thread.sleep(2000)
-    println(service.expensiveData)  // Recomputed (expired)
-
-    println("\n${service.userData}")
-    println(service.userData)  // Cached
-}
-```
-
-### Exercise 2: Change Tracking (Medium)
-
-Create a delegate that tracks all changes to a property.
-
-**Requirements**:
-- Track value changes with timestamps
-- Get change history
-- Support any type
-
-**Solution**:
-
-```kotlin
-import kotlin.reflect.KProperty
-
-data class Change<T>(
-    val oldValue: T?,
-    val newValue: T,
-    val timestamp: Long = System.currentTimeMillis()
+data class Order(
+    val items: List<Item>,
+    val discount: Double,
+    val taxRate: Double
 )
 
-class Tracked<T>(initialValue: T) {
-    private var value: T = initialValue
-    private val changes = mutableListOf<Change<T>>()
+data class Item(val price: Double, val quantity: Int)
 
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): T {
-        return value
-    }
-
-    operator fun setValue(thisRef: Any?, property: KProperty<*>, newValue: T) {
-        val change = Change(value, newValue)
-        changes.add(change)
-        value = newValue
-    }
-
-    fun getHistory(): List<Change<T>> = changes.toList()
-
-    fun getChangeCount(): Int = changes.size
+fun Order.calculateTotal() = run {
+    val subtotal = items.sumOf { it.price * it.quantity }
+    val afterDiscount = subtotal * (1 - discount)
+    val withTax = afterDiscount * (1 + taxRate)
+    withTax
 }
 
-fun <T> tracked(initialValue: T) = Tracked(initialValue)
+val order = Order(
+    items = listOf(
+        Item(10.0, 2),
+        Item(5.0, 3)
+    ),
+    discount = 0.1,
+    taxRate = 0.08
+)
 
-class Document {
-    var title: String by tracked("Untitled")
-    var content: String by tracked("")
-
-    fun getTitleHistory() = (::title.getDelegate() as Tracked<String>).getHistory()
-    fun getContentHistory() = (::content.getDelegate() as Tracked<String>).getHistory()
-}
-
-fun main() {
-    val doc = Document()
-
-    doc.title = "My Document"
-    Thread.sleep(100)
-    doc.title = "My Awesome Document"
-    Thread.sleep(100)
-    doc.title = "Final Title"
-
-    doc.content = "Introduction"
-    Thread.sleep(100)
-    doc.content = "Introduction\n\nBody"
-
-    println("Title History:")
-    doc.getTitleHistory().forEach { change ->
-        println("  ${change.oldValue} -> ${change.newValue}")
-    }
-
-    println("\nContent History:")
-    doc.getContentHistory().forEach { change ->
-        println("  '${change.oldValue}' -> '${change.newValue}'")
-    }
-}
+println("Total: ${"%.2f".format(order.calculateTotal())}")
+// Total: 30.02
 ```
 
-### Exercise 3: Smart Configuration (Hard)
+---
 
-Create a configuration system with validation, defaults, and environment variables.
+## with: Non-Extension Version
 
-**Requirements**:
-- Type-safe configuration properties
-- Default values
-- Environment variable override
-- Validation
+`with` is not an extension function; you pass the object as parameter. Uses `this` context.
 
-**Solution**:
+### Basic Usage
 
 ```kotlin
-import kotlin.properties.ReadWriteProperty
-import kotlin.reflect.KProperty
+val person = Person("Alice", 25)
 
-class ConfigProperty<T>(
-    private val default: T,
-    private val envVar: String? = null,
-    private val validator: (T) -> Boolean = { true }
-) : ReadWriteProperty<Any?, T> {
-    private var value: T? = null
+val description = with(person) {
+    // 'this' is person
+    "Name: $name, Age: $age"
+}
 
-    override fun getValue(thisRef: Any?, property: KProperty<*>): T {
-        if (value == null) {
-            // Try environment variable
-            value = envVar?.let { getEnvValue(it, default) } ?: default
-        }
-        return value!!
-    }
+println(description)
+// Name: Alice, Age: 25
+```
 
-    override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
-        if (!validator(value)) {
-            throw IllegalArgumentException("Invalid value for ${property.name}: $value")
-        }
-        this.value = value
-    }
+### Multiple Operations on Object
 
-    @Suppress("UNCHECKED_CAST")
-    private fun getEnvValue(name: String, default: T): T {
-        val envValue = System.getenv(name) ?: return default
+```kotlin
+class StringBuilder {
+    private val content = mutableListOf<String>()
 
-        return when (default) {
-            is String -> envValue as T
-            is Int -> envValue.toIntOrNull() as? T ?: default
-            is Boolean -> envValue.toBoolean() as T
-            is Double -> envValue.toDoubleOrNull() as? T ?: default
-            else -> default
-        }
+    fun append(text: String) = content.add(text)
+    fun build() = content.joinToString("")
+}
+
+val html = with(StringBuilder()) {
+    append("<html>")
+    append("<body>")
+    append("<h1>Hello</h1>")
+    append("</body>")
+    append("</html>")
+    build()
+}
+
+println(html)
+// <html><body><h1>Hello</h1></body></html>
+```
+
+### When to Use with vs run
+
+```kotlin
+// Use 'with' when you have an object already
+val person = Person("Alice", 25)
+val info = with(person) {
+    "$name is $age years old"
+}
+
+// Use 'run' for chaining or when creating object inline
+val info2 = Person("Bob", 30).run {
+    "$name is $age years old"
+}
+```
+
+### Real-World Example: Configuration
+
+```kotlin
+data class DatabaseConfig(
+    var host: String = "",
+    var port: Int = 0,
+    var username: String = "",
+    var password: String = "",
+    var database: String = ""
+) {
+    fun validate() = host.isNotEmpty() && username.isNotEmpty()
+}
+
+val config = DatabaseConfig()
+
+val isValid = with(config) {
+    host = "localhost"
+    port = 5432
+    username = "admin"
+    password = "secret"
+    database = "myapp"
+    validate()
+}
+
+println("Config valid: $isValid")  // true
+```
+
+---
+
+## apply: Configure and Return Object
+
+`apply` uses `this` context and returns the object itself (great for chaining!).
+
+### Basic Usage
+
+```kotlin
+data class Person(var name: String, var age: Int)
+
+val person = Person("", 0).apply {
+    name = "Alice"
+    age = 25
+}
+
+println(person)  // Person(name=Alice, age=25)
+```
+
+### Object Initialization
+
+```kotlin
+class User {
+    var name: String = ""
+    var email: String = ""
+    var age: Int = 0
+
+    override fun toString() = "User(name=$name, email=$email, age=$age)"
+}
+
+val user = User().apply {
+    name = "Alice"
+    email = "alice@example.com"
+    age = 25
+}
+
+println(user)
+// User(name=Alice, email=alice@example.com, age=25)
+```
+
+### Builder Pattern
+
+```kotlin
+class StringBuilder {
+    private val content = mutableListOf<String>()
+
+    fun append(text: String) = apply { content.add(text) }
+    fun appendLine(text: String) = apply { content.add("$text\n") }
+    fun clear() = apply { content.clear() }
+    fun build() = content.joinToString("")
+}
+
+val html = StringBuilder()
+    .appendLine("<html>")
+    .appendLine("<body>")
+    .append("<h1>Hello</h1>")
+    .appendLine("</body>")
+    .appendLine("</html>")
+    .build()
+
+println(html)
+```
+
+### Real-World Example: Android View Configuration
+
+```kotlin
+// Simulated Android view
+class TextView {
+    var text: String = ""
+    var textSize: Float = 14f
+    var textColor: String = "black"
+
+    override fun toString() = "TextView(text=$text, size=$textSize, color=$textColor)"
+}
+
+fun createTitleView() = TextView().apply {
+    text = "Welcome!"
+    textSize = 24f
+    textColor = "blue"
+}
+
+val view = createTitleView()
+println(view)
+// TextView(text=Welcome!, size=24.0, color=blue)
+```
+
+---
+
+## also: Side Effects, Return Object
+
+`also` uses `it` context and returns the object itself.
+
+### Basic Usage
+
+```kotlin
+val numbers = mutableListOf(1, 2, 3)
+    .also { println("Initial list: $it") }
+    .also { it.add(4) }
+    .also { println("After adding: $it") }
+
+println("Final: $numbers")
+// Initial list: [1, 2, 3]
+// After adding: [1, 2, 3, 4]
+// Final: [1, 2, 3, 4]
+```
+
+### Debugging and Logging
+
+```kotlin
+fun processData(data: String): String {
+    return data
+        .trim()
+        .also { println("After trim: '$it'") }
+        .uppercase()
+        .also { println("After uppercase: '$it'") }
+        .replace(" ", "_")
+        .also { println("After replace: '$it'") }
+}
+
+val result = processData("  hello world  ")
+// After trim: 'hello world'
+// After uppercase: 'HELLO WORLD'
+// After replace: 'HELLO_WORLD'
+```
+
+### Validation with Side Effects
+
+```kotlin
+data class User(val name: String, val email: String, val age: Int)
+
+fun validateUser(user: User): User {
+    return user.also {
+        require(it.name.isNotEmpty()) { "Name cannot be empty" }
+        require(it.email.contains("@")) { "Invalid email" }
+        require(it.age >= 18) { "Must be 18 or older" }
+        println("User validated: ${it.name}")
     }
 }
 
-fun <T> config(
-    default: T,
-    envVar: String? = null,
-    validator: (T) -> Boolean = { true }
-) = ConfigProperty(default, envVar, validator)
+val user = validateUser(User("Alice", "alice@example.com", 25))
+// User validated: Alice
+```
 
-class AppConfig {
-    var host: String by config(
-        default = "localhost",
-        envVar = "APP_HOST"
-    )
+### Real-World Example: File Operations
 
-    var port: Int by config(
-        default = 8080,
-        envVar = "APP_PORT",
-        validator = { it in 1..65535 }
-    )
+```kotlin
+import java.io.File
 
-    var maxConnections: Int by config(
-        default = 100,
-        validator = { it > 0 }
-    )
+fun processFile(path: String): List<String> {
+    return File(path)
+        .also { println("Reading file: ${it.absolutePath}") }
+        .also { require(it.exists()) { "File not found" } }
+        .readLines()
+        .also { println("Read ${it.size} lines") }
+        .filter { it.isNotEmpty() }
+        .also { println("After filtering: ${it.size} non-empty lines") }
+}
+```
 
-    var debugMode: Boolean by config(
-        default = false,
-        envVar = "DEBUG"
-    )
+---
+
+## this vs it: Context Objects
+
+### Comparison
+
+**`this` (receiver)**:
+- Used by: `run`, `with`, `apply`
+- Can be omitted (implicit)
+- Feels like you "are" the object
+
+**`it` (parameter)**:
+- Used by: `let`, `also`
+- Must be explicit
+- Clearer distinction between outer and inner scope
+
+### Examples
+
+```kotlin
+data class Person(var name: String)
+
+val person = Person("Alice")
+
+// 'this' context (apply)
+person.apply {
+    name = name.uppercase()  // 'this' is implicit
+    // Could also write: this.name = this.name.uppercase()
+}
+
+// 'it' context (also)
+person.also {
+    it.name = it.name.lowercase()  // 'it' is explicit
+}
+```
+
+### When to Use Which
+
+```kotlin
+// Use 'this' when configuring object
+val user = User().apply {
+    name = "Alice"  // Clean, no 'this.' needed
+    email = "alice@example.com"
+    age = 25
+}
+
+// Use 'it' when object needs clear reference
+val processed = user.let {
+    saveToDatabase(it)  // Clear what's being passed
+    sendEmail(it)
+    it
+}
+```
+
+---
+
+## Return Values: Lambda Result vs Object
+
+### Lambda Result Functions: let, run, with
+
+```kotlin
+// let
+val length = "Hello".let {
+    it.length  // Returns Int
+}
+
+// run
+val uppercase = "Hello".run {
+    this.uppercase()  // Returns String
+}
+
+// with
+val chars = with("Hello") {
+    this.length  // Returns Int
+}
+```
+
+### Object Functions: apply, also
+
+```kotlin
+// apply
+val person = Person("Alice", 25).apply {
+    age += 1
+}  // Returns Person
+
+// also
+val list = mutableListOf(1, 2, 3).also {
+    it.add(4)
+}  // Returns MutableList
+```
+
+### Why It Matters for Chaining
+
+```kotlin
+// apply and also return object - chainable!
+val person = Person("Alice", 25)
+    .apply { age += 1 }
+    .also { println("Created: $it") }
+    .apply { name = name.uppercase() }
+
+// let, run, with return result - chains break
+val result = Person("Alice", 25)
+    .run { age + 1 }  // Returns Int, can't call Person methods anymore
+    // .apply { ... }  // ERROR: Int doesn't have apply with Person context
+```
+
+---
+
+## Chaining Scope Functions
+
+Combining scope functions creates fluent APIs.
+
+### Example 1: Data Processing Pipeline
+
+```kotlin
+data class User(val name: String, val email: String, var validated: Boolean = false)
+
+fun createUser(name: String, email: String): User {
+    return User(name, email)
+        .apply {
+            // Configure object
+            validated = email.contains("@") && name.isNotEmpty()
+        }
+        .also {
+            // Side effect: log
+            println("User created: ${it.name}")
+        }
+        .takeIf { it.validated }
+        ?.also {
+            // Only for valid users
+            println("User validated successfully")
+        } ?: throw IllegalArgumentException("Invalid user data")
+}
+
+val user = createUser("Alice", "alice@example.com")
+// User created: Alice
+// User validated successfully
+```
+
+### Example 2: Building Complex Objects
+
+```kotlin
+data class Report(
+    var title: String = "",
+    var author: String = "",
+    val sections: MutableList<String> = mutableListOf(),
+    var timestamp: Long = 0
+)
+
+fun generateReport(title: String, author: String): Report {
+    return Report()
+        .apply {
+            this.title = title
+            this.author = author
+            timestamp = System.currentTimeMillis()
+        }
+        .also {
+            println("Generating report: ${it.title}")
+        }
+        .apply {
+            sections.add("Introduction")
+            sections.add("Analysis")
+            sections.add("Conclusion")
+        }
+        .also {
+            println("Added ${it.sections.size} sections")
+        }
+}
+
+val report = generateReport("Annual Report", "Alice")
+// Generating report: Annual Report
+// Added 3 sections
+```
+
+### Example 3: Conditional Processing
+
+```kotlin
+fun processOrder(orderId: Int): String {
+    return fetchOrder(orderId)
+        ?.let { order ->
+            // Transform order
+            order.apply {
+                items = items.filter { it.inStock }
+            }
+        }
+        ?.takeIf { it.items.isNotEmpty() }
+        ?.also { validateOrder(it) }
+        ?.run { "Order ${this.id} processed successfully" }
+        ?: "Order not found or invalid"
+}
+
+data class Order(val id: Int, var items: List<Item>)
+data class Item(val name: String, val inStock: Boolean)
+
+fun fetchOrder(id: Int): Order? = Order(id, listOf(
+    Item("Book", true),
+    Item("Pen", false),
+    Item("Notebook", true)
+))
+
+fun validateOrder(order: Order) {
+    println("Validating order ${order.id}")
+}
+```
+
+---
+
+## Decision Matrix: Which Scope Function to Use?
+
+### Flowchart
+
+```
+Need to transform/compute result?
+├─ Yes → Returns lambda result
+│  ├─ Have object already? → with
+│  ├─ Need null safety? → let
+│  └─ Creating/chaining? → run
+│
+└─ No → Returns object (chainable)
+   ├─ Need configuration? → apply (this)
+   └─ Need side effect? → also (it)
+```
+
+### Quick Reference
+
+| Want to... | Use | Example |
+|------------|-----|---------|
+| Transform nullable value | `let` | `name?.let { it.uppercase() }` |
+| Configure object | `apply` | `Person().apply { name = "Alice" }` |
+| Log/debug without breaking chain | `also` | `.also { println(it) }` |
+| Group operations, compute result | `run` / `with` | `person.run { age + 1 }` |
+| Multiple calls on existing object | `with` | `with(config) { ... }` |
+
+---
+
+## Exercise 1: Refactor with Scope Functions
+
+**Goal**: Refactor imperative code using scope functions.
+
+**Task**: Rewrite this code using appropriate scope functions:
+
+```kotlin
+data class Email(
+    var to: String = "",
+    var subject: String = "",
+    var body: String = "",
+    var sent: Boolean = false
+)
+
+fun sendEmail() {
+    val email = Email()
+    email.to = "user@example.com"
+    email.subject = "Welcome"
+    email.body = "Welcome to our service!"
+
+    println("Sending email to: ${email.to}")
+
+    if (email.to.isNotEmpty() && email.subject.isNotEmpty()) {
+        email.sent = true
+        println("Email sent successfully")
+    }
+}
+```
+
+---
+
+## Solution 1: Refactor with Scope Functions
+
+```kotlin
+data class Email(
+    var to: String = "",
+    var subject: String = "",
+    var body: String = "",
+    var sent: Boolean = false
+)
+
+fun sendEmailRefactored() {
+    Email()
+        .apply {
+            // Configure email
+            to = "user@example.com"
+            subject = "Welcome"
+            body = "Welcome to our service!"
+        }
+        .also {
+            // Side effect: log
+            println("Sending email to: ${it.to}")
+        }
+        .takeIf { it.to.isNotEmpty() && it.subject.isNotEmpty() }
+        ?.apply {
+            // Mark as sent
+            sent = true
+        }
+        ?.also {
+            // Side effect: confirm
+            println("Email sent successfully")
+        }
+        ?: println("Email validation failed")
+}
+
+fun main() {
+    sendEmailRefactored()
+    // Sending email to: user@example.com
+    // Email sent successfully
+}
+```
+
+**Explanation**:
+- `apply`: Configure the email object
+- `also`: Log without breaking the chain
+- `takeIf`: Conditional processing
+- Chainable, readable, and expressive!
+
+---
+
+## Exercise 2: Null Safety with let
+
+**Goal**: Use `let` for safe null handling.
+
+**Task**: Process nullable user input safely:
+
+```kotlin
+fun processUserInput(input: String?): String {
+    // TODO: Use let to safely process input
+    // 1. Trim whitespace
+    // 2. Convert to uppercase
+    // 3. Return processed string or "NO INPUT" if null/empty
+}
+
+fun main() {
+    println(processUserInput("  hello  "))  // Should print: HELLO
+    println(processUserInput(null))         // Should print: NO INPUT
+    println(processUserInput("   "))        // Should print: NO INPUT
+}
+```
+
+---
+
+## Solution 2: Null Safety with let
+
+```kotlin
+fun processUserInput(input: String?): String {
+    return input
+        ?.trim()
+        ?.takeIf { it.isNotEmpty() }
+        ?.let { it.uppercase() }
+        ?: "NO INPUT"
+}
+
+// Alternative with more explicit let
+fun processUserInputAlt(input: String?): String {
+    return input?.let { rawInput ->
+        rawInput.trim()
+    }?.let { trimmed ->
+        trimmed.takeIf { it.isNotEmpty() }
+    }?.let { validated ->
+        validated.uppercase()
+    } ?: "NO INPUT"
+}
+
+fun main() {
+    println(processUserInput("  hello  "))  // HELLO
+    println(processUserInput(null))         // NO INPUT
+    println(processUserInput("   "))        // NO INPUT
+
+    println("\nAlternative version:")
+    println(processUserInputAlt("  world  "))  // WORLD
+    println(processUserInputAlt(null))         // NO INPUT
+}
+```
+
+**Explanation**:
+- `?.` safe call operator works with `let`
+- `takeIf` filters out empty strings
+- `let` chains transformations safely
+- Elvis operator (`?:`) provides default
+
+---
+
+## Exercise 3: Builder Pattern with apply
+
+**Goal**: Create a fluent builder using `apply`.
+
+**Task**: Build an HTTP request configuration:
+
+```kotlin
+class HttpRequest {
+    var url: String = ""
+    var method: String = "GET"
+    var headers: MutableMap<String, String> = mutableMapOf()
+    var body: String? = null
+
+    fun addHeader(key: String, value: String) {
+        headers[key] = value
+    }
 
     override fun toString(): String {
-        return """
-            AppConfig(
-              host=$host,
-              port=$port,
-              maxConnections=$maxConnections,
-              debugMode=$debugMode
-            )
-        """.trimIndent()
+        return "HttpRequest(url=$url, method=$method, headers=$headers, body=$body)"
     }
 }
 
 fun main() {
-    val config = AppConfig()
-
-    println("Default configuration:")
-    println(config)
-
-    // Modify configuration
-    config.host = "0.0.0.0"
-    config.port = 3000
-    config.maxConnections = 500
-
-    println("\nModified configuration:")
-    println(config)
-
-    // Validation
-    try {
-        config.port = 99999  // Invalid
-    } catch (e: IllegalArgumentException) {
-        println("\n❌ Error: ${e.message}")
-    }
-
-    try {
-        config.maxConnections = -10  // Invalid
-    } catch (e: IllegalArgumentException) {
-        println("❌ Error: ${e.message}")
-    }
+    // TODO: Create POST request with headers using apply
 }
 ```
+
+---
+
+## Solution 3: Builder Pattern with apply
+
+```kotlin
+class HttpRequest {
+    var url: String = ""
+    var method: String = "GET"
+    var headers: MutableMap<String, String> = mutableMapOf()
+    var body: String? = null
+
+    fun addHeader(key: String, value: String) = apply {
+        headers[key] = value
+    }
+
+    override fun toString(): String {
+        return "HttpRequest(url=$url, method=$method, headers=$headers, body=$body)"
+    }
+}
+
+fun main() {
+    // Using apply for configuration
+    val request = HttpRequest().apply {
+        url = "https://api.example.com/users"
+        method = "POST"
+        body = """{"name": "Alice", "email": "alice@example.com"}"""
+    }.apply {
+        addHeader("Content-Type", "application/json")
+        addHeader("Authorization", "Bearer token123")
+    }
+
+    println(request)
+    // HttpRequest(url=https://api.example.com/users, method=POST,
+    // headers={Content-Type=application/json, Authorization=Bearer token123},
+    // body={"name": "Alice", "email": "alice@example.com"})
+
+    // Alternative: chaining with fluent API
+    val request2 = HttpRequest()
+        .apply {
+            url = "https://api.example.com/products"
+            method = "PUT"
+            body = """{"id": 1, "price": 99.99}"""
+        }
+        .addHeader("Content-Type", "application/json")
+        .addHeader("Accept", "application/json")
+        .also {
+            println("\nCreated request: ${it.method} ${it.url}")
+        }
+
+    println(request2)
+}
+```
+
+**Explanation**:
+- `apply` configures the object and returns it
+- Making `addHeader` return `this` with `apply` enables chaining
+- `also` adds logging without breaking the chain
+- Fluent, readable builder pattern
 
 ---
 
 ## Checkpoint Quiz
 
-### Question 1: Class Delegation
+### Question 1
+What's the main difference between `apply` and `also`?
 
-What does the `by` keyword do in class delegation?
+A) They're the same
+B) `apply` uses `this` context; `also` uses `it` context
+C) `apply` is faster
+D) `also` can't be chained
 
-**A)** Creates a subclass
-**B)** Forwards interface implementation to another object
-**C)** Copies all methods from another class
-**D)** Creates a singleton
+### Question 2
+Which scope function should you use for null-safe transformations?
 
-**Answer**: **B** - The `by` keyword automatically forwards interface implementation to the specified delegate object.
+A) `apply`
+B) `also`
+C) `let`
+D) `with`
 
----
+### Question 3
+What does `apply` return?
 
-### Question 2: Lazy Initialization
+A) The lambda result
+B) Unit
+C) The object itself
+D) A boolean
 
-When is a lazy property initialized?
+### Question 4
+When should you use `with` vs `run`?
 
-**A)** When the class is created
-**B)** At compile time
-**C)** On first access
-**D)** Never
+A) They're identical
+B) `with` when you have an object; `run` for chaining or inline creation
+C) `with` is deprecated
+D) `run` only works with strings
 
-**Answer**: **C** - Lazy properties are initialized on first access, not when the class is created.
+### Question 5
+What's the primary use case for `also`?
 
----
-
-### Question 3: Observable
-
-What does `Delegates.observable` do?
-
-**A)** Validates property values
-**B)** Notifies when property changes
-**C)** Makes property thread-safe
-**D)** Caches property values
-
-**Answer**: **B** - `Delegates.observable` calls a lambda whenever the property value changes, allowing you to observe changes.
-
----
-
-### Question 4: Vetoable
-
-How does `Delegates.vetoable` work?
-
-**A)** It logs all changes
-**B)** It returns true/false to accept/reject changes
-**C)** It automatically validates types
-**D)** It prevents all changes
-
-**Answer**: **B** - `Delegates.vetoable` calls a lambda that returns true to accept or false to reject the property change.
+A) Configuration
+B) Transformation
+C) Side effects (logging, validation) without breaking the chain
+D) Null safety
 
 ---
 
-### Question 5: Custom Delegates
+## Quiz Answers
 
-What must a custom property delegate implement?
+**Question 1: B) `apply` uses `this` context; `also` uses `it` context**
 
-**A)** `get()` and `set()`
-**B)** `getValue()` and `setValue()` operators
-**C)** `read()` and `write()`
-**D)** `load()` and `store()`
+```kotlin
+val person = Person("Alice", 25)
 
-**Answer**: **B** - Custom delegates must implement `getValue()` operator (and `setValue()` for mutable properties).
+// apply: 'this' context (implicit)
+person.apply {
+    name = name.uppercase()  // 'this' omitted
+}
 
----
+// also: 'it' context (explicit)
+person.also {
+    it.name = it.name.lowercase()
+}
+```
 
-## Summary
-
-Congratulations! You've mastered delegation in Kotlin. Here's what you learned:
-
-✅ **Class Delegation** - Composing objects with `by` keyword
-✅ **Property Delegation** - Delegating property accessors
-✅ **Lazy Initialization** - Deferring expensive computations
-✅ **Observable Properties** - Tracking property changes
-✅ **Standard Delegates** - `notNull`, `vetoable`, `observable`
-✅ **Custom Delegates** - Creating your own delegation logic
-
-### Key Takeaways
-
-1. **Class delegation** promotes composition over inheritance
-2. **`lazy`** initializes properties only on first access
-3. **`observable`** notifies on changes, **`vetoable`** can reject changes
-4. **Custom delegates** implement `getValue`/`setValue` operators
-5. **Map delegation** is great for dynamic property storage
-
-### Next Steps
-
-In the next lesson, we'll explore **Annotations and Reflection** - powerful metaprogramming features that let you inspect and modify code at runtime!
+Both return the object, but context differs.
 
 ---
 
-**Practice Challenge**: Create a preferences system that saves properties to a file automatically when they change, using custom delegates and observable patterns.
+**Question 2: C) `let`**
+
+```kotlin
+val name: String? = "Alice"
+
+// let with safe call
+val result = name?.let {
+    it.uppercase()
+} ?: "NO NAME"
+
+println(result)  // ALICE
+```
+
+`let` is perfect for nullable chains.
+
+---
+
+**Question 3: C) The object itself**
+
+```kotlin
+val person = Person("Alice", 25)
+    .apply {
+        age += 1
+    }  // Returns Person
+
+// Can chain because it returns the object
+person
+    .apply { name = name.uppercase() }
+    .also { println(it) }
+```
+
+Returning the object enables chaining.
+
+---
+
+**Question 4: B) `with` when you have an object; `run` for chaining or inline creation**
+
+```kotlin
+// with: object already exists
+val person = Person("Alice", 25)
+val info = with(person) {
+    "$name is $age"
+}
+
+// run: chaining or inline
+val info2 = Person("Bob", 30).run {
+    "$name is $age"
+}
+```
+
+Functionally similar, but usage context differs.
+
+---
+
+**Question 5: C) Side effects (logging, validation) without breaking the chain**
+
+```kotlin
+val result = processData()
+    .also { println("Step 1: $it") }
+    .transform()
+    .also { println("Step 2: $it") }
+    .finalize()
+
+// 'also' logs without changing the return value
+```
+
+Perfect for debugging and logging in chains.
+
+---
+
+## What You've Learned
+
+✅ Five scope functions: let, run, with, apply, also
+✅ Context differences: `this` vs `it`
+✅ Return value differences: lambda result vs object
+✅ When to use each scope function
+✅ Chaining scope functions for fluent APIs
+✅ Real-world use cases: null safety, configuration, logging
+✅ Builder pattern with `apply`
+
+---
+
+## Next Steps
+
+In **Lesson 3.5: Function Composition and Currying**, you'll explore:
+- Composing functions to build complex operations
+- Currying and partial application
+- Extension functions as functional tools
+- Infix functions for readable DSLs
+- Operator overloading
+- Building domain-specific languages (DSLs)
+
+Get ready to take functional programming to the next level!
+
+---
+
+## Key Takeaways
+
+**Scope Functions Summary**:
+
+```kotlin
+// let: nullable handling, transformation
+name?.let { it.uppercase() }
+
+// run: configure + compute result
+person.run { age + 1 }
+
+// with: multiple ops on existing object
+with(config) { host = "localhost"; port = 8080 }
+
+// apply: object configuration
+Person().apply { name = "Alice"; age = 25 }
+
+// also: side effects, logging
+data.also { println(it) }
+```
+
+**Decision Tree**:
+1. Need result from operation? → let, run, with
+2. Need object for chaining? → apply, also
+3. Null safety? → let
+4. Configuration? → apply
+5. Logging/side effects? → also
+
+**Best Practices**:
+- Don't overuse—sometimes simple code is clearer
+- Choose based on intent, not just brevity
+- Use meaningful names when using `it` isn't clear
+- Chain thoughtfully—too many levels hurt readability
+
+---
+
+**Congratulations on completing Lesson 3.4!** 🎉
+
+Scope functions are a hallmark of idiomatic Kotlin. Mastering them will make your code more elegant and expressive. Practice using them in your daily coding—they quickly become second nature!

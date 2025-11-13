@@ -1,1111 +1,1188 @@
-# Lesson 4.3: Advanced Coroutines
+# Lesson 3.3: Collection Operations
 
-**Estimated Time**: 75 minutes
-**Difficulty**: Advanced
-**Prerequisites**: Lesson 4.2 (Coroutines Fundamentals)
+**Estimated Time**: 70 minutes
+**Difficulty**: Intermediate
+**Prerequisites**: Lessons 3.1-3.2 (Functional programming basics, lambdas)
 
 ---
 
 ## Topic Introduction
 
-Now that you understand coroutine basics, it's time to explore the advanced features that make coroutines truly powerful. These features enable you to build reactive systems, handle streams of data, communicate between coroutines, and gracefully handle errors in concurrent code.
+Collections are everywhere in programming. Lists of users, sets of products, maps of configurations—they're fundamental to real applications. The way you work with collections defines your code quality.
 
-In this lesson, you'll learn:
-- Structured concurrency patterns
-- Exception handling in coroutines
-- Flows for reactive streams
-- Channels for coroutine communication
-- StateFlow and SharedFlow for state management
-- `withContext` for context switching
-- Advanced dispatchers and supervisors
+Kotlin's collection operations transform data manipulation from verbose loops into expressive, declarative pipelines. Instead of writing "how" to process data step-by-step, you declare "what" you want.
 
-By the end, you'll build production-ready concurrent applications!
+In this lesson, you'll master:
+- Essential operations: map, filter, reduce
+- Finding elements: find, first, last, any, all, none
+- Advanced grouping: groupBy, partition, associate
+- Flattening nested structures: flatMap, flatten
+- Sequences for lazy evaluation and performance
 
----
-
-## Structured Concurrency
-
-Structured concurrency ensures coroutines have a clear lifecycle and don't leak.
-
-### The Principle
-
-Coroutines should:
-1. Have a clear parent-child relationship
-2. Be automatically cancelled when parent is cancelled
-3. Complete or fail together as a unit
-
-```kotlin
-import kotlinx.coroutines.*
-
-fun main() = runBlocking {
-    val job = launch {
-        val child1 = launch {
-            try {
-                delay(Long.MAX_VALUE)
-            } catch (e: CancellationException) {
-                println("Child 1 cancelled")
-            }
-        }
-
-        val child2 = launch {
-            try {
-                delay(Long.MAX_VALUE)
-            } catch (e: CancellationException) {
-                println("Child 2 cancelled")
-            }
-        }
-
-        delay(500)
-    }
-
-    delay(200)
-    job.cancel()
-    delay(1000)
-}
-// Output:
-// Child 1 cancelled
-// Child 2 cancelled
-```
-
-### `coroutineScope` - Structured Concurrency Builder
-
-`coroutineScope` creates a scope that completes only when all children complete:
-
-```kotlin
-suspend fun fetchAllData() = coroutineScope {
-    val user = async { fetchUser() }
-    val posts = async { fetchPosts() }
-    val comments = async { fetchComments() }
-
-    UserData(user.await(), posts.await(), comments.await())
-}
-
-data class UserData(val user: String, val posts: String, val comments: String)
-
-suspend fun fetchUser() = delay(1000).let { "User" }
-suspend fun fetchPosts() = delay(800).let { "Posts" }
-suspend fun fetchComments() = delay(1200).let { "Comments" }
-
-fun main() = runBlocking {
-    val data = fetchAllData()
-    println(data)
-    // UserData(user=User, posts=Posts, comments=Comments)
-}
-```
-
-If any child fails, all siblings are cancelled:
-
-```kotlin
-suspend fun fetchWithFailure() = coroutineScope {
-    launch {
-        delay(500)
-        println("Task 1")
-    }
-
-    launch {
-        delay(300)
-        throw RuntimeException("Task 2 failed!")
-    }
-
-    launch {
-        delay(700)
-        println("Task 3")  // Never executes
-    }
-}
-
-fun main() = runBlocking {
-    try {
-        fetchWithFailure()
-    } catch (e: Exception) {
-        println("Caught: ${e.message}")
-    }
-}
-// Output:
-// Caught: Task 2 failed!
-```
-
-### `supervisorScope` - Independent Children
-
-`supervisorScope` allows children to fail independently:
-
-```kotlin
-suspend fun fetchWithSupervision() = supervisorScope {
-    launch {
-        delay(500)
-        println("Task 1 completed")
-    }
-
-    launch {
-        delay(300)
-        throw RuntimeException("Task 2 failed!")
-    }
-
-    launch {
-        delay(700)
-        println("Task 3 completed")  // Still executes
-    }
-}
-
-fun main() = runBlocking {
-    try {
-        fetchWithSupervision()
-        delay(1000)
-    } catch (e: Exception) {
-        println("Caught: ${e.message}")
-    }
-}
-// Output:
-// Task 1 completed
-// Task 3 completed
-```
+By the end, you'll process data with elegance and efficiency!
 
 ---
 
-## Exception Handling in Coroutines
+## The Concept: Transforming vs Iterating
 
-Exception handling in coroutines has special rules.
-
-### Try-Catch in Coroutines
+### The Traditional Way (Imperative)
 
 ```kotlin
-fun main() = runBlocking {
-    val job = launch {
-        try {
-            delay(500)
-            throw RuntimeException("Error!")
-        } catch (e: Exception) {
-            println("Caught in coroutine: ${e.message}")
-        }
+// Calculate total price of items over $100
+val items = listOf(50.0, 120.0, 75.0, 200.0, 95.0)
+var total = 0.0
+for (price in items) {
+    if (price > 100) {
+        total += price
     }
-
-    job.join()
 }
+println(total)  // 320.0
 ```
 
-### Try-Catch Outside Launch (Doesn't Work!)
+### The Functional Way (Declarative)
 
 ```kotlin
-fun main() = runBlocking {
-    try {
-        launch {  // Fire and forget!
-            delay(500)
-            throw RuntimeException("Error!")
-        }
-    } catch (e: Exception) {
-        println("Never caught here!")  // Not reached
-    }
-
-    delay(1000)
-}
-// Crashes the program!
+val items = listOf(50.0, 120.0, 75.0, 200.0, 95.0)
+val total = items
+    .filter { it > 100 }
+    .sum()
+println(total)  // 320.0
 ```
 
-### Exception Handling with Async
-
-```kotlin
-fun main() = runBlocking {
-    val deferred = async {
-        delay(500)
-        throw RuntimeException("Error in async!")
-    }
-
-    try {
-        deferred.await()  // Exception thrown here
-    } catch (e: Exception) {
-        println("Caught: ${e.message}")
-    }
-}
-```
-
-### CoroutineExceptionHandler
-
-Global exception handler for coroutines:
-
-```kotlin
-val handler = CoroutineExceptionHandler { _, exception ->
-    println("Caught: ${exception.message}")
-}
-
-fun main() = runBlocking {
-    val scope = CoroutineScope(Dispatchers.Default + handler)
-
-    scope.launch {
-        delay(500)
-        throw RuntimeException("Error!")
-    }
-
-    delay(1000)
-}
-// Output: Caught: Error!
-```
-
-### SupervisorJob for Independent Failures
-
-```kotlin
-fun main() = runBlocking {
-    val supervisor = SupervisorJob()
-    val scope = CoroutineScope(Dispatchers.Default + supervisor)
-
-    val job1 = scope.launch {
-        delay(500)
-        println("Job 1 completed")
-    }
-
-    val job2 = scope.launch {
-        delay(300)
-        throw RuntimeException("Job 2 failed!")
-    }
-
-    val job3 = scope.launch {
-        delay(700)
-        println("Job 3 completed")
-    }
-
-    joinAll(job1, job2, job3)
-    supervisor.cancel()
-}
-// Output:
-// Job 1 completed
-// Job 3 completed
-```
+**Benefits**:
+- Clearer intent (filter, then sum)
+- No mutable state (`var total`)
+- Chainable operations
+- Less error-prone
+- Easier to test and reason about
 
 ---
 
-## Flows - Reactive Streams
+## Map: Transforming Elements
 
-Flows represent asynchronous streams of values.
+`map` transforms each element using a function.
 
-### Basic Flow
+### Basic Map
 
 ```kotlin
-import kotlinx.coroutines.flow.*
+val numbers = listOf(1, 2, 3, 4, 5)
 
-fun simpleFlow(): Flow<Int> = flow {
-    for (i in 1..3) {
-        delay(500)
-        emit(i)  // Emit value
-    }
-}
+// Transform each number
+val doubled = numbers.map { it * 2 }
+println(doubled)  // [2, 4, 6, 8, 10]
 
-fun main() = runBlocking {
-    simpleFlow().collect { value ->
-        println("Received: $value")
-    }
-}
-// Output (0.5s delays):
-// Received: 1
-// Received: 2
-// Received: 3
+val squared = numbers.map { it * it }
+println(squared)  // [1, 4, 9, 16, 25]
+
+// Transform to different type
+val asStrings = numbers.map { "Number: $it" }
+println(asStrings)  // [Number: 1, Number: 2, ...]
 ```
 
-### Flow Builders
+### Map with Objects
 
 ```kotlin
-// flowOf - from values
-val flowOfValues: Flow<Int> = flowOf(1, 2, 3, 4, 5)
-
-// asFlow - from collections
-val listFlow: Flow<Int> = listOf(1, 2, 3).asFlow()
-
-// flow { } - custom
-val customFlow: Flow<Int> = flow {
-    emit(1)
-    delay(100)
-    emit(2)
-}
-
-fun main() = runBlocking {
-    flowOfValues.collect { println(it) }
-}
-```
-
-### Flow Operators
-
-```kotlin
-fun main() = runBlocking {
-    // map
-    (1..5).asFlow()
-        .map { it * it }
-        .collect { println(it) }  // 1, 4, 9, 16, 25
-
-    // filter
-    (1..10).asFlow()
-        .filter { it % 2 == 0 }
-        .collect { println(it) }  // 2, 4, 6, 8, 10
-
-    // transform
-    (1..3).asFlow()
-        .transform { value ->
-            emit("Start $value")
-            delay(100)
-            emit("End $value")
-        }
-        .collect { println(it) }
-
-    // take
-    (1..100).asFlow()
-        .take(3)
-        .collect { println(it) }  // 1, 2, 3
-}
-```
-
-### Flow Context
-
-Flows preserve the context of the collector:
-
-```kotlin
-fun simpleFlow(): Flow<Int> = flow {
-    println("Flow started on ${Thread.currentThread().name}")
-    for (i in 1..3) {
-        delay(100)
-        emit(i)
-    }
-}
-
-fun main() = runBlocking {
-    simpleFlow()
-        .collect { value ->
-            println("Collected $value on ${Thread.currentThread().name}")
-        }
-}
-```
-
-### `flowOn` - Change Flow Context
-
-```kotlin
-fun main() = runBlocking {
-    (1..5).asFlow()
-        .map { value ->
-            println("Map on ${Thread.currentThread().name}")
-            value * value
-        }
-        .flowOn(Dispatchers.Default)  // Upstream operators run on Default
-        .collect { value ->
-            println("Collect $value on ${Thread.currentThread().name}")
-        }
-}
-```
-
-### Buffer and Conflate
-
-```kotlin
-fun main() = runBlocking {
-    // Without buffer (slow)
-    val time1 = measureTimeMillis {
-        (1..3).asFlow()
-            .onEach { delay(100) }  // Emission delay
-            .collect { value ->
-                delay(300)  // Processing delay
-                println(value)
-            }
-    }
-    println("Time: $time1 ms")  // ~1200ms
-
-    // With buffer (faster)
-    val time2 = measureTimeMillis {
-        (1..3).asFlow()
-            .onEach { delay(100) }
-            .buffer()  // Buffer emissions
-            .collect { value ->
-                delay(300)
-                println(value)
-            }
-    }
-    println("Time: $time2 ms")  // ~1000ms
-
-    // Conflate - keep only latest
-    (1..10).asFlow()
-        .onEach { delay(100) }
-        .conflate()  // Skip intermediate values
-        .collect { value ->
-            println("Processing $value")
-            delay(300)
-        }
-}
-```
-
-### Combining Flows
-
-```kotlin
-fun main() = runBlocking {
-    val nums = (1..3).asFlow()
-    val strs = flowOf("one", "two", "three")
-
-    // zip - combine corresponding values
-    nums.zip(strs) { a, b -> "$a -> $b" }
-        .collect { println(it) }
-    // 1 -> one
-    // 2 -> two
-    // 3 -> three
-
-    // combine - combine latest values
-    nums.combine(strs) { a, b -> "$a and $b" }
-        .collect { println(it) }
-}
-```
-
-### Flow Completion
-
-```kotlin
-fun main() = runBlocking {
-    (1..3).asFlow()
-        .onEach { println("Emitting $it") }
-        .onCompletion { println("Flow completed") }
-        .collect { println("Collected $it") }
-
-    // With exception handling
-    flow {
-        emit(1)
-        throw RuntimeException("Error!")
-    }
-        .onCompletion { cause ->
-            if (cause != null) {
-                println("Completed with error: ${cause.message}")
-            }
-        }
-        .catch { println("Caught: ${it.message}") }
-        .collect()
-}
-```
-
----
-
-## Channels - Communication Between Coroutines
-
-Channels are hot streams for sending data between coroutines.
-
-### Basic Channel
-
-```kotlin
-import kotlinx.coroutines.channels.*
-
-fun main() = runBlocking {
-    val channel = Channel<Int>()
-
-    launch {
-        for (x in 1..5) {
-            channel.send(x)  // Send
-            println("Sent $x")
-        }
-        channel.close()  // Close channel
-    }
-
-    for (y in channel) {  // Receive
-        println("Received $y")
-    }
-}
-```
-
-### Producer-Consumer Pattern
-
-```kotlin
-fun CoroutineScope.produceNumbers() = produce<Int> {
-    var x = 1
-    while (true) {
-        send(x++)
-        delay(100)
-    }
-}
-
-fun CoroutineScope.square(numbers: ReceiveChannel<Int>) = produce<Int> {
-    for (x in numbers) {
-        send(x * x)
-    }
-}
-
-fun main() = runBlocking {
-    val numbers = produceNumbers()
-    val squares = square(numbers)
-
-    repeat(5) {
-        println(squares.receive())
-    }
-
-    coroutineContext.cancelChildren()
-}
-```
-
-### Channel Buffering
-
-```kotlin
-fun main() = runBlocking {
-    // Unbuffered (rendezvous)
-    val unbuffered = Channel<Int>()
-
-    // Buffered
-    val buffered = Channel<Int>(capacity = 3)
-
-    // Unlimited buffer
-    val unlimited = Channel<Int>(Channel.UNLIMITED)
-
-    // Conflated - keeps only latest
-    val conflated = Channel<Int>(Channel.CONFLATED)
-
-    launch {
-        repeat(5) {
-            buffered.send(it)
-            println("Sent $it")
-        }
-    }
-
-    delay(500)
-    repeat(5) {
-        println("Received ${buffered.receive()}")
-    }
-}
-```
-
-### Fan-out and Fan-in
-
-```kotlin
-// Fan-out - multiple consumers
-fun CoroutineScope.produceNumbers() = produce<Int> {
-    var x = 1
-    while (true) {
-        send(x++)
-        delay(100)
-    }
-}
-
-fun CoroutineScope.consumeNumbers(id: Int, channel: ReceiveChannel<Int>) = launch {
-    for (msg in channel) {
-        println("Consumer $id received $msg")
-    }
-}
-
-fun main() = runBlocking {
-    val producer = produceNumbers()
-
-    repeat(3) {
-        consumeNumbers(it + 1, producer)
-    }
-
-    delay(1000)
-    producer.cancel()
-}
-
-// Fan-in - multiple producers
-suspend fun sendString(channel: SendChannel<String>, s: String, time: Long) {
-    while (true) {
-        delay(time)
-        channel.send(s)
-    }
-}
-
-fun main2() = runBlocking {
-    val channel = Channel<String>()
-
-    launch { sendString(channel, "foo", 200) }
-    launch { sendString(channel, "bar", 500) }
-
-    repeat(10) {
-        println(channel.receive())
-    }
-
-    coroutineContext.cancelChildren()
-}
-```
-
----
-
-## StateFlow and SharedFlow
-
-Hot flows that maintain state or broadcast values.
-
-### StateFlow - State Holder
-
-```kotlin
-import kotlinx.coroutines.flow.*
-
-class Counter {
-    private val _count = MutableStateFlow(0)
-    val count: StateFlow<Int> = _count
-
-    fun increment() {
-        _count.value++
-    }
-
-    fun decrement() {
-        _count.value--
-    }
-}
-
-fun main() = runBlocking {
-    val counter = Counter()
-
-    launch {
-        counter.count.collect { value ->
-            println("Counter: $value")
-        }
-    }
-
-    delay(100)
-    counter.increment()  // Counter: 1
-    delay(100)
-    counter.increment()  // Counter: 2
-    delay(100)
-    counter.decrement()  // Counter: 1
-
-    delay(500)
-}
-```
-
-### StateFlow Features
-
-```kotlin
-fun main() = runBlocking {
-    val stateFlow = MutableStateFlow("Initial")
-
-    // Always has a value
-    println("Current: ${stateFlow.value}")
-
-    launch {
-        stateFlow.collect {
-            println("Collected: $it")
-        }
-    }
-
-    delay(100)
-    stateFlow.value = "Updated"
-    stateFlow.value = "Updated"  // Duplicate - not emitted
-    stateFlow.value = "Final"
-
-    delay(500)
-}
-// Output:
-// Current: Initial
-// Collected: Initial
-// Collected: Updated
-// Collected: Final
-```
-
-### SharedFlow - Event Broadcaster
-
-```kotlin
-class EventBus {
-    private val _events = MutableSharedFlow<String>()
-    val events: SharedFlow<String> = _events
-
-    suspend fun publish(event: String) {
-        _events.emit(event)
-    }
-}
-
-fun main() = runBlocking {
-    val eventBus = EventBus()
-
-    // Multiple collectors
-    launch {
-        eventBus.events.collect {
-            println("Collector 1: $it")
-        }
-    }
-
-    launch {
-        eventBus.events.collect {
-            println("Collector 2: $it")
-        }
-    }
-
-    delay(100)
-    eventBus.publish("Event 1")
-    delay(100)
-    eventBus.publish("Event 2")
-
-    delay(500)
-}
-// Both collectors receive all events
-```
-
-### SharedFlow with Replay
-
-```kotlin
-fun main() = runBlocking {
-    val sharedFlow = MutableSharedFlow<Int>(replay = 2)
-
-    sharedFlow.emit(1)
-    sharedFlow.emit(2)
-    sharedFlow.emit(3)
-
-    // New collector gets last 2 values
-    sharedFlow.collect {
-        println("Received: $it")
-    }
-}
-// Output:
-// Received: 2
-// Received: 3
-```
-
----
-
-## Advanced Context Switching
-
-### `withContext` - Temporary Context Switch
-
-```kotlin
-suspend fun fetchData(): String = withContext(Dispatchers.IO) {
-    // Runs on IO dispatcher
-    delay(1000)
-    "Data from IO"
-}
-
-suspend fun processData(data: String): String = withContext(Dispatchers.Default) {
-    // Runs on Default dispatcher
-    delay(500)
-    data.uppercase()
-}
-
-fun main() = runBlocking {
-    val data = fetchData()
-    val result = processData(data)
-    println(result)  // DATA FROM IO
-}
-```
-
-### Context Elements
-
-```kotlin
-fun main() = runBlocking {
-    val context = CoroutineName("MyCoroutine") + Dispatchers.Default
-
-    launch(context) {
-        println("Running in: ${coroutineContext[CoroutineName]?.name}")
-        println("On thread: ${Thread.currentThread().name}")
-    }
-
-    delay(100)
-}
-```
-
----
-
-## Exercises
-
-### Exercise 1: Temperature Monitor with Flow (Medium)
-
-Create a temperature monitoring system using Flow.
-
-**Requirements**:
-- Generate random temperatures every second
-- Filter temperatures above 30°C
-- Calculate running average
-- Emit alerts for high temperatures
-
-**Solution**:
-
-```kotlin
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
-import kotlin.random.Random
-
-fun temperatureFlow(): Flow<Double> = flow {
-    while (true) {
-        val temp = Random.nextDouble(15.0, 40.0)
-        emit(temp)
-        delay(1000)
-    }
-}
-
-fun main() = runBlocking {
-    var count = 0
-    var sum = 0.0
-
-    temperatureFlow()
-        .onEach { temp ->
-            println("Temperature: %.1f°C".format(temp))
-        }
-        .map { temp ->
-            count++
-            sum += temp
-            Pair(temp, sum / count)
-        }
-        .filter { (temp, _) -> temp > 30.0 }
-        .take(5)  // Stop after 5 high temps
-        .collect { (temp, avg) ->
-            println("⚠️ HIGH TEMP: %.1f°C (Avg: %.1f°C)".format(temp, avg))
-        }
-}
-```
-
-### Exercise 2: Download Manager with Channels (Hard)
-
-Build a concurrent download manager using channels.
-
-**Requirements**:
-- Multiple download workers
-- Task queue with channel
-- Progress reporting
-- Completion notification
-
-**Solution**:
-
-```kotlin
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
-
-data class DownloadTask(val id: Int, val url: String, val size: Int)
-data class DownloadResult(val id: Int, val url: String, val success: Boolean)
-
-suspend fun downloadFile(task: DownloadTask): DownloadResult {
-    println("Downloading ${task.url}...")
-    delay((task.size * 10).toLong())  // Simulate download
-    return DownloadResult(task.id, task.url, true)
-}
-
-fun CoroutineScope.downloadWorker(
-    id: Int,
-    tasks: ReceiveChannel<DownloadTask>,
-    results: SendChannel<DownloadResult>
-) = launch {
-    for (task in tasks) {
-        println("Worker $id processing task ${task.id}")
-        val result = downloadFile(task)
-        results.send(result)
-    }
-    println("Worker $id finished")
-}
-
-fun main() = runBlocking {
-    val tasks = Channel<DownloadTask>()
-    val results = Channel<DownloadResult>()
-
-    // Start 3 workers
-    repeat(3) { workerId ->
-        downloadWorker(workerId + 1, tasks, results)
-    }
-
-    // Send tasks
-    launch {
-        val downloads = listOf(
-            DownloadTask(1, "file1.zip", 100),
-            DownloadTask(2, "file2.zip", 50),
-            DownloadTask(3, "file3.zip", 75),
-            DownloadTask(4, "file4.zip", 120),
-            DownloadTask(5, "file5.zip", 60)
-        )
-
-        downloads.forEach { tasks.send(it) }
-        tasks.close()
-    }
-
-    // Collect results
-    var completed = 0
-    for (result in results) {
-        completed++
-        println("✅ Completed: ${result.url} (${completed}/5)")
-
-        if (completed == 5) {
-            results.close()
-            break
-        }
-    }
-
-    println("\nAll downloads completed!")
-}
-```
-
-### Exercise 3: Real-Time Chat with StateFlow (Hard)
-
-Create a simple chat system with StateFlow for state management.
-
-**Requirements**:
-- User state (online/offline)
-- Message history
-- Real-time updates
-- Multiple observers
-
-**Solution**:
-
-```kotlin
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
-
-data class Message(val user: String, val text: String, val timestamp: Long)
-data class ChatState(
-    val users: Set<String>,
-    val messages: List<Message>
+data class Person(val name: String, val age: Int)
+
+val people = listOf(
+    Person("Alice", 25),
+    Person("Bob", 30),
+    Person("Charlie", 35)
 )
 
-class ChatRoom {
-    private val _state = MutableStateFlow(ChatState(emptySet(), emptyList()))
-    val state: StateFlow<ChatState> = _state
+// Extract property
+val names = people.map { it.name }
+println(names)  // [Alice, Bob, Charlie]
 
-    fun userJoin(username: String) {
-        _state.value = _state.value.copy(
-            users = _state.value.users + username,
-            messages = _state.value.messages + Message(
-                "System",
-                "$username joined",
-                System.currentTimeMillis()
-            )
-        )
-    }
+// Or use member reference
+val ages = people.map(Person::age)
+println(ages)  // [25, 30, 35]
 
-    fun userLeave(username: String) {
-        _state.value = _state.value.copy(
-            users = _state.value.users - username,
-            messages = _state.value.messages + Message(
-                "System",
-                "$username left",
-                System.currentTimeMillis()
-            )
-        )
-    }
+// Transform to different object
+data class NameTag(val label: String)
+val tags = people.map { NameTag("Hello, I'm ${it.name}") }
+println(tags)
+// [NameTag(label=Hello, I'm Alice), ...]
+```
 
-    fun sendMessage(username: String, text: String) {
-        _state.value = _state.value.copy(
-            messages = _state.value.messages + Message(
-                username,
-                text,
-                System.currentTimeMillis()
-            )
-        )
+### MapIndexed: Transform with Index
+
+```kotlin
+val fruits = listOf("apple", "banana", "cherry")
+
+val indexed = fruits.mapIndexed { index, fruit ->
+    "$index: $fruit"
+}
+println(indexed)  // [0: apple, 1: banana, 2: cherry]
+```
+
+### MapNotNull: Transform and Filter Nulls
+
+```kotlin
+val input = listOf("1", "2", "abc", "3", "xyz")
+
+val numbers = input.mapNotNull { it.toIntOrNull() }
+println(numbers)  // [1, 2, 3]
+```
+
+---
+
+## Filter: Selecting Elements
+
+`filter` keeps only elements matching a predicate.
+
+### Basic Filter
+
+```kotlin
+val numbers = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+
+// Keep even numbers
+val evens = numbers.filter { it % 2 == 0 }
+println(evens)  // [2, 4, 6, 8, 10]
+
+// Keep numbers greater than 5
+val bigNumbers = numbers.filter { it > 5 }
+println(bigNumbers)  // [6, 7, 8, 9, 10]
+
+// Multiple conditions
+val filtered = numbers.filter { it > 3 && it < 8 }
+println(filtered)  // [4, 5, 6, 7]
+```
+
+### Filter with Objects
+
+```kotlin
+data class Product(val name: String, val price: Double, val inStock: Boolean)
+
+val products = listOf(
+    Product("Laptop", 1200.0, true),
+    Product("Mouse", 25.0, false),
+    Product("Keyboard", 75.0, true),
+    Product("Monitor", 300.0, true)
+)
+
+// Available products
+val available = products.filter { it.inStock }
+println(available.map { it.name })  // [Laptop, Keyboard, Monitor]
+
+// Expensive products in stock
+val expensiveAvailable = products.filter { it.price > 100 && it.inStock }
+println(expensiveAvailable.map { it.name })  // [Laptop, Monitor]
+```
+
+### FilterNot: Opposite of Filter
+
+```kotlin
+val numbers = listOf(1, 2, 3, 4, 5)
+
+// Keep odd numbers (not even)
+val odds = numbers.filterNot { it % 2 == 0 }
+println(odds)  // [1, 3, 5]
+```
+
+### FilterIsInstance: Filter by Type
+
+```kotlin
+val mixed: List<Any> = listOf(1, "hello", 2, "world", 3.14, true)
+
+val strings = mixed.filterIsInstance<String>()
+println(strings)  // [hello, world]
+
+val numbers = mixed.filterIsInstance<Int>()
+println(numbers)  // [1, 2]
+```
+
+---
+
+## Reduce and Fold: Accumulating Values
+
+Reduce/fold combine all elements into a single value.
+
+### Reduce
+
+```kotlin
+val numbers = listOf(1, 2, 3, 4, 5)
+
+// Sum all numbers
+val sum = numbers.reduce { acc, number -> acc + number }
+println(sum)  // 15
+
+// Product of all numbers
+val product = numbers.reduce { acc, number -> acc * number }
+println(product)  // 120
+
+// Find maximum
+val max = numbers.reduce { acc, number ->
+    if (number > acc) number else acc
+}
+println(max)  // 5
+```
+
+### Fold: Reduce with Initial Value
+
+```kotlin
+val numbers = listOf(1, 2, 3, 4, 5)
+
+// Sum with initial value
+val sum = numbers.fold(0) { acc, number -> acc + number }
+println(sum)  // 15
+
+// Start with 100
+val sumWith100 = numbers.fold(100) { acc, number -> acc + number }
+println(sumWith100)  // 115
+
+// Build a string
+val text = numbers.fold("Numbers: ") { acc, number ->
+    "$acc$number, "
+}
+println(text)  // Numbers: 1, 2, 3, 4, 5,
+```
+
+### Practical Example: Complex Accumulation
+
+```kotlin
+data class Transaction(val amount: Double, val type: String)
+
+val transactions = listOf(
+    Transaction(100.0, "income"),
+    Transaction(50.0, "expense"),
+    Transaction(200.0, "income"),
+    Transaction(30.0, "expense"),
+    Transaction(150.0, "income")
+)
+
+// Calculate net balance
+val balance = transactions.fold(0.0) { acc, transaction ->
+    when (transaction.type) {
+        "income" -> acc + transaction.amount
+        "expense" -> acc - transaction.amount
+        else -> acc
     }
 }
+println("Balance: $$balance")  // Balance: $370.0
+```
 
-fun main() = runBlocking {
-    val chatRoom = ChatRoom()
+---
 
-    // Observer 1
-    launch {
-        chatRoom.state
-            .map { it.users.size }
-            .distinctUntilChanged()
-            .collect { count ->
-                println("👥 Users online: $count")
-            }
+## Finding Elements
+
+### find: First Match or Null
+
+```kotlin
+val numbers = listOf(1, 2, 3, 4, 5, 6)
+
+val firstEven = numbers.find { it % 2 == 0 }
+println(firstEven)  // 2
+
+val firstBig = numbers.find { it > 10 }
+println(firstBig)  // null
+```
+
+### findLast: Last Match or Null
+
+```kotlin
+val numbers = listOf(1, 2, 3, 4, 5, 6)
+
+val lastEven = numbers.findLast { it % 2 == 0 }
+println(lastEven)  // 6
+```
+
+### first and last
+
+```kotlin
+val numbers = listOf(1, 2, 3, 4, 5)
+
+// First element
+println(numbers.first())  // 1
+
+// First matching predicate
+println(numbers.first { it > 3 })  // 4
+
+// Throws exception if not found
+// println(numbers.first { it > 10 })  // NoSuchElementException
+
+// Safe version
+println(numbers.firstOrNull { it > 10 })  // null
+
+// Last element
+println(numbers.last())  // 5
+```
+
+### any, all, none: Boolean Checks
+
+```kotlin
+val numbers = listOf(1, 2, 3, 4, 5)
+
+// Any element matches?
+println(numbers.any { it > 3 })  // true
+println(numbers.any { it > 10 })  // false
+
+// All elements match?
+println(numbers.all { it > 0 })  // true
+println(numbers.all { it > 3 })  // false
+
+// No elements match?
+println(numbers.none { it < 0 })  // true
+println(numbers.none { it > 3 })  // false
+```
+
+### Practical Example: Validation
+
+```kotlin
+data class User(val name: String, val age: Int, val email: String)
+
+val users = listOf(
+    User("Alice", 25, "alice@example.com"),
+    User("Bob", 17, "bob@example.com"),
+    User("Charlie", 30, "charlie@example.com")
+)
+
+// Check if any user is underage
+val hasMinors = users.any { it.age < 18 }
+println("Has minors: $hasMinors")  // true
+
+// Check if all have valid emails
+val allValidEmails = users.all { it.email.contains("@") }
+println("All valid emails: $allValidEmails")  // true
+
+// Check if no user has empty name
+val noEmptyNames = users.none { it.name.isEmpty() }
+println("No empty names: $noEmptyNames")  // true
+```
+
+---
+
+## Grouping and Partitioning
+
+### groupBy: Group into Map
+
+```kotlin
+data class Person(val name: String, val age: Int, val city: String)
+
+val people = listOf(
+    Person("Alice", 25, "NYC"),
+    Person("Bob", 30, "LA"),
+    Person("Charlie", 25, "NYC"),
+    Person("Diana", 30, "LA")
+)
+
+// Group by age
+val byAge = people.groupBy { it.age }
+println(byAge)
+// {25=[Person(Alice, 25, NYC), Person(Charlie, 25, NYC)],
+//  30=[Person(Bob, 30, LA), Person(Diana, 30, LA)]}
+
+// Group by city
+val byCity = people.groupBy { it.city }
+println(byCity.keys)  // [NYC, LA]
+
+// Group and transform
+val namesByCity = people.groupBy(
+    keySelector = { it.city },
+    valueTransform = { it.name }
+)
+println(namesByCity)
+// {NYC=[Alice, Charlie], LA=[Bob, Diana]}
+```
+
+### partition: Split into Two Groups
+
+```kotlin
+val numbers = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+
+// Split into even and odd
+val (evens, odds) = numbers.partition { it % 2 == 0 }
+println("Evens: $evens")  // [2, 4, 6, 8, 10]
+println("Odds: $odds")    // [1, 3, 5, 7, 9]
+
+// Practical example
+data class Task(val name: String, val completed: Boolean)
+
+val tasks = listOf(
+    Task("Write code", true),
+    Task("Write tests", false),
+    Task("Review PR", true),
+    Task("Deploy", false)
+)
+
+val (completed, pending) = tasks.partition { it.completed }
+println("Completed: ${completed.map { it.name }}")  // [Write code, Review PR]
+println("Pending: ${pending.map { it.name }}")      // [Write tests, Deploy]
+```
+
+### associate: Create Map
+
+```kotlin
+val people = listOf("Alice", "Bob", "Charlie")
+
+// Create map from list
+val ages = people.associateWith { it.length }
+println(ages)  // {Alice=5, Bob=3, Charlie=7}
+
+// Associate with key
+val byFirstLetter = people.associateBy { it.first() }
+println(byFirstLetter)  // {A=Alice, B=Bob, C=Charlie}
+
+// Full control
+val custom = people.associate { name ->
+    name.uppercase() to name.length
+}
+println(custom)  // {ALICE=5, BOB=3, CHARLIE=7}
+```
+
+---
+
+## FlatMap and Flatten
+
+### flatten: Flatten Nested Collections
+
+```kotlin
+val nested = listOf(
+    listOf(1, 2, 3),
+    listOf(4, 5),
+    listOf(6, 7, 8, 9)
+)
+
+val flat = nested.flatten()
+println(flat)  // [1, 2, 3, 4, 5, 6, 7, 8, 9]
+```
+
+### flatMap: Map Then Flatten
+
+```kotlin
+data class Order(val id: Int, val items: List<String>)
+
+val orders = listOf(
+    Order(1, listOf("Laptop", "Mouse")),
+    Order(2, listOf("Keyboard", "Monitor", "Cable")),
+    Order(3, listOf("Phone"))
+)
+
+// Get all items across all orders
+val allItems = orders.flatMap { it.items }
+println(allItems)
+// [Laptop, Mouse, Keyboard, Monitor, Cable, Phone]
+
+// Equivalent to map + flatten
+val allItems2 = orders.map { it.items }.flatten()
+println(allItems2)
+// [Laptop, Mouse, Keyboard, Monitor, Cable, Phone]
+```
+
+### Practical Example: Hierarchical Data
+
+```kotlin
+data class Department(val name: String, val employees: List<Employee>)
+data class Employee(val name: String, val skills: List<String>)
+
+val departments = listOf(
+    Department("Engineering", listOf(
+        Employee("Alice", listOf("Kotlin", "Java", "Python")),
+        Employee("Bob", listOf("JavaScript", "TypeScript"))
+    )),
+    Department("Design", listOf(
+        Employee("Charlie", listOf("Figma", "Photoshop")),
+        Employee("Diana", listOf("Illustrator", "Sketch"))
+    ))
+)
+
+// All employees across departments
+val allEmployees = departments.flatMap { it.employees }
+println("Total employees: ${allEmployees.size}")  // 4
+
+// All unique skills across company
+val allSkills = departments
+    .flatMap { it.employees }
+    .flatMap { it.skills }
+    .toSet()
+println("All skills: $allSkills")
+// [Kotlin, Java, Python, JavaScript, TypeScript, Figma, Photoshop, Illustrator, Sketch]
+```
+
+---
+
+## Sequences: Lazy Evaluation
+
+Collections process eagerly (all at once). Sequences process lazily (on demand).
+
+### The Problem with Eager Evaluation
+
+```kotlin
+val numbers = (1..1_000_000).toList()
+
+// Each operation creates intermediate list
+val result = numbers
+    .map { it * 2 }        // Creates 1M element list
+    .filter { it > 100 }   // Creates another list
+    .take(10)              // Finally takes 10
+
+// Memory inefficient!
+```
+
+### Sequences to the Rescue
+
+```kotlin
+val numbers = (1..1_000_000).asSequence()
+
+val result = numbers
+    .map { it * 2 }        // Doesn't execute yet
+    .filter { it > 100 }   // Doesn't execute yet
+    .take(10)              // Still lazy
+    .toList()              // NOW it executes, processes only what's needed
+
+println(result)
+// [102, 104, 106, 108, 110, 112, 114, 116, 118, 120]
+```
+
+### How Sequences Work
+
+```kotlin
+val numbers = sequenceOf(1, 2, 3, 4, 5)
+
+val result = numbers
+    .map {
+        println("Mapping $it")
+        it * 2
+    }
+    .filter {
+        println("Filtering $it")
+        it > 4
+    }
+    .toList()
+
+// Output shows element-by-element processing:
+// Mapping 1
+// Filtering 2
+// Mapping 2
+// Filtering 4
+// Mapping 3
+// Filtering 6
+// Mapping 4
+// Filtering 8
+// Mapping 5
+// Filtering 10
+
+println(result)  // [6, 8, 10]
+```
+
+### When to Use Sequences
+
+**Use sequences when**:
+- ✅ Large collections (1000+ elements)
+- ✅ Multiple chained operations
+- ✅ Only need part of result (take, first)
+- ✅ Infinite data streams
+
+**Use regular collections when**:
+- ✅ Small collections (< 100 elements)
+- ✅ Single operation
+- ✅ Need the entire result anyway
+
+### Performance Comparison
+
+```kotlin
+fun measureTime(label: String, block: () -> Unit) {
+    val start = System.currentTimeMillis()
+    block()
+    val elapsed = System.currentTimeMillis() - start
+    println("$label: ${elapsed}ms")
+}
+
+val largeList = (1..10_000_000).toList()
+
+measureTime("List") {
+    val result = largeList
+        .map { it * 2 }
+        .filter { it > 1000 }
+        .take(100)
+        .sum()
+}
+
+measureTime("Sequence") {
+    val result = largeList.asSequence()
+        .map { it * 2 }
+        .filter { it > 1000 }
+        .take(100)
+        .sum()
+}
+
+// Typical output:
+// List: 450ms
+// Sequence: 0ms (processes only ~51 elements!)
+```
+
+---
+
+## Chaining Operations
+
+The real power comes from combining operations.
+
+### Example 1: E-Commerce Analysis
+
+```kotlin
+data class Product(val name: String, val category: String, val price: Double, val rating: Double)
+
+val products = listOf(
+    Product("Laptop", "Electronics", 1200.0, 4.5),
+    Product("Mouse", "Electronics", 25.0, 4.2),
+    Product("Desk", "Furniture", 300.0, 4.7),
+    Product("Chair", "Furniture", 250.0, 4.6),
+    Product("Monitor", "Electronics", 400.0, 4.8),
+    Product("Lamp", "Furniture", 50.0, 4.1)
+)
+
+// Find expensive, highly-rated electronics
+val topElectronics = products
+    .filter { it.category == "Electronics" }
+    .filter { it.price > 100 }
+    .filter { it.rating >= 4.5 }
+    .sortedByDescending { it.rating }
+    .map { it.name }
+
+println("Top electronics: $topElectronics")
+// [Monitor, Laptop]
+
+// Average price by category
+val avgPriceByCategory = products
+    .groupBy { it.category }
+    .mapValues { (_, products) ->
+        products.map { it.price }.average()
     }
 
-    // Observer 2
-    launch {
-        chatRoom.state
-            .map { it.messages.lastOrNull() }
-            .filterNotNull()
-            .collect { msg ->
-                println("💬 [${msg.user}]: ${msg.text}")
-            }
+println("Average prices: $avgPriceByCategory")
+// {Electronics=541.67, Furniture=200.0}
+```
+
+### Example 2: Student Grade Analysis
+
+```kotlin
+data class Student(val name: String, val grades: List<Int>, val major: String)
+
+val students = listOf(
+    Student("Alice", listOf(85, 90, 92), "CS"),
+    Student("Bob", listOf(78, 82, 80), "Math"),
+    Student("Charlie", listOf(95, 98, 96), "CS"),
+    Student("Diana", listOf(88, 85, 90), "Math"),
+    Student("Eve", listOf(70, 75, 72), "CS")
+)
+
+// CS students with average > 85
+val topCSStudents = students
+    .filter { it.major == "CS" }
+    .map { student ->
+        student.name to student.grades.average()
     }
+    .filter { (_, avg) -> avg > 85 }
+    .sortedByDescending { (_, avg) -> avg }
 
-    delay(100)
+println("Top CS students:")
+topCSStudents.forEach { (name, avg) ->
+    println("  $name: ${"%.1f".format(avg)}")
+}
+// Top CS students:
+//   Charlie: 96.3
+//   Alice: 89.0
 
-    chatRoom.userJoin("Alice")
-    delay(100)
-    chatRoom.userJoin("Bob")
-    delay(100)
-    chatRoom.sendMessage("Alice", "Hello, Bob!")
-    delay(100)
-    chatRoom.sendMessage("Bob", "Hi, Alice!")
-    delay(100)
-    chatRoom.userLeave("Alice")
+// All grades flattened and analyzed
+val allGrades = students.flatMap { it.grades }
+println("Total grades: ${allGrades.size}")  // 15
+println("Highest grade: ${allGrades.maxOrNull()}")  // 98
+println("Average: ${"%.1f".format(allGrades.average())}")  // 84.7
+```
 
-    delay(500)
+---
+
+## Exercise 1: Sales Data Analysis
+
+**Goal**: Analyze sales data using collection operations.
+
+**Task**: Given sales data, calculate:
+1. Total revenue
+2. Number of sales over $100
+3. Average sale amount
+4. Best-selling product
+
+```kotlin
+data class Sale(val product: String, val amount: Double, val quantity: Int)
+
+fun main() {
+    val sales = listOf(
+        Sale("Laptop", 1200.0, 2),
+        Sale("Mouse", 25.0, 10),
+        Sale("Keyboard", 75.0, 5),
+        Sale("Monitor", 300.0, 3),
+        Sale("Laptop", 1200.0, 1),
+        Sale("Mouse", 25.0, 15)
+    )
+
+    // TODO: Implement analysis
 }
 ```
+
+---
+
+## Solution 1: Sales Data Analysis
+
+```kotlin
+data class Sale(val product: String, val amount: Double, val quantity: Int)
+
+fun main() {
+    val sales = listOf(
+        Sale("Laptop", 1200.0, 2),
+        Sale("Mouse", 25.0, 10),
+        Sale("Keyboard", 75.0, 5),
+        Sale("Monitor", 300.0, 3),
+        Sale("Laptop", 1200.0, 1),
+        Sale("Mouse", 25.0, 15)
+    )
+
+    // 1. Total revenue
+    val totalRevenue = sales.sumOf { it.amount * it.quantity }
+    println("Total revenue: $${"%.2f".format(totalRevenue)}")
+    // Total revenue: $5500.00
+
+    // 2. Number of sales over $100 total
+    val bigSales = sales.count { it.amount * it.quantity > 100 }
+    println("Sales over $100: $bigSales")
+    // Sales over $100: 5
+
+    // 3. Average sale amount
+    val avgSale = sales.map { it.amount * it.quantity }.average()
+    println("Average sale: $${"%.2f".format(avgSale)}")
+    // Average sale: $916.67
+
+    // 4. Best-selling product (by quantity)
+    val bestSeller = sales
+        .groupBy { it.product }
+        .mapValues { (_, sales) -> sales.sumOf { it.quantity } }
+        .maxByOrNull { it.value }
+
+    println("Best seller: ${bestSeller?.key} (${bestSeller?.value} units)")
+    // Best seller: Mouse (25 units)
+
+    // Bonus: Revenue by product
+    val revenueByProduct = sales
+        .groupBy { it.product }
+        .mapValues { (_, sales) ->
+            sales.sumOf { it.amount * it.quantity }
+        }
+        .toList()
+        .sortedByDescending { it.second }
+
+    println("\nRevenue by product:")
+    revenueByProduct.forEach { (product, revenue) ->
+        println("  $product: $${"%.2f".format(revenue)}")
+    }
+    // Laptop: $3600.00
+    // Monitor: $900.00
+    // Mouse: $625.00
+    // Keyboard: $375.00
+}
+```
+
+**Explanation**:
+- `sumOf` calculates total with transformation
+- `count` with predicate counts matches
+- `groupBy` + `mapValues` aggregates by key
+- `maxByOrNull` finds maximum based on criteria
+
+---
+
+## Exercise 2: Text Processing
+
+**Goal**: Process log files using collection operations.
+
+**Task**: Parse log entries and:
+1. Count errors
+2. Find unique users
+3. Group by log level
+4. Get most recent error
+
+```kotlin
+data class LogEntry(
+    val timestamp: Long,
+    val level: String,
+    val user: String,
+    val message: String
+)
+
+fun main() {
+    val logs = listOf(
+        LogEntry(1000, "INFO", "alice", "User logged in"),
+        LogEntry(2000, "ERROR", "bob", "Connection failed"),
+        LogEntry(3000, "INFO", "alice", "Data saved"),
+        LogEntry(4000, "WARN", "charlie", "Slow query"),
+        LogEntry(5000, "ERROR", "alice", "Timeout"),
+        LogEntry(6000, "INFO", "bob", "Request completed")
+    )
+
+    // TODO: Process logs
+}
+```
+
+---
+
+## Solution 2: Text Processing
+
+```kotlin
+data class LogEntry(
+    val timestamp: Long,
+    val level: String,
+    val user: String,
+    val message: String
+)
+
+fun main() {
+    val logs = listOf(
+        LogEntry(1000, "INFO", "alice", "User logged in"),
+        LogEntry(2000, "ERROR", "bob", "Connection failed"),
+        LogEntry(3000, "INFO", "alice", "Data saved"),
+        LogEntry(4000, "WARN", "charlie", "Slow query"),
+        LogEntry(5000, "ERROR", "alice", "Timeout"),
+        LogEntry(6000, "INFO", "bob", "Request completed")
+    )
+
+    // 1. Count errors
+    val errorCount = logs.count { it.level == "ERROR" }
+    println("Error count: $errorCount")  // 2
+
+    // 2. Unique users
+    val uniqueUsers = logs.map { it.user }.toSet()
+    println("Unique users: $uniqueUsers")  // [alice, bob, charlie]
+
+    // 3. Group by log level
+    val byLevel = logs.groupBy { it.level }
+    println("\nLogs by level:")
+    byLevel.forEach { (level, entries) ->
+        println("  $level: ${entries.size}")
+    }
+    // INFO: 3
+    // ERROR: 2
+    // WARN: 1
+
+    // 4. Most recent error
+    val recentError = logs
+        .filter { it.level == "ERROR" }
+        .maxByOrNull { it.timestamp }
+
+    println("\nMost recent error:")
+    println("  User: ${recentError?.user}")
+    println("  Message: ${recentError?.message}")
+    // User: alice
+    // Message: Timeout
+
+    // Bonus: Activity by user
+    val activityByUser = logs
+        .groupBy { it.user }
+        .mapValues { (_, entries) -> entries.size }
+        .toList()
+        .sortedByDescending { it.second }
+
+    println("\nActivity by user:")
+    activityByUser.forEach { (user, count) ->
+        println("  $user: $count actions")
+    }
+    // alice: 3 actions
+    // bob: 2 actions
+    // charlie: 1 actions
+}
+```
+
+**Explanation**:
+- `count` with predicate for conditional counting
+- `map` + `toSet` for unique values
+- `groupBy` organizes by key
+- `filter` + `maxByOrNull` finds specific maximum
+- Chaining operations creates powerful pipelines
+
+---
+
+## Exercise 3: Sequence Performance
+
+**Goal**: Compare list vs sequence performance.
+
+**Task**: Process large dataset and measure time difference.
+
+```kotlin
+fun main() {
+    val largeList = (1..1_000_000).toList()
+
+    // TODO: Compare list vs sequence for:
+    // - Map to double
+    // - Filter > 1000
+    // - Take first 100
+    // - Sum
+}
+```
+
+---
+
+## Solution 3: Sequence Performance
+
+```kotlin
+fun measureTime(label: String, block: () -> Any): Any {
+    val start = System.currentTimeMillis()
+    val result = block()
+    val elapsed = System.currentTimeMillis() - start
+    println("$label: ${elapsed}ms")
+    return result
+}
+
+fun main() {
+    val largeList = (1..1_000_000).toList()
+
+    // Using List (eager evaluation)
+    val listResult = measureTime("List processing") {
+        largeList
+            .map { it * 2 }        // Processes all 1M
+            .filter { it > 1000 }  // Processes all results
+            .take(100)             // Finally takes 100
+            .sum()
+    }
+    println("Result: $listResult\n")
+
+    // Using Sequence (lazy evaluation)
+    val sequenceResult = measureTime("Sequence processing") {
+        largeList.asSequence()
+            .map { it * 2 }        // Lazy
+            .filter { it > 1000 }  // Lazy
+            .take(100)             // Lazy
+            .sum()                 // Triggers evaluation
+    }
+    println("Result: $sequenceResult\n")
+
+    // Demonstrate step-by-step processing
+    println("=== Sequence Element-by-Element ===")
+    (1..5).asSequence()
+        .map {
+            println("  Map: $it -> ${it * 2}")
+            it * 2
+        }
+        .filter {
+            println("  Filter: $it > 4? ${it > 4}")
+            it > 4
+        }
+        .take(2)
+        .forEach { println("  Result: $it") }
+
+    // Typical output:
+    // List processing: 180ms
+    // Result: 130100
+    //
+    // Sequence processing: 0ms
+    // Result: 130100
+    //
+    // === Sequence Element-by-Element ===
+    //   Map: 1 -> 2
+    //   Filter: 2 > 4? false
+    //   Map: 2 -> 4
+    //   Filter: 4 > 4? false
+    //   Map: 3 -> 6
+    //   Filter: 6 > 4? true
+    //   Result: 6
+    //   Map: 4 -> 8
+    //   Filter: 8 > 4? true
+    //   Result: 8
+
+    // Explanation
+    println("\n=== Why Sequence is Faster ===")
+    println("List: Processes all 1M elements through each operation")
+    println("Sequence: Processes elements one-by-one, stops after finding 100")
+    println("For this example, sequence processes ~501 elements vs 1M")
+}
+```
+
+**Explanation**:
+- Lists create intermediate collections at each step
+- Sequences process elements one at a time
+- With `take(100)`, sequence stops after 100 matches
+- Sequences excel when you don't need all results
+- The performance difference grows with data size
 
 ---
 
 ## Checkpoint Quiz
 
-### Question 1: Structured Concurrency
+### Question 1
+What's the difference between `map` and `flatMap`?
 
-What happens in `coroutineScope` if one child fails?
+A) They do the same thing
+B) `map` transforms each element; `flatMap` transforms and flattens nested structures
+C) `flatMap` is faster than `map`
+D) `map` only works with numbers
 
-**A)** Only that child is cancelled
-**B)** All children are cancelled and exception is propagated
-**C)** The exception is ignored
-**D)** Other children continue running
+### Question 2
+What does `filter` return?
 
-**Answer**: **B** - In `coroutineScope`, if one child fails, all siblings are cancelled and the exception is propagated to the parent.
+A) A single element
+B) A Boolean
+C) A new collection with only elements matching the predicate
+D) The count of matching elements
+
+### Question 3
+What's the difference between `reduce` and `fold`?
+
+A) No difference
+B) `fold` requires an initial value; `reduce` uses the first element as initial value
+C) `reduce` is deprecated
+D) `fold` only works with numbers
+
+### Question 4
+When should you use sequences instead of regular collections?
+
+A) Always
+B) Never
+C) For large collections with multiple operations, especially when you don't need all results
+D) Only for strings
+
+### Question 5
+What does `partition` do?
+
+A) Splits a collection into N equal parts
+B) Splits a collection into two groups based on a predicate
+C) Removes duplicate elements
+D) Sorts the collection
 
 ---
 
-### Question 2: Flow vs Channel
+## Quiz Answers
 
-What's the main difference between Flow and Channel?
-
-**A)** Flow is hot, Channel is cold
-**B)** Flow is cold (lazy), Channel is hot (active)
-**C)** They are the same
-**D)** Channel can't be cancelled
-
-**Answer**: **B** - Flow is cold (starts on collection), while Channel is hot (actively sends/receives regardless of consumers).
-
----
-
-### Question 3: StateFlow
-
-What makes StateFlow special?
-
-**A)** It's the fastest flow type
-**B)** It always has a current value and conflates duplicates
-**C)** It can only emit once
-**D)** It doesn't support multiple collectors
-
-**Answer**: **B** - StateFlow always has a current value (accessible via `.value`) and automatically conflates duplicate consecutive values.
-
----
-
-### Question 4: Exception Handling
-
-Why doesn't this catch the exception?
+**Question 1: B) `map` transforms each element; `flatMap` transforms and flattens nested structures**
 
 ```kotlin
-try {
-    launch {
-        throw Exception("Error")
-    }
-} catch (e: Exception) {
-    println("Caught")
-}
+val orders = listOf(
+    Order(1, listOf("A", "B")),
+    Order(2, listOf("C"))
+)
+
+// map: List<Order> -> List<List<String>>
+val nested = orders.map { it.items }  // [[A, B], [C]]
+
+// flatMap: List<Order> -> List<String>
+val flat = orders.flatMap { it.items }  // [A, B, C]
 ```
 
-**A)** launch is not a suspend function
-**B)** launch is fire-and-forget, exception happens async
-**C)** Exception handling doesn't work in coroutines
-**D)** Missing await()
-
-**Answer**: **B** - `launch` returns immediately (fire-and-forget), so the exception happens asynchronously after the try-catch block.
+`flatMap` = `map` + `flatten`
 
 ---
 
-### Question 5: flowOn
+**Question 2: C) A new collection with only elements matching the predicate**
 
-What does `flowOn` do?
+```kotlin
+val numbers = listOf(1, 2, 3, 4, 5)
 
-**A)** Changes the dispatcher for downstream operators
-**B)** Changes the dispatcher for upstream operators
-**C)** Stops the flow
-**D)** Buffers the flow
+val evens = numbers.filter { it % 2 == 0 }
+println(evens)  // [2, 4]
+```
 
-**Answer**: **B** - `flowOn` changes the dispatcher for upstream operators (everything before it in the chain).
-
----
-
-## Summary
-
-Congratulations! You've mastered advanced coroutines. Here's what you learned:
-
-✅ **Structured Concurrency** - `coroutineScope` and `supervisorScope`
-✅ **Exception Handling** - Try-catch patterns and exception handlers
-✅ **Flows** - Reactive streams with operators and transformations
-✅ **Channels** - Communication between coroutines
-✅ **StateFlow/SharedFlow** - State management and event broadcasting
-✅ **Context Switching** - `withContext` for dispatcher changes
-
-### Key Takeaways
-
-1. **Use `coroutineScope`** for related tasks that should fail together
-2. **Use `supervisorScope`** for independent tasks
-3. **Flows are cold** (start on collection), **Channels are hot**
-4. **StateFlow** for state, **SharedFlow** for events
-5. **Exception handling** in `launch` requires `CoroutineExceptionHandler`
-6. **`flowOn`** changes dispatcher for upstream operators
-
-### Next Steps
-
-In the next lesson, we'll explore **Delegation and Lazy Initialization** - powerful patterns for delegating behavior and optimizing resource usage!
+`filter` returns a new list; the original is unchanged (immutability).
 
 ---
 
-**Practice Challenge**: Build a stock price monitoring system that fetches prices from multiple sources using Flows, combines them, and alerts when prices cross thresholds using StateFlow.
+**Question 3: B) `fold` requires an initial value; `reduce` uses the first element as initial value**
+
+```kotlin
+val numbers = listOf(1, 2, 3, 4)
+
+// reduce: starts with first element (1)
+val sum1 = numbers.reduce { acc, n -> acc + n }  // 10
+
+// fold: starts with provided value (0)
+val sum2 = numbers.fold(0) { acc, n -> acc + n }  // 10
+
+// fold with different initial value
+val sum3 = numbers.fold(100) { acc, n -> acc + n }  // 110
+
+// reduce throws on empty list; fold doesn't
+val empty = emptyList<Int>()
+// empty.reduce { acc, n -> acc + n }  // Exception!
+val safe = empty.fold(0) { acc, n -> acc + n }  // 0
+```
+
+`fold` is safer and more flexible.
+
+---
+
+**Question 4: C) For large collections with multiple operations, especially when you don't need all results**
+
+```kotlin
+// Good for sequence: large data, multiple ops, partial results
+(1..10_000_000).asSequence()
+    .map { it * 2 }
+    .filter { it > 1000 }
+    .take(10)  // Only need 10!
+    .toList()
+
+// Bad for sequence: small data, single op
+listOf(1, 2, 3)
+    .map { it * 2 }  // Just use regular list
+```
+
+Sequences have overhead; only beneficial for specific scenarios.
+
+---
+
+**Question 5: B) Splits a collection into two groups based on a predicate**
+
+```kotlin
+val numbers = listOf(1, 2, 3, 4, 5, 6)
+
+val (evens, odds) = numbers.partition { it % 2 == 0 }
+println(evens)  // [2, 4, 6]
+println(odds)   // [1, 3, 5]
+```
+
+Returns a `Pair` of lists: (matching, not-matching).
+
+---
+
+## What You've Learned
+
+✅ Essential operations: map, filter, reduce, fold
+✅ Finding elements: find, first, last, any, all, none
+✅ Grouping and partitioning: groupBy, partition, associate
+✅ Flattening nested structures: flatMap, flatten
+✅ Sequences for lazy evaluation and performance
+✅ Chaining operations into powerful pipelines
+✅ When to use each operation
+✅ Performance considerations
+
+---
+
+## Next Steps
+
+In **Lesson 3.4: Scope Functions**, you'll master:
+- let, run, with, apply, also
+- When to use each scope function
+- `this` vs `it` context
+- Return value differences
+- Chaining scope functions
+
+Get ready for Kotlin's most elegant features!
+
+---
+
+## Key Takeaways
+
+**Collection Operations Transform Code**:
+- Replace loops with declarative operations
+- Chain operations for readability
+- Immutable transformations prevent bugs
+
+**Choose the Right Tool**:
+- `map`: Transform each element
+- `filter`: Select elements
+- `reduce/fold`: Combine into single value
+- `flatMap`: Transform and flatten
+- `groupBy`: Organize by key
+
+**Performance Matters**:
+- Regular collections: Small data, simple operations
+- Sequences: Large data, multiple operations, partial results
+- Measure when performance is critical
+
+---
+
+**Congratulations on completing Lesson 3.3!** 🎉
+
+You now wield the power of functional collection operations. This knowledge will make your data processing code elegant and efficient. Practice chaining operations—it becomes second nature quickly!

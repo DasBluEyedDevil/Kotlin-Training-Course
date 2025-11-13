@@ -1,921 +1,894 @@
-# Lesson 2.3: Inheritance and Polymorphism
+# Lesson 2.3: The When Expression - Elegant Multi-Way Decisions
 
-**Estimated Time**: 70 minutes
+**Estimated Time**: 60 minutes
+**Difficulty**: Beginner
+**Prerequisites**: Lesson 2.1 (If statements), Lesson 2.2 (Logical operators)
 
 ---
 
 ## Topic Introduction
 
-You've learned to create classes and manage properties. Now it's time to explore one of OOP's most powerful features: **inheritance**.
+You've learned how to make decisions with `if-else` statements and combine conditions with logical operators. But what happens when you need to check many different possibilities? Imagine writing a program that converts day numbers to day names, or grades to letter marks. Using `if-else` chains becomes verbose and hard to read.
 
-Inheritance allows you to create new classes based on existing ones, reusing and extending their functionality. Combined with **polymorphism**, you can write flexible, maintainable code that models complex real-world relationships.
+Enter Kotlin's `when` expression—an elegant, powerful alternative that makes multi-way decisions clean and expressive. Think of it as a sophisticated switchboard operator, efficiently routing your program to the right destination based on various conditions.
 
-Imagine you're building a system for different types of employees: managers, developers, and interns. They all share common attributes (name, ID, salary) but have unique behaviors. Inheritance lets you capture these commonalities and differences elegantly.
+In this lesson, you'll learn:
+- What the `when` expression is and when to use it
+- How to match against specific values
+- Using `when` with ranges and complex conditions
+- The power of `when` as an expression
+- Pattern matching and smart casts
+- Best practices for clean, maintainable code
 
----
-
-## The Concept
-
-### What is Inheritance?
-
-**Inheritance** is a mechanism where a new class (child/subclass) is based on an existing class (parent/superclass), inheriting its properties and methods.
-
-**Real-World Analogy: Vehicle Hierarchy**
-
-```
-        Vehicle
-       /   |   \
-     Car  Bike  Truck
-    /
-  SportsCar
-```
-
-- **Vehicle** (parent): Has wheels, can move, has fuel
-- **Car** (child): Inherits from Vehicle, adds doors and trunk
-- **SportsCar** (grandchild): Inherits from Car, adds turbo boost
-
-**Why Inheritance?**
-- **Code Reuse**: Don't repeat common functionality
-- **Logical Organization**: Model real-world relationships
-- **Maintainability**: Change once, affect all subclasses
-- **Polymorphism**: Treat different types uniformly
+By the end, you'll be able to write elegant decision logic that's both powerful and easy to understand!
 
 ---
 
-## Inheritance Basics
+## The Concept: When as a Switchboard
 
-### The `open` Keyword
+### Real-World Analogy: The Hotel Concierge
 
-In Kotlin, classes are **final by default** (cannot be inherited). Use `open` to allow inheritance.
+Imagine a hotel concierge helping guests:
+
+```
+Guest: "What should I do on a rainy day?"
+Concierge checks the weather:
+  → Rain: "Visit the museum"
+  → Snow: "Go skiing"
+  → Sunny: "Beach day!"
+  → Cloudy: "Perfect for hiking"
+  → Otherwise: "Enjoy the hotel spa"
+```
+
+The concierge efficiently routes to one answer based on the weather. That's exactly what `when` does—it evaluates an expression once and routes to the matching branch.
+
+### The if-else-if Problem
+
+Let's see why we need `when`. Here's a day-of-week converter using if-else:
 
 ```kotlin
-// ❌ Cannot inherit from this
-class Animal {
-    fun eat() = println("Eating...")
-}
+val dayNumber = 3
+val dayName: String
 
-// ✅ Can inherit from this
-open class Bird {
-    open fun fly() = println("Flying...")
+if (dayNumber == 1) {
+    dayName = "Monday"
+} else if (dayNumber == 2) {
+    dayName = "Tuesday"
+} else if (dayNumber == 3) {
+    dayName = "Wednesday"
+} else if (dayNumber == 4) {
+    dayName = "Thursday"
+} else if (dayNumber == 5) {
+    dayName = "Friday"
+} else if (dayNumber == 6) {
+    dayName = "Saturday"
+} else if (dayNumber == 7) {
+    dayName = "Sunday"
+} else {
+    dayName = "Invalid day"
 }
 ```
 
-**Why are classes final by default?**
-- Safety: Prevents unintended inheritance
-- Performance: Compiler optimizations
-- Design: Encourages composition over inheritance
+This works, but it's:
+- **Repetitive**: `dayNumber ==` appears 7 times
+- **Verbose**: 19 lines for a simple mapping
+- **Error-prone**: Easy to make mistakes in long chains
 
-### Creating a Subclass
-
-Use a colon (`:`) to inherit from a superclass.
+**The same logic with `when`:**
 
 ```kotlin
-open class Animal(val name: String) {
-    open fun makeSound() {
-        println("Some generic animal sound")
-    }
-
-    fun sleep() {
-        println("$name is sleeping...")
-    }
+val dayNumber = 3
+val dayName = when (dayNumber) {
+    1 -> "Monday"
+    2 -> "Tuesday"
+    3 -> "Wednesday"
+    4 -> "Thursday"
+    5 -> "Friday"
+    6 -> "Saturday"
+    7 -> "Sunday"
+    else -> "Invalid day"
 }
+```
 
-class Dog(name: String) : Animal(name) {
-    override fun makeSound() {
-        println("$name says: Woof! Woof!")
-    }
+Only 10 lines! Clean, readable, and elegant.
 
-    fun fetch() {
-        println("$name is fetching the ball!")
-    }
+---
+
+## Basic When Expression
+
+### Syntax and Structure
+
+```kotlin
+when (expression) {
+    value1 -> result1
+    value2 -> result2
+    value3 -> result3
+    else -> defaultResult
 }
+```
 
-class Cat(name: String) : Animal(name) {
-    override fun makeSound() {
-        println("$name says: Meow!")
-    }
+**Parts:**
+- `when` - Keyword starting the expression
+- `(expression)` - The value to match against
+- `value ->` - Match condition followed by arrow
+- `result` - What to return/execute when matched
+- `else` - Default case (like the final "otherwise")
 
-    fun scratch() {
-        println("$name is scratching the furniture!")
-    }
-}
+### Your First When Expression
 
+```kotlin
 fun main() {
-    val dog = Dog("Buddy")
-    dog.makeSound()  // Buddy says: Woof! Woof!
-    dog.sleep()      // Buddy is sleeping...
-    dog.fetch()      // Buddy is fetching the ball!
+    val trafficLight = "Red"
 
-    val cat = Cat("Whiskers")
-    cat.makeSound()  // Whiskers says: Meow!
-    cat.sleep()      // Whiskers is sleeping...
-    cat.scratch()    // Whiskers is scratching the furniture!
+    val action = when (trafficLight) {
+        "Red" -> "Stop"
+        "Yellow" -> "Slow down"
+        "Green" -> "Go"
+        else -> "Invalid light color"
+    }
+
+    println("Traffic light is $trafficLight: $action")
 }
 ```
 
-**Key Points**:
-- `Dog` and `Cat` inherit from `Animal`
-- They inherit `sleep()` (can use it without redefining)
-- They override `makeSound()` with their own implementation
-- They add unique methods (`fetch()`, `scratch()`)
+**Output:**
+```
+Traffic light is Red: Stop
+```
+
+**How it works:**
+1. Evaluate the expression: `trafficLight` = "Red"
+2. Check each branch from top to bottom
+3. Find match: `"Red"` matches first branch
+4. Return result: `"Stop"`
+5. Assign to `action` variable
+6. Skip remaining branches
 
 ---
 
-## Overriding Methods
+## When with Multiple Values
 
-To override a method from the superclass:
-1. The superclass method must be marked `open`
-2. Use the `override` keyword in the subclass
+You can match multiple values in one branch using commas:
 
 ```kotlin
-open class Shape {
-    open fun draw() {
-        println("Drawing a shape")
-    }
-
-    open fun area(): Double {
-        return 0.0
-    }
-}
-
-class Circle(val radius: Double) : Shape() {
-    override fun draw() {
-        println("Drawing a circle with radius $radius")
-    }
-
-    override fun area(): Double {
-        return Math.PI * radius * radius
-    }
-}
-
-class Rectangle(val width: Double, val height: Double) : Shape() {
-    override fun draw() {
-        println("Drawing a rectangle $width x $height")
-    }
-
-    override fun area(): Double {
-        return width * height
-    }
-}
-
 fun main() {
-    val circle = Circle(5.0)
-    circle.draw()  // Drawing a circle with radius 5.0
-    println("Area: ${circle.area()}")  // Area: 78.53981633974483
+    val month = "December"
 
-    val rect = Rectangle(4.0, 6.0)
-    rect.draw()  // Drawing a rectangle 4.0 x 6.0
-    println("Area: ${rect.area()}")  // Area: 24.0
+    val season = when (month) {
+        "December", "January", "February" -> "Winter"
+        "March", "April", "May" -> "Spring"
+        "June", "July", "August" -> "Summer"
+        "September", "October", "November" -> "Fall"
+        else -> "Unknown month"
+    }
+
+    println("$month is in $season")
 }
 ```
 
----
+**Output:**
+```
+December is in Winter
+```
 
-## The `super` Keyword
+This is much cleaner than:
+```kotlin
+// Verbose alternative
+if (month == "December" || month == "January" || month == "February") {
+    season = "Winter"
+}
+// ... etc
+```
 
-Use `super` to call the superclass's implementation.
+### Practical Example: Weekend Checker
 
 ```kotlin
-open class Employee(val name: String, val salary: Double) {
-    open fun displayInfo() {
-        println("Employee: $name")
-        println("Salary: $$salary")
-    }
-
-    open fun work() {
-        println("$name is working...")
-    }
-}
-
-class Manager(name: String, salary: Double, val teamSize: Int) : Employee(name, salary) {
-    override fun displayInfo() {
-        super.displayInfo()  // Call parent's implementation
-        println("Team Size: $teamSize")
-        println("Role: Manager")
-    }
-
-    override fun work() {
-        println("$name is managing a team of $teamSize people")
-    }
-
-    fun conductMeeting() {
-        println("$name is conducting a team meeting")
-    }
-}
-
-class Developer(name: String, salary: Double, val programmingLanguage: String) : Employee(name, salary) {
-    override fun displayInfo() {
-        super.displayInfo()
-        println("Language: $programmingLanguage")
-        println("Role: Developer")
-    }
-
-    override fun work() {
-        println("$name is coding in $programmingLanguage")
-    }
-}
-
 fun main() {
-    val manager = Manager("Alice", 120000.0, 5)
-    manager.displayInfo()
-    println()
-    manager.work()
-    manager.conductMeeting()
+    val day = "Saturday"
 
-    println("\n---\n")
+    val dayType = when (day) {
+        "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" -> "Weekday"
+        "Saturday", "Sunday" -> "Weekend"
+        else -> "Invalid day"
+    }
 
-    val dev = Developer("Bob", 90000.0, "Kotlin")
-    dev.displayInfo()
-    println()
-    dev.work()
+    println("$day is a $dayType")
+
+    if (dayType == "Weekend") {
+        println("Time to relax!")
+    } else {
+        println("Time to work!")
+    }
 }
 ```
 
-**Output**:
+**Output:**
 ```
-Employee: Alice
-Salary: $120000.0
-Team Size: 5
-Role: Manager
-
-Alice is managing a team of 5 people
-Alice is conducting a team meeting
-
----
-
-Employee: Bob
-Salary: $90000.0
-Language: Kotlin
-Role: Developer
-
-Bob is coding in Kotlin
+Saturday is a Weekend
+Time to relax!
 ```
 
 ---
 
-## Abstract Classes
+## When with Ranges
 
-**Abstract classes** are classes that cannot be instantiated directly. They serve as blueprints for subclasses.
-
-Use abstract classes when:
-- You want to provide a common base with some implemented methods
-- You want to force subclasses to implement specific methods
+One of `when`'s superpowers is matching against ranges using the `in` keyword:
 
 ```kotlin
-abstract class Vehicle(val brand: String, val model: String) {
-    var speed: Int = 0
-
-    // Abstract method (no implementation)
-    abstract fun start()
-
-    // Abstract method
-    abstract fun stop()
-
-    // Concrete method (has implementation)
-    fun accelerate(amount: Int) {
-        speed += amount
-        println("$brand $model accelerating to $speed km/h")
-    }
-
-    fun brake(amount: Int) {
-        speed -= amount
-        if (speed < 0) speed = 0
-        println("$brand $model slowing down to $speed km/h")
-    }
-}
-
-class Car(brand: String, model: String) : Vehicle(brand, model) {
-    override fun start() {
-        println("$brand $model: Turning key, engine starts")
-    }
-
-    override fun stop() {
-        println("$brand $model: Turning off engine")
-        speed = 0
-    }
-}
-
-class ElectricBike(brand: String, model: String) : Vehicle(brand, model) {
-    override fun start() {
-        println("$brand $model: Pressing power button, motor starts silently")
-    }
-
-    override fun stop() {
-        println("$brand $model: Releasing throttle, motor stops")
-        speed = 0
-    }
-}
-
 fun main() {
-    // val vehicle = Vehicle("Generic", "Model")  // ❌ Cannot instantiate abstract class
+    val score = 85
 
-    val car = Car("Toyota", "Camry")
-    car.start()          // Toyota Camry: Turning key, engine starts
-    car.accelerate(50)   // Toyota Camry accelerating to 50 km/h
-    car.accelerate(30)   // Toyota Camry accelerating to 80 km/h
-    car.brake(20)        // Toyota Camry slowing down to 60 km/h
-    car.stop()           // Toyota Camry: Turning off engine
+    val grade = when (score) {
+        in 90..100 -> "A"
+        in 80..89 -> "B"
+        in 70..79 -> "C"
+        in 60..69 -> "D"
+        in 0..59 -> "F"
+        else -> "Invalid score"
+    }
 
-    println()
-
-    val bike = ElectricBike("Tesla", "E-Bike Pro")
-    bike.start()         // Tesla E-Bike Pro: Pressing power button, motor starts silently
-    bike.accelerate(25)  // Tesla E-Bike Pro accelerating to 25 km/h
-    bike.stop()          // Tesla E-Bike Pro: Releasing throttle, motor stops
+    println("Score: $score, Grade: $grade")
 }
 ```
 
----
+**Output:**
+```
+Score: 85, Grade: B
+```
 
-## Polymorphism
+### How Ranges Work
 
-**Polymorphism** means "many forms." It allows you to treat objects of different types through a common interface.
+**Range syntax:**
+- `0..10` - Includes both 0 and 10 (closed range)
+- `in range` - Checks if value is within the range
 
-**Example: Animal Sounds**
+**Examples:**
+```kotlin
+val age = 25
+
+when (age) {
+    in 0..12 -> println("Child")
+    in 13..19 -> println("Teenager")
+    in 20..64 -> println("Adult")
+    in 65..120 -> println("Senior")
+    else -> println("Invalid age")
+}
+// Output: Adult
+```
+
+### Temperature Advisory System
 
 ```kotlin
-open class Animal(val name: String) {
-    open fun makeSound() {
-        println("Some generic sound")
-    }
-}
-
-class Dog(name: String) : Animal(name) {
-    override fun makeSound() {
-        println("$name: Woof! Woof!")
-    }
-}
-
-class Cat(name: String) : Animal(name) {
-    override fun makeSound() {
-        println("$name: Meow!")
-    }
-}
-
-class Cow(name: String) : Animal(name) {
-    override fun makeSound() {
-        println("$name: Moo!")
-    }
-}
-
-fun makeAnimalSpeak(animal: Animal) {
-    animal.makeSound()  // Polymorphism: calls the correct method based on actual type
-}
-
 fun main() {
-    val animals: List<Animal> = listOf(
-        Dog("Buddy"),
-        Cat("Whiskers"),
-        Cow("Bessie"),
-        Dog("Max"),
-        Cat("Fluffy")
-    )
+    val temperature = 75
 
-    // Polymorphism in action
-    animals.forEach { animal ->
-        makeAnimalSpeak(animal)
+    val advice = when (temperature) {
+        in Int.MIN_VALUE..32 -> "Freezing! Bundle up!"
+        in 33..50 -> "Cold - wear a jacket"
+        in 51..70 -> "Cool and comfortable"
+        in 71..85 -> "Warm and pleasant"
+        in 86..95 -> "Hot - stay hydrated"
+        in 96..Int.MAX_VALUE -> "Extreme heat warning!"
+        else -> "Invalid temperature"
     }
+
+    println("Temperature: ${temperature}°F")
+    println(advice)
 }
 ```
 
-**Output**:
+**Output:**
 ```
-Buddy: Woof! Woof!
-Whiskers: Meow!
-Bessie: Moo!
-Max: Woof! Woof!
-Fluffy: Meow!
-```
-
-**Key Point**: Even though `animals` is a list of `Animal`, each object calls its own specific `makeSound()` implementation!
-
----
-
-## Type Checking and Casting
-
-### Type Checking with `is`
-
-```kotlin
-fun describe(obj: Any) {
-    when (obj) {
-        is String -> println("String of length ${obj.length}")
-        is Int -> println("Integer: $obj")
-        is List<*> -> println("List with ${obj.size} items")
-        is Dog -> println("Dog named ${obj.name}")
-        else -> println("Unknown type")
-    }
-}
-```
-
-### Smart Casting
-
-Kotlin automatically casts after type checking:
-
-```kotlin
-fun feedAnimal(animal: Animal) {
-    if (animal is Dog) {
-        // animal is automatically cast to Dog here
-        animal.fetch()
-    } else if (animal is Cat) {
-        // animal is automatically cast to Cat here
-        animal.scratch()
-    }
-}
-```
-
-### Explicit Casting
-
-```kotlin
-val animal: Animal = Dog("Buddy")
-
-// Safe cast (returns null if cast fails)
-val dog: Dog? = animal as? Dog
-dog?.fetch()
-
-// Unsafe cast (throws exception if cast fails)
-val dog2: Dog = animal as Dog
-dog2.fetch()
+Temperature: 75°F
+Warm and pleasant
 ```
 
 ---
 
-## Exercise 1: Employee Hierarchy
+## When with Conditions (No Argument)
 
-**Goal**: Create an employee management system with inheritance.
-
-**Requirements**:
-1. Abstract class `Employee` with properties: `name`, `id`, `baseSalary`
-2. Abstract method: `calculateSalary(): Double`
-3. Method: `displayInfo()`
-4. Class `FullTimeEmployee` extends `Employee`:
-   - Adds `bonus` property
-   - Implements `calculateSalary()` as baseSalary + bonus
-5. Class `Contractor` extends `Employee`:
-   - Adds `hourlyRate` and `hoursWorked` properties
-   - Implements `calculateSalary()` as hourlyRate * hoursWorked
-6. Class `Intern` extends `Employee`:
-   - Adds `stipend` property
-   - Implements `calculateSalary()` as stipend (fixed amount)
-7. Create a list of mixed employees and calculate total payroll
-
----
-
-## Solution: Employee Hierarchy
+You can use `when` without an argument to write complex conditions:
 
 ```kotlin
-abstract class Employee(val name: String, val id: String, val baseSalary: Double) {
-    abstract fun calculateSalary(): Double
-
-    open fun displayInfo() {
-        println("ID: $id")
-        println("Name: $name")
-        println("Salary: $${calculateSalary()}")
-    }
-}
-
-class FullTimeEmployee(
-    name: String,
-    id: String,
-    baseSalary: Double,
-    val bonus: Double
-) : Employee(name, id, baseSalary) {
-
-    override fun calculateSalary(): Double {
-        return baseSalary + bonus
-    }
-
-    override fun displayInfo() {
-        println("=== Full-Time Employee ===")
-        super.displayInfo()
-        println("Base Salary: $$baseSalary")
-        println("Bonus: $$bonus")
-    }
-}
-
-class Contractor(
-    name: String,
-    id: String,
-    val hourlyRate: Double,
-    val hoursWorked: Double
-) : Employee(name, id, 0.0) {
-
-    override fun calculateSalary(): Double {
-        return hourlyRate * hoursWorked
-    }
-
-    override fun displayInfo() {
-        println("=== Contractor ===")
-        super.displayInfo()
-        println("Hourly Rate: $$hourlyRate")
-        println("Hours Worked: $hoursWorked")
-    }
-}
-
-class Intern(
-    name: String,
-    id: String,
-    val stipend: Double
-) : Employee(name, id, 0.0) {
-
-    override fun calculateSalary(): Double {
-        return stipend
-    }
-
-    override fun displayInfo() {
-        println("=== Intern ===")
-        super.displayInfo()
-        println("Monthly Stipend: $$stipend")
-    }
-}
-
 fun main() {
-    val employees: List<Employee> = listOf(
-        FullTimeEmployee("Alice Johnson", "FT001", 80000.0, 10000.0),
-        FullTimeEmployee("Bob Smith", "FT002", 75000.0, 8000.0),
-        Contractor("Carol Davis", "CT001", 50.0, 160.0),
-        Contractor("David Wilson", "CT002", 60.0, 120.0),
-        Intern("Eve Brown", "IN001", 2000.0),
-        Intern("Frank Miller", "IN002", 1800.0)
-    )
+    val age = 25
+    val hasLicense = true
+    val hasInsurance = true
 
-    employees.forEach { employee ->
-        employee.displayInfo()
-        println()
-    }
-
-    val totalPayroll = employees.sumOf { it.calculateSalary() }
-    println("=== Payroll Summary ===")
-    println("Total Employees: ${employees.size}")
-    println("Total Payroll: $$totalPayroll")
-}
-```
-
----
-
-## Exercise 2: Shape Hierarchy
-
-**Goal**: Create a comprehensive shape system.
-
-**Requirements**:
-1. Abstract class `Shape` with abstract methods: `area()`, `perimeter()`, `draw()`
-2. Class `Circle` extends `Shape` with radius
-3. Class `Rectangle` extends `Shape` with width and height
-4. Class `Triangle` extends `Shape` with three sides
-5. Create a function that prints total area of all shapes
-
----
-
-## Solution: Shape Hierarchy
-
-```kotlin
-import kotlin.math.sqrt
-
-abstract class Shape(val color: String) {
-    abstract fun area(): Double
-    abstract fun perimeter(): Double
-    abstract fun draw()
-
-    fun displayInfo() {
-        println("Color: $color")
-        println("Area: ${String.format("%.2f", area())}")
-        println("Perimeter: ${String.format("%.2f", perimeter())}")
-    }
-}
-
-class Circle(color: String, val radius: Double) : Shape(color) {
-    override fun area(): Double = Math.PI * radius * radius
-
-    override fun perimeter(): Double = 2 * Math.PI * radius
-
-    override fun draw() {
-        println("⭕ Drawing a $color circle with radius $radius")
-    }
-}
-
-class Rectangle(color: String, val width: Double, val height: Double) : Shape(color) {
-    override fun area(): Double = width * height
-
-    override fun perimeter(): Double = 2 * (width + height)
-
-    override fun draw() {
-        println("▭ Drawing a $color rectangle ${width}x${height}")
-    }
-}
-
-class Triangle(color: String, val side1: Double, val side2: Double, val side3: Double) : Shape(color) {
-
-    init {
-        require(isValid()) { "Invalid triangle: sides don't satisfy triangle inequality" }
-    }
-
-    private fun isValid(): Boolean {
-        return side1 + side2 > side3 && side1 + side3 > side2 && side2 + side3 > side1
-    }
-
-    override fun area(): Double {
-        // Heron's formula
-        val s = perimeter() / 2
-        return sqrt(s * (s - side1) * (s - side2) * (s - side3))
-    }
-
-    override fun perimeter(): Double = side1 + side2 + side3
-
-    override fun draw() {
-        println("△ Drawing a $color triangle with sides $side1, $side2, $side3")
-    }
-}
-
-fun printTotalArea(shapes: List<Shape>) {
-    val total = shapes.sumOf { it.area() }
-    println("Total area of all shapes: ${String.format("%.2f", total)}")
-}
-
-fun main() {
-    val shapes: List<Shape> = listOf(
-        Circle("Red", 5.0),
-        Rectangle("Blue", 4.0, 6.0),
-        Triangle("Green", 3.0, 4.0, 5.0),
-        Circle("Yellow", 3.0),
-        Rectangle("Purple", 10.0, 2.0)
-    )
-
-    shapes.forEach { shape ->
-        shape.draw()
-        shape.displayInfo()
-        println()
-    }
-
-    printTotalArea(shapes)
-}
-```
-
----
-
-## Exercise 3: Bank Account Hierarchy
-
-**Goal**: Build different types of bank accounts with shared and unique features.
-
-**Requirements**:
-1. Open class `BankAccount` with `accountNumber`, `holder`, `balance`
-2. Methods: `deposit()`, `withdraw()`, `displayBalance()`
-3. Class `SavingsAccount` extends `BankAccount`:
-   - Adds `interestRate` property
-   - Method `applyInterest()`
-   - Withdrawal limit of 3 times per month
-4. Class `CheckingAccount` extends `BankAccount`:
-   - Adds `overdraftLimit` property
-   - Can withdraw beyond balance up to overdraft limit
-5. Test all account types
-
----
-
-## Solution: Bank Account Hierarchy
-
-```kotlin
-open class BankAccount(val accountNumber: String, val holder: String) {
-    protected var balance: Double = 0.0
-
-    open fun deposit(amount: Double) {
-        require(amount > 0) { "Deposit amount must be positive" }
-        balance += amount
-        println("Deposited $$amount. New balance: $$balance")
-    }
-
-    open fun withdraw(amount: Double): Boolean {
-        require(amount > 0) { "Withdrawal amount must be positive" }
-
-        return if (amount <= balance) {
-            balance -= amount
-            println("Withdrew $$amount. New balance: $$balance")
+    val canDrive = when {
+        age < 16 -> false
+        age >= 16 && hasLicense && hasInsurance -> true
+        age >= 16 && hasLicense -> {
+            println("Warning: No insurance!")
             true
-        } else {
-            println("Insufficient funds! Balance: $$balance")
-            false
         }
+        else -> false
     }
 
-    fun displayBalance() {
-        println("Account: $accountNumber ($holder)")
-        println("Balance: $$balance")
-    }
+    println("Can drive: $canDrive")
 }
+```
 
-class SavingsAccount(
-    accountNumber: String,
-    holder: String,
-    val interestRate: Double
-) : BankAccount(accountNumber, holder) {
+**Output:**
+```
+Can drive: true
+```
 
-    private var withdrawalsThisMonth = 0
-    private val maxWithdrawals = 3
+**This form is perfect when:**
+- Conditions are complex
+- You're checking different variables
+- Conditions don't follow a simple pattern
 
-    override fun withdraw(amount: Double): Boolean {
-        if (withdrawalsThisMonth >= maxWithdrawals) {
-            println("Withdrawal limit reached! Maximum $maxWithdrawals withdrawals per month.")
-            return false
-        }
+### Example: Shipping Cost Calculator
 
-        val success = super.withdraw(amount)
-        if (success) {
-            withdrawalsThisMonth++
-            println("Withdrawals remaining this month: ${maxWithdrawals - withdrawalsThisMonth}")
-        }
-        return success
+```kotlin
+fun main() {
+    val weight = 15.0  // pounds
+    val distance = 500  // miles
+    val isPrime = true
+
+    val shippingCost = when {
+        isPrime && weight < 20 -> 0.0  // Free for Prime under 20 lbs
+        weight < 5 -> 5.99
+        weight < 10 -> 9.99
+        weight < 20 -> 14.99
+        distance > 1000 -> weight * 2.0
+        else -> weight * 1.5
     }
 
-    fun applyInterest() {
-        val interest = balance * interestRate / 100
-        balance += interest
-        println("Interest applied: $$interest. New balance: $$balance")
-    }
-
-    fun resetMonthlyWithdrawals() {
-        withdrawalsThisMonth = 0
-        println("Monthly withdrawal limit reset")
-    }
+    println("Weight: $weight lbs, Distance: $distance miles")
+    println("Shipping cost: $$shippingCost")
 }
+```
 
-class CheckingAccount(
-    accountNumber: String,
-    holder: String,
-    val overdraftLimit: Double
-) : BankAccount(accountNumber, holder) {
+**Output:**
+```
+Weight: 15.0 lbs, Distance: 500 miles
+Shipping cost: $0.0
+```
 
-    override fun withdraw(amount: Double): Boolean {
-        require(amount > 0) { "Withdrawal amount must be positive" }
+---
 
-        val availableFunds = balance + overdraftLimit
+## When as a Statement vs Expression
 
-        return if (amount <= availableFunds) {
-            balance -= amount
-            println("Withdrew $$amount. New balance: $$balance")
-            if (balance < 0) {
-                println("⚠️ Account overdrawn by $${-balance}")
-            }
-            true
-        } else {
-            println("Exceeds overdraft limit! Available: $$availableFunds")
-            false
+### When as Expression (Returns a Value)
+
+```kotlin
+// Must have else to ensure a value is always returned
+val result = when (x) {
+    1 -> "One"
+    2 -> "Two"
+    else -> "Other"
+}
+```
+
+### When as Statement (Just Executes Code)
+
+```kotlin
+// No need for else when not returning a value
+when (x) {
+    1 -> println("One")
+    2 -> println("Two")
+}
+// If x is 3, nothing happens
+```
+
+### Complete Example
+
+```kotlin
+fun main() {
+    val userAction = "login"
+
+    // When as statement - performs actions
+    when (userAction) {
+        "login" -> {
+            println("Checking credentials...")
+            println("Welcome back!")
         }
+        "logout" -> {
+            println("Saving session...")
+            println("Goodbye!")
+        }
+        "register" -> {
+            println("Creating new account...")
+            println("Registration complete!")
+        }
+    }
+
+    // When as expression - returns a value
+    val message = when (userAction) {
+        "login" -> "User logged in"
+        "logout" -> "User logged out"
+        "register" -> "New user registered"
+        else -> "Unknown action"
+    }
+
+    println("Log entry: $message")
+}
+```
+
+**Output:**
+```
+Checking credentials...
+Welcome back!
+Log entry: User logged in
+```
+
+---
+
+## When with Type Checking (Smart Casts)
+
+Kotlin's `when` can check types and automatically cast variables:
+
+```kotlin
+fun describeValue(value: Any): String {
+    return when (value) {
+        is String -> "Text: '$value' (length: ${value.length})"
+        is Int -> "Number: $value (doubled: ${value * 2})"
+        is Boolean -> "Boolean: $value (opposite: ${!value})"
+        is List<*> -> "List with ${value.size} items"
+        else -> "Unknown type: ${value::class.simpleName}"
     }
 }
 
 fun main() {
-    println("=== Savings Account ===")
-    val savings = SavingsAccount("SAV001", "Alice Johnson", 2.5)
-    savings.deposit(1000.0)
-    savings.applyInterest()
-    savings.withdraw(100.0)
-    savings.withdraw(100.0)
-    savings.withdraw(100.0)
-    savings.withdraw(100.0)  // Should fail (limit reached)
-    savings.displayBalance()
+    println(describeValue("Hello"))
+    println(describeValue(42))
+    println(describeValue(true))
+    println(describeValue(listOf(1, 2, 3)))
+}
+```
 
-    println("\n=== Checking Account ===")
-    val checking = CheckingAccount("CHK001", "Bob Smith", 500.0)
-    checking.deposit(1000.0)
-    checking.withdraw(1200.0)  // Uses overdraft
-    checking.withdraw(400.0)   // Should fail (exceeds overdraft limit)
-    checking.displayBalance()
+**Output:**
+```
+Text: 'Hello' (length: 5)
+Number: 42 (doubled: 84)
+Boolean: true (opposite: false)
+List with 3 items
+```
+
+**Note:** After `is String`, Kotlin knows `value` is a String and lets you use `.length` without casting!
+
+---
+
+## Hands-On Exercises
+
+### Exercise 1: Calculator
+
+**Challenge:** Create a simple calculator using `when` that:
+1. Takes two numbers and an operator (+, -, *, /)
+2. Performs the operation
+3. Returns the result
+
+<details>
+<summary>Click to see solution</summary>
+
+```kotlin
+fun main() {
+    val num1 = 10.0
+    val num2 = 5.0
+    val operator = "/"
+
+    val result = when (operator) {
+        "+" -> num1 + num2
+        "-" -> num1 - num2
+        "*" -> num1 * num2
+        "/" -> if (num2 != 0.0) num1 / num2 else Double.NaN
+        else -> Double.NaN
+    }
+
+    if (result.isNaN()) {
+        println("Invalid operation")
+    } else {
+        println("$num1 $operator $num2 = $result")
+    }
+}
+```
+
+**Output:**
+```
+10.0 / 5.0 = 2.0
+```
+
+**Key concepts:**
+- Using `when` for operator selection
+- Handling division by zero
+- Returning calculated values
+</details>
+
+---
+
+### Exercise 2: Movie Rating System
+
+**Challenge:** Create a movie rating system that converts numeric ratings to descriptions:
+- 10: "Masterpiece"
+- 8-9: "Excellent"
+- 6-7: "Good"
+- 4-5: "Average"
+- 1-3: "Poor"
+- 0: "Terrible"
+
+<details>
+<summary>Click to see solution</summary>
+
+```kotlin
+fun main() {
+    val rating = 8
+
+    val description = when (rating) {
+        10 -> "Masterpiece"
+        in 8..9 -> "Excellent"
+        in 6..7 -> "Good"
+        in 4..5 -> "Average"
+        in 1..3 -> "Poor"
+        0 -> "Terrible"
+        else -> "Invalid rating (must be 0-10)"
+    }
+
+    println("Rating: $rating/10 - $description")
+}
+```
+
+**Output:**
+```
+Rating: 8/10 - Excellent
+```
+</details>
+
+---
+
+### Exercise 3: Password Strength Checker
+
+**Challenge:** Create a password strength checker that evaluates based on length:
+- Less than 6: "Weak"
+- 6-8: "Medium"
+- 9-12: "Strong"
+- 13+: "Very Strong"
+
+Also check if the password is a common password (use when without argument).
+
+<details>
+<summary>Click to see solution</summary>
+
+```kotlin
+fun main() {
+    val password = "MySecurePass123"
+    val commonPasswords = listOf("password", "123456", "qwerty")
+
+    val strength = when {
+        password in commonPasswords -> "Weak (common password!)"
+        password.length < 6 -> "Weak"
+        password.length in 6..8 -> "Medium"
+        password.length in 9..12 -> "Strong"
+        password.length >= 13 -> "Very Strong"
+        else -> "Invalid"
+    }
+
+    println("Password: $password")
+    println("Strength: $strength")
+}
+```
+
+**Output:**
+```
+Password: MySecurePass123
+Strength: Very Strong
+```
+
+**Key concepts:**
+- Using when without an argument
+- Checking membership with `in`
+- Combining multiple conditions
+</details>
+
+---
+
+### Exercise 4: BMI Category Calculator
+
+**Challenge:** Calculate BMI category:
+- BMI < 18.5: "Underweight"
+- BMI 18.5-24.9: "Normal weight"
+- BMI 25.0-29.9: "Overweight"
+- BMI ≥ 30.0: "Obese"
+
+<details>
+<summary>Click to see solution</summary>
+
+```kotlin
+fun main() {
+    val weight = 70.0  // kg
+    val height = 1.75   // meters
+    val bmi = weight / (height * height)
+
+    val category = when {
+        bmi < 18.5 -> "Underweight"
+        bmi < 25.0 -> "Normal weight"
+        bmi < 30.0 -> "Overweight"
+        else -> "Obese"
+    }
+
+    println("BMI: %.1f".format(bmi))
+    println("Category: $category")
+}
+```
+
+**Output:**
+```
+BMI: 22.9
+Category: Normal weight
+```
+</details>
+
+---
+
+## Common Pitfalls and Best Practices
+
+### Pitfall 1: Missing else in Expressions
+
+❌ **Error:**
+```kotlin
+val result = when (x) {
+    1 -> "One"
+    2 -> "Two"
+    // No else - compiler error if used as expression!
+}
+```
+
+✅ **Correct:**
+```kotlin
+val result = when (x) {
+    1 -> "One"
+    2 -> "Two"
+    else -> "Other"
+}
+```
+
+**Rule:** When used as an expression (returning a value), `else` is required unless the compiler can prove all cases are covered.
+
+### Pitfall 2: Overlapping Ranges
+
+❌ **Problem:**
+```kotlin
+when (score) {
+    in 80..100 -> "Great"
+    in 90..100 -> "Excellent"  // Never reached!
+    else -> "Keep trying"
+}
+```
+
+The second range is completely covered by the first. `when` executes the **first** matching branch.
+
+✅ **Correct:**
+```kotlin
+when (score) {
+    in 90..100 -> "Excellent"  // More specific first
+    in 80..89 -> "Great"
+    else -> "Keep trying"
+}
+```
+
+### Pitfall 3: Forgetting Braces for Multiple Statements
+
+❌ **Won't compile:**
+```kotlin
+when (x) {
+    1 ->
+        println("First line")
+        println("Second line")  // Error!
+}
+```
+
+✅ **Correct:**
+```kotlin
+when (x) {
+    1 -> {
+        println("First line")
+        println("Second line")
+    }
+}
+```
+
+### Best Practice 1: Order Matters
+
+Put the most specific cases first:
+
+✅ **Good:**
+```kotlin
+when (value) {
+    null -> "Null value"
+    "" -> "Empty string"
+    "test" -> "Test value"
+    else -> "Other: $value"
+}
+```
+
+### Best Practice 2: Use When for 3+ Options
+
+- **2 options:** Use `if-else`
+- **3+ options:** Use `when`
+
+```kotlin
+// 2 options - if-else is fine
+val type = if (age >= 18) "Adult" else "Minor"
+
+// 3+ options - when is better
+val category = when (age) {
+    in 0..12 -> "Child"
+    in 13..19 -> "Teen"
+    else -> "Adult"
+}
+```
+
+### Best Practice 3: Exhaustive When
+
+For enums and sealed classes, you can make `when` exhaustive without `else`:
+
+```kotlin
+enum class Direction { NORTH, SOUTH, EAST, WEST }
+
+fun move(direction: Direction) = when (direction) {
+    Direction.NORTH -> "Going north"
+    Direction.SOUTH -> "Going south"
+    Direction.EAST -> "Going east"
+    Direction.WEST -> "Going west"
+    // No else needed - all cases covered!
 }
 ```
 
 ---
 
-## Checkpoint Quiz
+## Quick Quiz
 
-### Question 1
-What keyword is required to allow a class to be inherited?
-
-A) `extend`
-B) `open`
-C) `inherit`
-D) `abstract`
-
-### Question 2
-What is polymorphism?
-
-A) Creating multiple classes
-B) The ability to treat objects of different types through a common interface
-C) Overriding methods
-D) Using multiple inheritance
-
-### Question 3
-When should you use an abstract class?
-
-A) When you never want instances of that class
-B) When you want to provide a common base with some implemented methods
-C) When you want to force subclasses to implement specific methods
-D) Both B and C
-
-### Question 4
-What does the `super` keyword do?
-
-A) Creates a new superclass
-B) Calls the subclass's implementation
-C) Calls the superclass's implementation
-D) Deletes the superclass
-
-### Question 5
-What is smart casting in Kotlin?
-
-A) Converting strings to integers
-B) Automatic type casting after a type check with `is`
-C) Casting to any type
-D) A compiler optimization
-
----
-
-## Quiz Answers
-
-**Question 1: B) `open`**
-
-Kotlin classes are final by default. Use `open` to allow inheritance.
-
+**Question 1:** What will this print?
 ```kotlin
-open class Animal { }  // ✅ Can inherit
-class Dog : Animal()   // ✅ Works
-
-class Plant { }        // ❌ Final by default
-// class Tree : Plant() // ❌ Error
+val x = 5
+val result = when (x) {
+    in 1..3 -> "Low"
+    in 4..6 -> "Medium"
+    in 7..10 -> "High"
+    else -> "Unknown"
+}
+println(result)
 ```
 
+<details>
+<summary>Answer</summary>
+
+**Output:** `Medium`
+
+**Explanation:** `5` is in the range `4..6`, so "Medium" is returned.
+</details>
+
 ---
 
-**Question 2: B) The ability to treat objects of different types through a common interface**
+**Question 2:** Is this valid code?
+```kotlin
+val day = 3
+when (day) {
+    1 -> println("Monday")
+    2 -> println("Tuesday")
+}
+```
 
-Polymorphism lets you write code that works with a superclass but automatically uses the correct subclass implementation.
+<details>
+<summary>Answer</summary>
+
+**Yes!** This is valid. When used as a **statement** (not returning a value), `else` is optional. If `day = 3`, nothing will print.
+</details>
+
+---
+
+**Question 3:** What's wrong with this?
+```kotlin
+val grade = when (score) {
+    in 0..100 -> "Valid"
+    in 90..100 -> "A"
+}
+```
+
+<details>
+<summary>Answer</summary>
+
+**Problem:** The second branch (`in 90..100`) will never execute because it's completely covered by the first branch (`in 0..100`). Always put more specific conditions first!
+
+**Fixed:**
+```kotlin
+val grade = when (score) {
+    in 90..100 -> "A"
+    in 0..89 -> "Other"
+    else -> "Invalid"
+}
+```
+</details>
+
+---
+
+**Question 4:** Can you use `when` with strings?
+
+<details>
+<summary>Answer</summary>
+
+**Yes!** `when` works with any type:
 
 ```kotlin
-fun makeSound(animal: Animal) {
-    animal.makeSound()  // Calls Dog, Cat, or Cow's version
+val fruit = "apple"
+when (fruit) {
+    "apple" -> println("Red or green")
+    "banana" -> println("Yellow")
+    else -> println("Unknown fruit")
+}
+```
+</details>
+
+---
+
+## Summary
+
+Congratulations! You've mastered Kotlin's `when` expression. Let's recap:
+
+**Key Concepts:**
+- **When expression** provides elegant multi-way decisions
+- **Value matching** checks against specific values
+- **Multiple values** can be matched with commas
+- **Ranges** use `in` keyword for range checking
+- **Conditions** can be complex with argument-less when
+- **Type checking** with `is` and smart casts
+- **Expression vs statement** - expressions need else
+
+**When Syntax Patterns:**
+```kotlin
+// Basic value matching
+when (x) {
+    1 -> "One"
+    2, 3 -> "Two or Three"
+    else -> "Other"
+}
+
+// Range matching
+when (score) {
+    in 90..100 -> "A"
+    in 80..89 -> "B"
+    else -> "C or lower"
+}
+
+// Condition matching
+when {
+    x > 10 -> "Large"
+    x > 5 -> "Medium"
+    else -> "Small"
+}
+```
+
+**Best Practices:**
+- Use `when` for 3+ options
+- Put specific cases before general ones
+- Always include `else` for expressions
+- Use braces for multi-statement branches
+- Consider ranges for numeric values
+
+---
+
+## What's Next?
+
+You can now make sophisticated decisions with `when`, but what about repeating tasks? What if you need to print "Hello" 100 times, or process every item in a list?
+
+In **Lesson 2.4: Repeating Tasks - For Loops**, you'll learn:
+- How to repeat code with for loops
+- Iterating through ranges and collections
+- Advanced loop techniques: step, downTo, until
+- Practical applications of iteration
+
+**Preview:**
+```kotlin
+for (i in 1..10) {
+    println("Count: $i")
+}
+
+for (day in listOf("Mon", "Tue", "Wed")) {
+    println("Today is $day")
 }
 ```
 
 ---
 
-**Question 3: D) Both B and C**
-
-Abstract classes provide partial implementation (some methods implemented, some abstract) and force subclasses to implement abstract methods.
-
-```kotlin
-abstract class Shape {
-    abstract fun area(): Double  // Must implement
-    fun display() { }           // Already implemented
-}
-```
-
----
-
-**Question 4: C) Calls the superclass's implementation**
-
-Use `super` to access the parent class's methods or properties.
-
-```kotlin
-override fun displayInfo() {
-    super.displayInfo()  // Call parent's version first
-    println("Additional info")
-}
-```
-
----
-
-**Question 5: B) Automatic type casting after a type check with `is`**
-
-After checking a type with `is`, Kotlin automatically casts the variable.
-
-```kotlin
-if (animal is Dog) {
-    animal.fetch()  // No explicit cast needed!
-}
-```
-
----
-
-## What You've Learned
-
-✅ Inheritance basics with `open` and `:` syntax
-✅ Overriding methods with `override`
-✅ Using `super` to call parent implementations
-✅ Abstract classes for shared functionality
-✅ Polymorphism for flexible code
-✅ Type checking with `is` and smart casting
-
----
-
-## Next Steps
-
-In **Lesson 2.4: Interfaces and Abstract Classes**, you'll learn:
-- Defining and implementing interfaces
-- Multiple interface implementation
-- Default interface methods
-- When to use interfaces vs abstract classes
-- Real-world design patterns
-
-You're mastering inheritance! Keep building on this foundation!
-
----
-
-**Congratulations on completing Lesson 2.3!** 🎉
-
-Inheritance and polymorphism are cornerstones of OOP. You now have the tools to create flexible, maintainable class hierarchies!
+**Excellent work! You've completed Lesson 2.3. Continue to master loops next!** 🎉

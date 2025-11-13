@@ -1,977 +1,948 @@
-# Lesson 2.6: Object Declarations and Companion Objects
+# Lesson 2.6: Lists - Storing Multiple Items
 
-**Estimated Time**: 60 minutes
+**Estimated Time**: 65 minutes
+**Difficulty**: Beginner
+**Prerequisites**: Lesson 2.5 (While loops)
 
 ---
 
 ## Topic Introduction
 
-So far, you've created classes and instantiated them into objects. But what if you need:
-- Only **one instance** of a class (singleton pattern)?
-- **Static-like members** (methods/properties that belong to the class, not instances)?
-- **Anonymous objects** for one-time use?
+So far, you've stored individual pieces of data in variables—a single name, one number, a single temperature. But real-world programs need to manage collections of related data: a shopping cart with multiple items, a class roster with dozens of students, a playlist with hundreds of songs.
 
-Kotlin provides elegant solutions through:
-- **Object expressions** - Anonymous objects
-- **Object declarations** - Singletons
-- **Companion objects** - Static-like members within classes
+Imagine creating a task manager app. Would you create separate variables for each task?
 
-These features eliminate boilerplate code and provide type-safe alternatives to Java's static members.
+```kotlin
+val task1 = "Buy groceries"
+val task2 = "Call dentist"
+val task3 = "Finish homework"
+// ... task50?
+```
+
+This is impractical and impossible to maintain. **Lists** solve this problem elegantly by storing multiple items in a single, ordered collection.
+
+In this lesson, you'll learn:
+- What lists are and why they're essential
+- Creating immutable and mutable lists
+- Accessing, adding, and removing elements
+- Essential list operations and functions
+- Powerful functional programming with lists
+- Best practices for working with collections
+
+By the end, you'll be able to manage collections of data like a pro!
 
 ---
 
-## The Concept
+## The Concept: Lists as Containers
 
-### What are Objects in Kotlin?
+### Real-World List Analogy
 
-In Kotlin, `object` is a keyword with three uses:
+Think of a list as a **numbered filing cabinet**:
 
-1. **Object Expression**: Create anonymous objects (like Java's anonymous classes)
-2. **Object Declaration**: Create singletons
-3. **Companion Object**: Define class-level members (like Java's static)
+```
+Shopping List (Drawer):
+┌──────────────────┐
+│ 0: Milk          │  ← First item (index 0)
+│ 1: Bread         │
+│ 2: Eggs          │
+│ 3: Cheese        │  ← Last item (index 3)
+└──────────────────┘
+```
 
-**Why Objects?**
-- **Singletons**: Ensure only one instance exists (database connections, app config)
-- **Utilities**: Group related functions without instantiation
-- **Constants**: Define immutable values accessible anywhere
-- **Factory methods**: Create instances with custom logic
+**Properties of this cabinet:**
+- **Ordered**: Items have specific positions (0, 1, 2, 3)
+- **Indexed**: You can access any item by its position
+- **Dynamic**: You can add or remove items (if mutable)
+- **Homogeneous**: Usually stores items of the same type
+
+### Why Use Lists?
+
+**Without lists:**
+```kotlin
+val student1 = "Alice"
+val student2 = "Bob"
+val student3 = "Charlie"
+
+// How do you loop through these?
+// What if you get a 4th student?
+```
+
+**With lists:**
+```kotlin
+val students = listOf("Alice", "Bob", "Charlie")
+
+// Easy to loop through
+for (student in students) {
+    println(student)
+}
+
+// Easy to add more (with mutableListOf)
+```
+
+Lists give you:
+- ✅ Organization: Group related data
+- ✅ Flexibility: Easily add/remove items
+- ✅ Iteration: Loop through all items
+- ✅ Built-in operations: Sort, filter, search, and more
 
 ---
 
-## Object Expressions
+## Creating Lists
 
-**Object expressions** create anonymous objects - objects of an unnamed class.
+### Immutable Lists (Read-Only)
 
-### Basic Object Expression
+Created with `listOf()`:
 
 ```kotlin
 fun main() {
-    val greeting = object {
-        val message = "Hello"
-        fun greet() {
-            println("$message, World!")
-        }
-    }
+    val fruits = listOf("Apple", "Banana", "Cherry")
 
-    greeting.greet()  // Hello, World!
-    println(greeting.message)  // Hello
+    println(fruits)  // [Apple, Banana, Cherry]
+    println("Size: ${fruits.size}")  // Size: 3
 }
 ```
 
-### Implementing Interfaces
+**Immutable means:**
+- ❌ Can't add items
+- ❌ Can't remove items
+- ❌ Can't change items
+- ✅ Can read and iterate
+- ✅ Thread-safe and predictable
 
-Common use: One-time implementations of interfaces
+**When to use:** When your collection won't change (days of the week, menu options, etc.)
+
+### Mutable Lists (Can Change)
+
+Created with `mutableListOf()`:
 
 ```kotlin
-interface ClickListener {
-    fun onClick()
-}
-
-fun setClickListener(listener: ClickListener) {
-    println("Setting click listener...")
-    listener.onClick()
-}
-
 fun main() {
-    // Create anonymous object implementing ClickListener
-    setClickListener(object : ClickListener {
-        override fun onClick() {
-            println("Button clicked!")
-        }
-    })
+    val tasks = mutableListOf("Write code", "Test app")
+
+    println("Initial: $tasks")
+
+    tasks.add("Deploy")
+    println("After add: $tasks")
+
+    tasks.remove("Test app")
+    println("After remove: $tasks")
 }
 ```
 
-**Real-World Example: Event Handlers**
+**Output:**
+```
+Initial: [Write code, Test app]
+After add: [Write code, Test app, Deploy]
+After remove: [Write code, Deploy]
+```
+
+**When to use:** When your collection needs to change (shopping cart, todo list, etc.)
+
+### Empty Lists
 
 ```kotlin
-interface EventHandler {
-    fun onEvent(event: String)
-}
+// Empty immutable list
+val emptyList = listOf<String>()
 
-class Button(val text: String) {
-    private var handler: EventHandler? = null
+// Empty mutable list
+val emptyMutable = mutableListOf<Int>()
 
-    fun setOnClickHandler(handler: EventHandler) {
-        this.handler = handler
-    }
-
-    fun click() {
-        println("Button '$text' clicked")
-        handler?.onEvent("click")
-    }
-}
-
-fun main() {
-    val button = Button("Submit")
-
-    // Anonymous object as event handler
-    button.setOnClickHandler(object : EventHandler {
-        override fun onEvent(event: String) {
-            println("Handling $event event: Form submitted!")
-        }
-    })
-
-    button.click()
-}
+// Or use emptyList()
+val alsoEmpty = emptyList<Double>()
 ```
 
-**Output**:
-```
-Button 'Submit' clicked
-Handling click event: Form submitted!
-```
-
-### Accessing Outer Scope
-
-Object expressions can access variables from their surrounding scope:
+### Lists with Type Inference
 
 ```kotlin
-fun countClicks() {
-    var clickCount = 0
+// Kotlin infers type from values
+val numbers = listOf(1, 2, 3, 4, 5)  // List<Int>
+val names = listOf("Alice", "Bob")    // List<String>
+val mixed = listOf<Any>(1, "two", 3.0) // List<Any>
 
-    val button = object {
-        fun click() {
-            clickCount++  // Access outer variable
-            println("Click count: $clickCount")
-        }
-    }
-
-    button.click()  // Click count: 1
-    button.click()  // Click count: 2
-    button.click()  // Click count: 3
-}
-
-fun main() {
-    countClicks()
-}
+// Explicit type declaration
+val scores: List<Int> = listOf(95, 87, 92)
 ```
 
 ---
 
-## Object Declarations (Singletons)
+## Accessing List Elements
 
-**Object declaration** creates a singleton - a class with exactly one instance.
+### Indexing (Zero-Based)
 
-### Basic Singleton
-
-```kotlin
-object DatabaseConnection {
-    init {
-        println("Database connection initialized")
-    }
-
-    var isConnected = false
-
-    fun connect() {
-        isConnected = true
-        println("Connected to database")
-    }
-
-    fun disconnect() {
-        isConnected = false
-        println("Disconnected from database")
-    }
-
-    fun query(sql: String): String {
-        return if (isConnected) {
-            "Result of: $sql"
-        } else {
-            "Error: Not connected"
-        }
-    }
-}
-
-fun main() {
-    // No need to instantiate - DatabaseConnection is the instance
-    DatabaseConnection.connect()
-    println(DatabaseConnection.query("SELECT * FROM users"))
-    DatabaseConnection.disconnect()
-}
-```
-
-**Output**:
-```
-Database connection initialized
-Connected to database
-Result of: SELECT * FROM users
-Disconnected from database
-```
-
-**Key Points**:
-- Created on first access (lazy initialization)
-- Thread-safe by default
-- Cannot have constructors
-- Can implement interfaces and extend classes
-
-### Real-World Example: Application Config
+Lists use **zero-based indexing**—the first element is at position 0:
 
 ```kotlin
-object AppConfig {
-    const val APP_NAME = "MyAwesomeApp"
-    const val VERSION = "1.0.0"
-
-    var apiUrl = "https://api.example.com"
-    var timeout = 30
-    var debugMode = false
-
-    fun printConfig() {
-        println("=== $APP_NAME Configuration ===")
-        println("Version: $VERSION")
-        println("API URL: $apiUrl")
-        println("Timeout: ${timeout}s")
-        println("Debug Mode: $debugMode")
-    }
-}
-
 fun main() {
-    AppConfig.printConfig()
+    val colors = listOf("Red", "Green", "Blue", "Yellow")
 
-    // Modify config
-    AppConfig.debugMode = true
-    AppConfig.timeout = 60
-
-    AppConfig.printConfig()
+    println(colors[0])  // Red (first)
+    println(colors[1])  // Green
+    println(colors[2])  // Blue
+    println(colors[3])  // Yellow (last)
 }
 ```
 
-### Singleton with Interface
+**Visual representation:**
+```
+Index:  0      1        2       3
+Value: "Red" "Green" "Blue" "Yellow"
+```
+
+### Safe Access Methods
 
 ```kotlin
-interface Logger {
-    fun log(message: String)
-    fun error(message: String)
-}
-
-object ConsoleLogger : Logger {
-    override fun log(message: String) {
-        println("[LOG] $message")
-    }
-
-    override fun error(message: String) {
-        println("[ERROR] $message")
-    }
-}
-
-fun processData(logger: Logger) {
-    logger.log("Processing data...")
-    logger.error("An error occurred!")
-}
-
 fun main() {
-    processData(ConsoleLogger)
+    val fruits = listOf("Apple", "Banana", "Cherry")
+
+    // Direct access (throws error if out of bounds)
+    println(fruits[0])  // Apple
+
+    // Safe access with get()
+    println(fruits.get(1))  // Banana
+
+    // Safe access with getOrNull() (returns null if out of bounds)
+    println(fruits.getOrNull(5))  // null (no error!)
+
+    // Safe access with getOrElse()
+    println(fruits.getOrElse(5) { "Not found" })  // Not found
+}
+```
+
+### First, Last, and More
+
+```kotlin
+fun main() {
+    val numbers = listOf(10, 20, 30, 40, 50)
+
+    println("First: ${numbers.first()}")     // 10
+    println("Last: ${numbers.last()}")       // 50
+    println("Size: ${numbers.size}")         // 5
+    println("Is empty: ${numbers.isEmpty()}") // false
+
+    // Safe versions
+    val empty = emptyList<Int>()
+    println(empty.firstOrNull())  // null (no error)
+    println(empty.lastOrNull())   // null
 }
 ```
 
 ---
 
-## Companion Objects
+## Modifying Mutable Lists
 
-**Companion objects** are object declarations inside a class, providing "static-like" members.
-
-### Basic Companion Object
+### Adding Elements
 
 ```kotlin
-class User(val name: String, val email: String) {
-    companion object {
-        const val DEFAULT_ROLE = "USER"
-        var userCount = 0
-
-        fun create(name: String, email: String): User {
-            userCount++
-            return User(name, email)
-        }
-    }
-}
-
 fun main() {
-    println("Default role: ${User.DEFAULT_ROLE}")
+    val cart = mutableListOf<String>()
 
-    val user1 = User.create("Alice", "alice@example.com")
-    val user2 = User.create("Bob", "bob@example.com")
+    // Add at the end
+    cart.add("Laptop")
+    cart.add("Mouse")
+    println(cart)  // [Laptop, Mouse]
 
-    println("Total users created: ${User.userCount}")
+    // Add at specific position
+    cart.add(1, "Keyboard")
+    println(cart)  // [Laptop, Keyboard, Mouse]
+
+    // Add multiple items
+    cart.addAll(listOf("Monitor", "Speakers"))
+    println(cart)  // [Laptop, Keyboard, Mouse, Monitor, Speakers]
 }
 ```
 
-**Output**:
-```
-Default role: USER
-Total users created: 2
-```
-
-### Factory Methods
-
-Companion objects are perfect for factory methods:
+### Removing Elements
 
 ```kotlin
-class Person private constructor(val name: String, val age: Int) {
-    companion object {
-        fun fromFullInfo(name: String, age: Int): Person {
-            require(age >= 0) { "Age cannot be negative" }
-            return Person(name, age)
-        }
-
-        fun fromName(name: String): Person {
-            return Person(name, 0)
-        }
-
-        fun createAnonymous(): Person {
-            return Person("Anonymous", 0)
-        }
-    }
-
-    fun display() {
-        println("Name: $name, Age: $age")
-    }
-}
-
 fun main() {
-    val person1 = Person.fromFullInfo("Alice", 25)
-    val person2 = Person.fromName("Bob")
-    val person3 = Person.createAnonymous()
+    val numbers = mutableListOf(10, 20, 30, 40, 50)
 
-    person1.display()  // Name: Alice, Age: 25
-    person2.display()  // Name: Bob, Age: 0
-    person3.display()  // Name: Anonymous, Age: 0
+    // Remove by value
+    numbers.remove(30)
+    println(numbers)  // [10, 20, 40, 50]
+
+    // Remove by index
+    numbers.removeAt(0)
+    println(numbers)  // [20, 40, 50]
+
+    // Remove last
+    numbers.removeLast()
+    println(numbers)  // [20, 40]
+
+    // Remove all
+    numbers.clear()
+    println(numbers)  // []
 }
 ```
 
-### Named Companion Objects
+### Updating Elements
 
 ```kotlin
-class MathOperations {
-    companion object Calculator {
-        fun add(a: Int, b: Int) = a + b
-        fun subtract(a: Int, b: Int) = a - b
-        fun multiply(a: Int, b: Int) = a * b
-        fun divide(a: Int, b: Int) = a / b
-    }
-}
-
 fun main() {
-    // Can use class name
-    println(MathOperations.add(5, 3))  // 8
+    val tasks = mutableListOf("Buy milk", "Call mom", "Study Kotlin")
 
-    // Or companion object name
-    println(MathOperations.Calculator.multiply(4, 7))  // 28
-}
-```
+    // Update by index
+    tasks[0] = "Buy groceries"
+    println(tasks)  // [Buy groceries, Call mom, Study Kotlin]
 
-### Companion Object Implementing Interface
-
-```kotlin
-interface JsonSerializer {
-    fun toJson(obj: Any): String
-}
-
-class User(val name: String, val age: Int) {
-    companion object : JsonSerializer {
-        override fun toJson(obj: Any): String {
-            if (obj !is User) return "{}"
-            return """{"name": "${obj.name}", "age": ${obj.age}}"""
-        }
-    }
-}
-
-fun main() {
-    val user = User("Alice", 25)
-    val json = User.toJson(user)
-    println(json)  // {"name": "Alice", "age": 25}
+    // Update with set()
+    tasks.set(1, "Video call mom")
+    println(tasks)  // [Buy groceries, Video call mom, Study Kotlin]
 }
 ```
 
 ---
 
-## Constants: `const` vs `val`
+## Common List Operations
 
-### `const` for Compile-Time Constants
+### Checking Contents
 
 ```kotlin
-object Constants {
-    const val MAX_USERS = 100  // ✅ Compile-time constant
-    const val API_KEY = "abc123"  // ✅ Compile-time constant
+fun main() {
+    val fruits = listOf("Apple", "Banana", "Cherry", "Date")
 
-    val createdAt = System.currentTimeMillis()  // ✅ Runtime value (not const)
-}
+    // Check if contains
+    println("Apple" in fruits)        // true
+    println(fruits.contains("Mango"))  // false
 
-class Config {
-    companion object {
-        const val TIMEOUT = 30  // ✅ Top-level or companion object
-        val instance = Config()  // ✅ Runtime value
-    }
+    // Check if contains all
+    println(fruits.containsAll(listOf("Apple", "Date")))  // true
+
+    // Count specific item
+    val numbers = listOf(1, 2, 3, 2, 1, 2)
+    println(numbers.count { it == 2 })  // 3
 }
 ```
 
-**Rules for `const`**:
-- Must be top-level, in object, or in companion object
-- Must be primitive type or String
-- Must be initialized with a compile-time constant
-- Cannot have custom getter
-
----
-
-## Real-World Example: Database Manager
+### Finding Elements
 
 ```kotlin
-data class User(val id: Int, val name: String, val email: String)
-
-object DatabaseManager {
-    private val users = mutableMapOf<Int, User>()
-    private var nextId = 1
-    private var isInitialized = false
-
-    init {
-        println("Initializing Database Manager...")
-    }
-
-    fun initialize() {
-        if (isInitialized) {
-            println("Database already initialized")
-            return
-        }
-        println("Setting up database connection...")
-        isInitialized = true
-    }
-
-    fun insertUser(name: String, email: String): User {
-        require(isInitialized) { "Database not initialized" }
-        val user = User(nextId++, name, email)
-        users[user.id] = user
-        println("Inserted user: ${user.name}")
-        return user
-    }
-
-    fun getUserById(id: Int): User? {
-        require(isInitialized) { "Database not initialized" }
-        return users[id]
-    }
-
-    fun getAllUsers(): List<User> {
-        require(isInitialized) { "Database not initialized" }
-        return users.values.toList()
-    }
-
-    fun deleteUser(id: Int): Boolean {
-        require(isInitialized) { "Database not initialized" }
-        return users.remove(id) != null
-    }
-
-    fun getUserCount() = users.size
-}
-
 fun main() {
-    DatabaseManager.initialize()
+    val numbers = listOf(5, 12, 8, 3, 15, 7, 9)
 
-    DatabaseManager.insertUser("Alice", "alice@example.com")
-    DatabaseManager.insertUser("Bob", "bob@example.com")
-    DatabaseManager.insertUser("Carol", "carol@example.com")
+    // Find first match
+    val firstEven = numbers.find { it % 2 == 0 }
+    println("First even: $firstEven")  // 12
 
-    println("\nAll users:")
-    DatabaseManager.getAllUsers().forEach { user ->
-        println("${user.id}: ${user.name} (${user.email})")
-    }
+    // Find last match
+    val lastEven = numbers.findLast { it % 2 == 0 }
+    println("Last even: $lastEven")  // 8
 
-    println("\nGet user by ID:")
-    val user = DatabaseManager.getUserById(2)
-    println(user)
+    // Find index
+    val index = numbers.indexOf(15)
+    println("15 is at index: $index")  // 4
+}
+```
 
-    println("\nDelete user 2:")
-    DatabaseManager.deleteUser(2)
+### Sorting Lists
 
-    println("\nRemaining users: ${DatabaseManager.getUserCount()}")
-    DatabaseManager.getAllUsers().forEach { user ->
-        println("${user.id}: ${user.name}")
-    }
+```kotlin
+fun main() {
+    val numbers = mutableListOf(5, 2, 8, 1, 9)
+
+    // Sort in place (modifies original)
+    numbers.sort()
+    println("Sorted: $numbers")  // [1, 2, 5, 8, 9]
+
+    // Reverse sort
+    numbers.sortDescending()
+    println("Descending: $numbers")  // [9, 8, 5, 2, 1]
+
+    // Sorted (returns new list, original unchanged)
+    val original = listOf(5, 2, 8, 1, 9)
+    val sorted = original.sorted()
+    println("Original: $original")  // [5, 2, 8, 1, 9]
+    println("Sorted: $sorted")      // [1, 2, 5, 8, 9]
 }
 ```
 
 ---
 
-## Exercise 1: Logging System
+## Functional Operations on Lists
 
-**Goal**: Create a comprehensive logging system using objects.
-
-**Requirements**:
-1. Object `Logger` with different log levels (INFO, WARNING, ERROR)
-2. Methods: `info()`, `warning()`, `error()`
-3. Property to enable/disable logging
-4. Track log count for each level
-5. Method to print statistics
-
----
-
-## Solution: Logging System
+### Map (Transform Each Element)
 
 ```kotlin
-object Logger {
-    private var enabled = true
-    private var infoCount = 0
-    private var warningCount = 0
-    private var errorCount = 0
-
-    fun enable() {
-        enabled = true
-        println("[LOGGER] Logging enabled")
-    }
-
-    fun disable() {
-        enabled = false
-        println("[LOGGER] Logging disabled")
-    }
-
-    fun info(message: String) {
-        if (!enabled) return
-        infoCount++
-        println("[INFO] $message")
-    }
-
-    fun warning(message: String) {
-        if (!enabled) return
-        warningCount++
-        println("[WARNING] $message")
-    }
-
-    fun error(message: String) {
-        if (!enabled) return
-        errorCount++
-        println("[ERROR] $message")
-    }
-
-    fun printStatistics() {
-        println("\n=== Logging Statistics ===")
-        println("Info messages: $infoCount")
-        println("Warning messages: $warningCount")
-        println("Error messages: $errorCount")
-        println("Total messages: ${infoCount + warningCount + errorCount}")
-        println("==========================\n")
-    }
-
-    fun reset() {
-        infoCount = 0
-        warningCount = 0
-        errorCount = 0
-        println("[LOGGER] Statistics reset")
-    }
-}
-
 fun main() {
-    Logger.info("Application started")
-    Logger.info("Loading configuration")
-    Logger.warning("Configuration file not found, using defaults")
-    Logger.info("Connecting to database")
-    Logger.error("Failed to connect to database")
-    Logger.info("Retrying connection")
-    Logger.info("Connected successfully")
+    val numbers = listOf(1, 2, 3, 4, 5)
 
-    Logger.printStatistics()
+    // Double each number
+    val doubled = numbers.map { it * 2 }
+    println(doubled)  // [2, 4, 6, 8, 10]
 
-    Logger.disable()
-    Logger.info("This won't be logged")
+    // Convert to strings
+    val strings = numbers.map { "Number $it" }
+    println(strings)  // [Number 1, Number 2, ...]
 
-    Logger.enable()
-    Logger.info("This will be logged")
+    // Transform names to uppercase
+    val names = listOf("alice", "bob", "charlie")
+    val upper = names.map { it.uppercase() }
+    println(upper)  // [ALICE, BOB, CHARLIE]
+}
+```
 
-    Logger.printStatistics()
+**Map pattern:**
+```
+Input:  [1, 2, 3, 4, 5]
+         ↓  ↓  ↓  ↓  ↓
+Transform each with: it * 2
+         ↓  ↓  ↓  ↓  ↓
+Output: [2, 4, 6, 8, 10]
+```
+
+### Filter (Keep Only Matching Items)
+
+```kotlin
+fun main() {
+    val numbers = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+
+    // Keep only even numbers
+    val evens = numbers.filter { it % 2 == 0 }
+    println(evens)  // [2, 4, 6, 8, 10]
+
+    // Keep numbers greater than 5
+    val greaterThan5 = numbers.filter { it > 5 }
+    println(greaterThan5)  // [6, 7, 8, 9, 10]
+
+    // Filter strings by length
+    val words = listOf("hi", "hello", "hey", "goodbye")
+    val shortWords = words.filter { it.length <= 3 }
+    println(shortWords)  // [hi, hey]
+}
+```
+
+**Filter pattern:**
+```
+Input:  [1, 2, 3, 4, 5]
+         ↓  ↓  ↓  ↓  ↓
+Keep if: it % 2 == 0
+         X  ✓  X  ✓  X
+Output: [2, 4]
+```
+
+### Combining Map and Filter
+
+```kotlin
+fun main() {
+    val numbers = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+
+    // Get squares of even numbers
+    val result = numbers
+        .filter { it % 2 == 0 }  // [2, 4, 6, 8, 10]
+        .map { it * it }         // [4, 16, 36, 64, 100]
+
+    println(result)  // [4, 16, 36, 64, 100]
+}
+```
+
+### Other Useful Operations
+
+```kotlin
+fun main() {
+    val numbers = listOf(1, 2, 3, 4, 5)
+
+    // Sum
+    println("Sum: ${numbers.sum()}")  // 15
+
+    // Average
+    println("Average: ${numbers.average()}")  // 3.0
+
+    // Max and Min
+    println("Max: ${numbers.maxOrNull()}")  // 5
+    println("Min: ${numbers.minOrNull()}")  // 1
+
+    // Any (at least one matches)
+    println("Any > 3? ${numbers.any { it > 3 }}")  // true
+
+    // All (all match)
+    println("All > 0? ${numbers.all { it > 0 }}")  // true
+
+    // None (none match)
+    println("None < 0? ${numbers.none { it < 0 }}")  // true
 }
 ```
 
 ---
 
-## Exercise 2: Factory Pattern with Companion Objects
+## Hands-On Exercises
 
-**Goal**: Create different types of database connections using factory methods.
+### Exercise 1: Shopping Cart Manager
 
-**Requirements**:
-1. Abstract class `DatabaseConnection` with method `connect()`
-2. Subclasses: `MySqlConnection`, `PostgreSqlConnection`, `MongoConnection`
-3. Companion object with factory methods to create each type
-4. Method to validate connection parameters
+**Challenge:** Create a shopping cart system that:
+1. Starts with an empty mutable list
+2. Allows adding items
+3. Displays all items
+4. Calculates total (assume each item costs $10)
+5. Removes items
+
+<details>
+<summary>Click to see solution</summary>
+
+```kotlin
+fun main() {
+    val cart = mutableListOf<String>()
+
+    // Add items
+    cart.add("Laptop")
+    cart.add("Mouse")
+    cart.add("Keyboard")
+    cart.add("Monitor")
+
+    // Display cart
+    println("=== Shopping Cart ===")
+    for ((index, item) in cart.withIndex()) {
+        println("${index + 1}. $item")
+    }
+
+    // Calculate total
+    val itemPrice = 10.0
+    val total = cart.size * itemPrice
+    println("\nTotal items: ${cart.size}")
+    println("Total cost: $$total")
+
+    // Remove an item
+    cart.remove("Mouse")
+    println("\nAfter removing Mouse:")
+    println(cart)
+    println("New total: $${cart.size * itemPrice}")
+}
+```
+
+**Output:**
+```
+=== Shopping Cart ===
+1. Laptop
+2. Mouse
+3. Keyboard
+4. Monitor
+
+Total items: 4
+Total cost: $40.0
+
+After removing Mouse:
+[Laptop, Keyboard, Monitor]
+New total: $30.0
+```
+</details>
 
 ---
 
-## Solution: Database Factory
+### Exercise 2: Grade Analyzer
+
+**Challenge:** Given a list of test scores:
+1. Calculate average
+2. Find highest and lowest scores
+3. Count how many passed (≥60)
+4. Filter and display only passing grades
+
+<details>
+<summary>Click to see solution</summary>
 
 ```kotlin
-abstract class DatabaseConnection(
-    protected val host: String,
-    protected val port: Int,
-    protected val database: String
-) {
-    abstract fun connect(): Boolean
-    abstract fun getConnectionString(): String
-
-    companion object Factory {
-        const val DEFAULT_MYSQL_PORT = 3306
-        const val DEFAULT_POSTGRES_PORT = 5432
-        const val DEFAULT_MONGO_PORT = 27017
-
-        fun createMySql(host: String, database: String, port: Int = DEFAULT_MYSQL_PORT): MySqlConnection {
-            return MySqlConnection(host, port, database)
-        }
-
-        fun createPostgreSql(host: String, database: String, port: Int = DEFAULT_POSTGRES_PORT): PostgreSqlConnection {
-            return PostgreSqlConnection(host, port, database)
-        }
-
-        fun createMongo(host: String, database: String, port: Int = DEFAULT_MONGO_PORT): MongoConnection {
-            return MongoConnection(host, port, database)
-        }
-
-        fun createFromType(type: String, host: String, database: String): DatabaseConnection {
-            return when (type.lowercase()) {
-                "mysql" -> createMySql(host, database)
-                "postgresql", "postgres" -> createPostgreSql(host, database)
-                "mongodb", "mongo" -> createMongo(host, database)
-                else -> throw IllegalArgumentException("Unknown database type: $type")
-            }
-        }
-    }
-}
-
-class MySqlConnection(host: String, port: Int, database: String) : DatabaseConnection(host, port, database) {
-    override fun connect(): Boolean {
-        println("Connecting to MySQL...")
-        println(getConnectionString())
-        return true
-    }
-
-    override fun getConnectionString(): String {
-        return "jdbc:mysql://$host:$port/$database"
-    }
-}
-
-class PostgreSqlConnection(host: String, port: Int, database: String) : DatabaseConnection(host, port, database) {
-    override fun connect(): Boolean {
-        println("Connecting to PostgreSQL...")
-        println(getConnectionString())
-        return true
-    }
-
-    override fun getConnectionString(): String {
-        return "jdbc:postgresql://$host:$port/$database"
-    }
-}
-
-class MongoConnection(host: String, port: Int, database: String) : DatabaseConnection(host, port, database) {
-    override fun connect(): Boolean {
-        println("Connecting to MongoDB...")
-        println(getConnectionString())
-        return true
-    }
-
-    override fun getConnectionString(): String {
-        return "mongodb://$host:$port/$database"
-    }
-}
-
 fun main() {
-    println("=== Creating connections using factory methods ===\n")
+    val scores = listOf(85, 92, 78, 45, 88, 67, 95, 52, 73, 89)
 
-    val mysql = DatabaseConnection.createMySql("localhost", "myapp")
-    mysql.connect()
-
+    println("Test Scores: $scores")
     println()
 
-    val postgres = DatabaseConnection.createPostgreSql("localhost", "myapp")
-    postgres.connect()
+    // Average
+    val average = scores.average()
+    println("Average: %.1f".format(average))
 
+    // Highest and lowest
+    val highest = scores.maxOrNull() ?: 0
+    val lowest = scores.minOrNull() ?: 0
+    println("Highest: $highest")
+    println("Lowest: $lowest")
+
+    // Count passing
+    val passing = scores.filter { it >= 60 }
+    println("\nPassing scores (≥60): ${passing.size}")
+    println("Passing grades: $passing")
+
+    // Count failing
+    val failing = scores.filter { it < 60 }
+    println("\nFailing scores (<60): ${failing.size}")
+    println("Failing grades: $failing")
+}
+```
+
+**Output:**
+```
+Test Scores: [85, 92, 78, 45, 88, 67, 95, 52, 73, 89]
+
+Average: 76.4
+Highest: 95
+Lowest: 45
+
+Passing scores (≥60): 8
+Passing grades: [85, 92, 78, 88, 67, 95, 73, 89]
+
+Failing scores (<60): 2
+Failing grades: [45, 52]
+```
+</details>
+
+---
+
+### Exercise 3: Word Filter
+
+**Challenge:** Create a program that:
+1. Takes a list of words
+2. Filters words longer than 5 characters
+3. Converts them to uppercase
+4. Sorts them alphabetically
+
+<details>
+<summary>Click to see solution</summary>
+
+```kotlin
+fun main() {
+    val words = listOf(
+        "cat", "elephant", "dog", "butterfly",
+        "ant", "giraffe", "bird", "hippopotamus"
+    )
+
+    println("Original words:")
+    println(words)
     println()
 
-    val mongo = DatabaseConnection.createMongo("localhost", "myapp")
-    mongo.connect()
+    val result = words
+        .filter { it.length > 5 }           // Keep long words
+        .map { it.uppercase() }             // Convert to uppercase
+        .sorted()                           // Sort alphabetically
 
-    println("\n=== Creating from type string ===\n")
+    println("Filtered, uppercase, and sorted:")
+    println(result)
 
-    val db = DatabaseConnection.createFromType("mysql", "prod-server", "users_db")
-    db.connect()
+    println("\nStep by step:")
+    println("1. After filter: ${words.filter { it.length > 5 }}")
+    println("2. After map: ${words.filter { it.length > 5 }.map { it.uppercase() }}")
+    println("3. After sort: $result")
 }
 ```
 
+**Output:**
+```
+Original words:
+[cat, elephant, dog, butterfly, ant, giraffe, bird, hippopotamus]
+
+Filtered, uppercase, and sorted:
+[BUTTERFLY, ELEPHANT, GIRAFFE, HIPPOPOTAMUS]
+
+Step by step:
+1. After filter: [elephant, butterfly, giraffe, hippopotamus]
+2. After map: [ELEPHANT, BUTTERFLY, GIRAFFE, HIPPOPOTAMUS]
+3. After sort: [BUTTERFLY, ELEPHANT, GIRAFFE, HIPPOPOTAMUS]
+```
+</details>
+
 ---
 
-## Exercise 3: Singleton Cache System
+### Exercise 4: Number Statistics
 
-**Goal**: Build a thread-safe cache system using object declaration.
+**Challenge:** Create a statistics program that takes a list of numbers and displays:
+1. Sum
+2. Average
+3. Numbers above average
+4. Numbers below average
+5. Median (middle value when sorted)
 
-**Requirements**:
-1. Object `CacheManager` to store key-value pairs
-2. Methods: `put()`, `get()`, `remove()`, `clear()`
-3. Method to check if key exists
-4. Method to get all keys
-5. Track cache size and hits/misses
-
----
-
-## Solution: Cache System
+<details>
+<summary>Click to see solution</summary>
 
 ```kotlin
-object CacheManager {
-    private val cache = mutableMapOf<String, Any>()
-    private var hits = 0
-    private var misses = 0
-
-    fun put(key: String, value: Any) {
-        cache[key] = value
-        println("✅ Cached: $key")
-    }
-
-    fun get(key: String): Any? {
-        return if (cache.containsKey(key)) {
-            hits++
-            cache[key]
-        } else {
-            misses++
-            null
-        }
-    }
-
-    inline fun <reified T> getAs(key: String): T? {
-        val value = get(key)
-        return value as? T
-    }
-
-    fun remove(key: String): Boolean {
-        val removed = cache.remove(key) != null
-        if (removed) {
-            println("🗑️  Removed: $key")
-        }
-        return removed
-    }
-
-    fun clear() {
-        val count = cache.size
-        cache.clear()
-        println("🧹 Cleared $count items from cache")
-    }
-
-    fun contains(key: String): Boolean = cache.containsKey(key)
-
-    fun getAllKeys(): Set<String> = cache.keys.toSet()
-
-    fun size(): Int = cache.size
-
-    fun getStatistics() {
-        val totalRequests = hits + misses
-        val hitRate = if (totalRequests > 0) (hits.toDouble() / totalRequests * 100) else 0.0
-
-        println("\n=== Cache Statistics ===")
-        println("Size: ${cache.size} items")
-        println("Hits: $hits")
-        println("Misses: $misses")
-        println("Hit Rate: ${"%.2f".format(hitRate)}%")
-        println("=======================\n")
-    }
-
-    fun displayContents() {
-        println("\n=== Cache Contents ===")
-        if (cache.isEmpty()) {
-            println("(empty)")
-        } else {
-            cache.forEach { (key, value) ->
-                println("$key = $value")
-            }
-        }
-        println("======================\n")
-    }
-}
-
-data class User(val id: Int, val name: String)
-
 fun main() {
-    // Add items to cache
-    CacheManager.put("user:1", User(1, "Alice"))
-    CacheManager.put("user:2", User(2, "Bob"))
-    CacheManager.put("config:timeout", 30)
-    CacheManager.put("config:maxUsers", 100)
+    val numbers = listOf(23, 45, 12, 67, 34, 89, 15, 56, 78, 91)
 
-    CacheManager.displayContents()
+    println("Numbers: $numbers")
+    println()
 
-    // Retrieve items
-    println("=== Retrieving items ===")
-    val user1 = CacheManager.getAs<User>("user:1")
-    println("Retrieved: $user1")
+    // Sum and average
+    val sum = numbers.sum()
+    val average = numbers.average()
+    println("Sum: $sum")
+    println("Average: %.1f".format(average))
 
-    val timeout = CacheManager.getAs<Int>("config:timeout")
-    println("Timeout: $timeout")
+    // Above and below average
+    val aboveAvg = numbers.filter { it > average }
+    val belowAvg = numbers.filter { it < average }
 
-    val notFound = CacheManager.get("user:999")
-    println("Not found: $notFound")
+    println("\nAbove average (${aboveAvg.size}): $aboveAvg")
+    println("Below average (${belowAvg.size}): $belowAvg")
 
-    CacheManager.getStatistics()
+    // Median
+    val sorted = numbers.sorted()
+    val median = if (sorted.size % 2 == 0) {
+        (sorted[sorted.size / 2 - 1] + sorted[sorted.size / 2]) / 2.0
+    } else {
+        sorted[sorted.size / 2].toDouble()
+    }
 
-    // Check existence
-    println("Contains 'user:1': ${CacheManager.contains("user:1")}")
-    println("Contains 'user:999': ${CacheManager.contains("user:999")}")
-
-    // Get all keys
-    println("\nAll keys: ${CacheManager.getAllKeys()}")
-
-    // Remove item
-    CacheManager.remove("user:2")
-
-    CacheManager.displayContents()
-
-    // Clear cache
-    CacheManager.clear()
-
-    CacheManager.displayContents()
-    CacheManager.getStatistics()
+    println("\nSorted: $sorted")
+    println("Median: $median")
 }
 ```
 
----
+**Output:**
+```
+Numbers: [23, 45, 12, 67, 34, 89, 15, 56, 78, 91]
 
-## Checkpoint Quiz
+Sum: 510
+Average: 51.0
 
-### Question 1
-What is an object declaration in Kotlin?
+Above average (5): [67, 89, 56, 78, 91]
+Below average (5): [23, 45, 12, 34, 15]
 
-A) A way to create multiple instances
-B) A singleton pattern with exactly one instance
-C) An abstract class
-D) A data class
-
-### Question 2
-What is a companion object?
-
-A) A friend class
-B) An object that provides static-like members for a class
-C) A duplicate object
-D) An object expression
-
-### Question 3
-When is an object declaration initialized?
-
-A) At compile time
-B) When the program starts
-C) On first access (lazy initialization)
-D) Never
-
-### Question 4
-Can companion objects implement interfaces?
-
-A) No, never
-B) Yes, but only one interface
-C) Yes, multiple interfaces
-D) Only abstract classes
-
-### Question 5
-What's the difference between `const val` and `val` in an object?
-
-A) No difference
-B) `const val` is a compile-time constant; `val` is computed at runtime
-C) `const val` is faster
-D) `val` is immutable; `const val` is not
+Sorted: [12, 15, 23, 34, 45, 56, 67, 78, 89, 91]
+Median: 50.5
+```
+</details>
 
 ---
 
-## Quiz Answers
+## Common Pitfalls and Best Practices
 
-**Question 1: B) A singleton pattern with exactly one instance**
+### Pitfall 1: Index Out of Bounds
 
-Object declarations create singletons - classes with exactly one instance that's created lazily.
-
+❌ **Crash:**
 ```kotlin
-object DatabaseConnection {
-    fun connect() { }
-}
-
-// No need to instantiate
-DatabaseConnection.connect()
+val list = listOf(1, 2, 3)
+println(list[5])  // Exception: Index out of bounds!
 ```
 
----
+✅ **Safe:**
+```kotlin
+val list = listOf(1, 2, 3)
+println(list.getOrNull(5))  // null (no crash)
+println(list.getOrElse(5) { 0 })  // 0 (default value)
+```
 
-**Question 2: B) An object that provides static-like members for a class**
+### Pitfall 2: Modifying Immutable Lists
 
-Companion objects give you "static" functionality in Kotlin.
+❌ **Error:**
+```kotlin
+val list = listOf(1, 2, 3)
+list.add(4)  // Error: Unresolved reference
+```
+
+✅ **Correct:**
+```kotlin
+val list = mutableListOf(1, 2, 3)
+list.add(4)  // Works!
+```
+
+### Pitfall 3: Forgetting Lists Are Zero-Indexed
+
+❌ **Confusion:**
+```kotlin
+val items = listOf("First", "Second", "Third")
+println(items[1])  // "Second", not "First"!
+```
+
+✅ **Remember:**
+```kotlin
+val items = listOf("First", "Second", "Third")
+println("Index 0: ${items[0]}")  // "First"
+println("Index 1: ${items[1]}")  // "Second"
+println("Index 2: ${items[2]}")  // "Third"
+```
+
+### Best Practice 1: Use val with Mutable Lists
 
 ```kotlin
-class User {
-    companion object {
-        fun create() = User()  // "Static" factory method
+// ✅ Good: val reference, mutable contents
+val list = mutableListOf(1, 2, 3)
+list.add(4)  // Can modify contents
+// list = mutableListOf(5, 6)  // Can't reassign
+
+// ❌ Avoid: var with mutable list (too much mutability)
+var list2 = mutableListOf(1, 2, 3)
+list2.add(4)  // Can modify
+list2 = mutableListOf(5, 6)  // Can reassign (confusing!)
+```
+
+### Best Practice 2: Prefer Immutable When Possible
+
+```kotlin
+// ✅ Good: Won't change? Use listOf
+val daysOfWeek = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+
+// Only use mutable when necessary
+val shoppingCart = mutableListOf<String>()  // Will change
+```
+
+### Best Practice 3: Use Collection Functions
+
+```kotlin
+// ❌ Manual (verbose)
+val numbers = listOf(1, 2, 3, 4, 5)
+val evens = mutableListOf<Int>()
+for (num in numbers) {
+    if (num % 2 == 0) {
+        evens.add(num)
     }
 }
 
-val user = User.create()
+// ✅ Functional (concise)
+val evens2 = numbers.filter { it % 2 == 0 }
 ```
 
 ---
 
-**Question 3: C) On first access (lazy initialization)**
+## Quick Quiz
 
-Objects are created the first time they're accessed, not when the program starts.
-
+**Question 1:** What's the output?
 ```kotlin
-object Lazy {
-    init {
-        println("Initialized!")  // Prints on first access only
-    }
-}
-
-// ... later ...
-Lazy.toString()  // "Initialized!" prints here
+val list = listOf("A", "B", "C")
+println(list[0])
+println(list.last())
 ```
+
+<details>
+<summary>Answer</summary>
+
+**Output:**
+```
+A
+C
+```
+
+**Explanation:** `list[0]` gets the first element, `last()` gets the last element.
+</details>
 
 ---
 
-**Question 4: C) Yes, multiple interfaces**
-
-Companion objects can implement multiple interfaces, just like regular objects.
-
+**Question 2:** What's wrong with this code?
 ```kotlin
-interface A { fun a() }
-interface B { fun b() }
-
-class Example {
-    companion object : A, B {
-        override fun a() { }
-        override fun b() { }
-    }
-}
+val numbers = listOf(1, 2, 3)
+numbers.add(4)
 ```
 
----
+<details>
+<summary>Answer</summary>
 
-**Question 5: B) `const val` is a compile-time constant; `val` is computed at runtime**
+**Error:** `listOf()` creates an **immutable** list. You can't add to it.
 
-`const val` must be known at compile time; `val` can be computed at runtime.
-
+**Fix:** Use `mutableListOf()` instead:
 ```kotlin
-object Config {
-    const val MAX_SIZE = 100  // ✅ Compile-time constant
-    val timestamp = System.currentTimeMillis()  // ✅ Runtime value
-    // const val time = System.currentTimeMillis()  // ❌ Error!
-}
+val numbers = mutableListOf(1, 2, 3)
+numbers.add(4)  // Now it works!
+```
+</details>
+
+---
+
+**Question 3:** What does this produce?
+```kotlin
+val numbers = listOf(1, 2, 3, 4, 5)
+val result = numbers.filter { it > 2 }.map { it * 2 }
+println(result)
 ```
 
----
+<details>
+<summary>Answer</summary>
 
-## What You've Learned
+**Output:** `[6, 8, 10]`
 
-✅ Object expressions for anonymous objects
-✅ Object declarations for singletons
-✅ Companion objects for static-like members
-✅ Factory methods with companion objects
-✅ Constants with `const val`
-✅ When to use objects vs classes
-
----
-
-## Next Steps
-
-In **Lesson 2.7: Part 2 Capstone - Library Management System**, you'll:
-- Build a complete OOP project
-- Apply all concepts from Part 2
-- Create classes, inheritance, interfaces
-- Use data classes and objects
-- Implement a real-world system
-
-Get ready for the capstone project!
+**Explanation:**
+1. Filter keeps: `[3, 4, 5]` (values > 2)
+2. Map doubles: `[6, 8, 10]`
+</details>
 
 ---
 
-**Congratulations on completing Lesson 2.6!** 🎉
+**Question 4:** What's the size?
+```kotlin
+val list = mutableListOf(1, 2, 3)
+list.add(4)
+list.remove(2)
+println(list.size)
+```
 
-You now understand all of Kotlin's object-related features. Ready for the capstone project!
+<details>
+<summary>Answer</summary>
+
+**Output:** `3`
+
+**Explanation:**
+1. Start: `[1, 2, 3]` (size 3)
+2. Add 4: `[1, 2, 3, 4]` (size 4)
+3. Remove 2: `[1, 3, 4]` (size 3)
+</details>
+
+---
+
+## Summary
+
+Congratulations! You've mastered lists in Kotlin. Let's recap:
+
+**Key Concepts:**
+- **Lists** store multiple items in order
+- **Immutable lists** (`listOf`) can't be changed
+- **Mutable lists** (`mutableListOf`) can be modified
+- **Zero-indexed**: First element is at index 0
+- **Rich operations**: map, filter, sort, find, and more
+
+**List Creation:**
+```kotlin
+val immutable = listOf(1, 2, 3)
+val mutable = mutableListOf(1, 2, 3)
+val empty = emptyList<String>()
+```
+
+**Common Operations:**
+```kotlin
+// Access
+list[0], list.first(), list.last()
+
+// Modify (mutable only)
+list.add(item)
+list.remove(item)
+list.removeAt(index)
+
+// Transform
+list.map { }      // Transform each
+list.filter { }   // Keep matching
+list.sorted()     // Sort
+
+// Aggregate
+list.sum()
+list.average()
+list.maxOrNull()
+```
+
+**Best Practices:**
+- Use immutable lists by default
+- Prefer collection functions over manual loops
+- Use safe access methods (getOrNull)
+- Remember zero-based indexing
+- Use val with mutable lists
+
+---
+
+## What's Next?
+
+You can now store and manipulate lists of items, but what if you need to look up data by a key? Like finding a phone number by name, or a definition by word?
+
+In **Lesson 2.7: Maps and Part 2 Capstone**, you'll learn:
+- Maps for key-value pairs
+- Creating and using maps
+- Map operations and functions
+- **Part 2 Capstone Project**: Combine everything you've learned!
+
+**Preview:**
+```kotlin
+val phoneBook = mapOf(
+    "Alice" to "555-1234",
+    "Bob" to "555-5678"
+)
+
+println(phoneBook["Alice"])  // 555-1234
+```
+
+Get ready for the final lesson of Part 2 and an exciting capstone project!
+
+---
+
+**Amazing progress! You've completed Lesson 2.6. One more lesson to go!** 🎉

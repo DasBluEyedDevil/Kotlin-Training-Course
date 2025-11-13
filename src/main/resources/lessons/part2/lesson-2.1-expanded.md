@@ -1,776 +1,952 @@
-# Lesson 2.1: Introduction to Object-Oriented Programming
+# Lesson 2.1: Making Decisions - If Statements and Conditional Logic
 
 **Estimated Time**: 60 minutes
+**Difficulty**: Beginner
+**Prerequisites**: Part 1 (Kotlin fundamentals)
 
 ---
 
 ## Topic Introduction
 
-Welcome to Part 2 of the Kotlin Training Course! You've mastered the fundamentals—variables, control flow, functions, and collections. Now it's time to learn **Object-Oriented Programming (OOP)**, a paradigm that will transform how you design and structure your code.
+Welcome to Part 2: Controlling the Flow! You've mastered Kotlin fundamentals—variables, data types, functions, and basic input/output. Now it's time to make your programs **intelligent** by teaching them to make decisions.
 
-OOP is more than just a programming technique—it's a way of thinking about problems. Instead of writing procedural code that executes step-by-step, you'll learn to model real-world entities as **objects** with their own data and behavior.
+Up until now, your programs have executed line-by-line in a straight path, like following a recipe exactly. But real-world programs need to adapt and respond to different situations. Should you bring an umbrella? **If** it's raining, yes. **Otherwise**, no. That's conditional logic!
 
-By the end of this lesson, you'll understand what OOP is, why it matters, and how to create your first classes and objects in Kotlin.
+In this lesson, you'll learn:
+- What conditional logic is and why it's essential
+- How to use `if`, `else`, and `else if` statements
+- Comparison operators (`==`, `!=`, `<`, `>`, `<=`, `>=`)
+- How to make decisions based on Boolean conditions
+- Kotlin's unique `if` expression feature
+- Common patterns and best practices
 
----
-
-## The Concept
-
-### What is Object-Oriented Programming?
-
-**Object-Oriented Programming (OOP)** is a programming paradigm that organizes code around **objects**—self-contained units that combine data (properties) and behavior (methods).
-
-**Real-World Analogy: A Car**
-
-Think about a car in the real world:
-
-**Properties (Data)**:
-- Color: "Red"
-- Brand: "Toyota"
-- Model: "Camry"
-- Current Speed: 0 mph
-- Fuel Level: 100%
-
-**Behaviors (Actions)**:
-- Start engine
-- Accelerate
-- Brake
-- Turn left/right
-- Refuel
-
-A car is an **object** with both data and functionality. OOP lets you model concepts like this in code!
-
-### Why OOP Matters
-
-**Before OOP (Procedural Programming)**:
-
-```kotlin
-// Scattered data
-var carColor = "Red"
-var carBrand = "Toyota"
-var carSpeed = 0
-
-// Scattered functions
-fun accelerateCar() {
-    carSpeed += 10
-}
-
-fun brakeCar() {
-    carSpeed -= 10
-}
-```
-
-**Problems**:
-- Data and behavior are disconnected
-- Hard to manage multiple cars
-- No clear organization
-- Prone to errors (which car are we accelerating?)
-
-**With OOP**:
-
-```kotlin
-class Car(val color: String, val brand: String) {
-    var speed = 0
-
-    fun accelerate() {
-        speed += 10
-    }
-
-    fun brake() {
-        speed -= 10
-    }
-}
-
-val myCar = Car("Red", "Toyota")
-myCar.accelerate()
-println(myCar.speed)  // 10
-```
-
-**Benefits**:
-- ✅ Data and behavior are bundled together
-- ✅ Easy to create multiple cars
-- ✅ Clear organization and structure
-- ✅ Safer and more maintainable
+By the end, you'll write programs that adapt their behavior based on conditions—the foundation of all intelligent software!
 
 ---
 
-## Classes and Objects
+## The Concept: Conditional Logic
 
-### What is a Class?
+### Real-World Decision Making
 
-A **class** is a blueprint or template for creating objects. It defines:
-- **Properties**: What data the object holds
-- **Methods**: What actions the object can perform
-
-**Analogy**: A class is like a cookie cutter, and objects are the cookies.
+Every day, you make countless decisions based on conditions:
 
 ```
-Class (Blueprint)          Objects (Instances)
-┌─────────────┐           ┌─────────────┐ ┌─────────────┐
-│   Car       │           │  Car #1     │ │  Car #2     │
-│             │ ─────────▶│  Red Toyota │ │  Blue Honda │
-│ color       │           │  Speed: 0   │ │  Speed: 30  │
-│ speed       │           └─────────────┘ └─────────────┘
-│ accelerate()│
-└─────────────┘
+IF temperature < 32°F
+    Wear a heavy coat
+OTHERWISE IF temperature < 60°F
+    Wear a light jacket
+OTHERWISE
+    Wear a t-shirt
 ```
 
-### Creating Your First Class
+```
+IF you have the key
+    Open the door
+OTHERWISE
+    Ring the doorbell
+```
 
-**Syntax**:
+```
+IF account balance >= purchase price
+    Complete purchase
+OTHERWISE
+    Show "insufficient funds" error
+```
+
+Your brain evaluates conditions and chooses different paths automatically. Programming lets computers do the same!
+
+### The Traffic Light Analogy
+
+Think of a traffic light controlling your program's flow:
+
+- **Red light (condition false)**: Skip this block of code
+- **Green light (condition true)**: Execute this block of code
+- **Yellow light (else)**: Default path when others are false
+
+Just as traffic lights control the flow of cars, conditional statements control the flow of code execution.
+
+### What Makes a Condition?
+
+A condition is any expression that evaluates to **true** or **false** (a Boolean value):
 
 ```kotlin
-class ClassName {
-    // Properties
-    // Methods
-}
+age >= 18           // true if age is 18 or more
+temperature < 32    // true if temperature is less than 32
+name == "Alice"     // true if name exactly equals "Alice"
+isRaining           // already a Boolean variable
 ```
 
-**Example: Person Class**
+The program checks the condition and decides which code to execute based on the result.
+
+---
+
+## The Fundamentals: If Statements
+
+### Basic If Statement
+
+The simplest form of conditional logic is the **if statement**:
 
 ```kotlin
-class Person {
-    var name: String = ""
-    var age: Int = 0
-
-    fun introduce() {
-        println("Hi, I'm $name and I'm $age years old.")
-    }
-}
-
 fun main() {
-    // Create an object (instance) of Person
-    val person1 = Person()
-    person1.name = "Alice"
-    person1.age = 25
-    person1.introduce()  // Hi, I'm Alice and I'm 25 years old.
+    val temperature = 95
 
-    // Create another object
-    val person2 = Person()
-    person2.name = "Bob"
-    person2.age = 30
-    person2.introduce()  // Hi, I'm Bob and I'm 30 years old.
+    if (temperature > 90) {
+        println("It's extremely hot! Stay hydrated.")
+    }
+
+    println("Have a great day!")
 }
 ```
 
-**Key Points**:
-- `class Person` defines the blueprint
-- `Person()` creates a new instance (object)
-- Each object has its own independent data
-- `person1` and `person2` are separate objects
+**Output:**
+```
+It's extremely hot! Stay hydrated.
+Have a great day!
+```
+
+**How it works:**
+1. Program evaluates `temperature > 90` → `95 > 90` → `true`
+2. Because the condition is true, the code inside the braces `{ }` executes
+3. Program continues to the next line after the if statement
+
+**If the temperature was 85:**
+```kotlin
+val temperature = 85
+if (temperature > 90) {
+    println("It's extremely hot! Stay hydrated.")  // SKIPPED
+}
+println("Have a great day!")  // Still executes
+```
+
+**Output:**
+```
+Have a great day!
+```
+
+### Anatomy of an If Statement
+
+```kotlin
+if (condition) {
+    // Code that runs only when condition is true
+}
+```
+
+**Parts:**
+- `if` - Keyword that starts the conditional statement
+- `(condition)` - A Boolean expression that evaluates to true or false
+- `{ }` - Code block containing statements to execute when true
+- Indentation - Makes the code readable (best practice: 4 spaces)
+
+### Multiple Independent If Statements
+
+You can have multiple separate if statements:
+
+```kotlin
+fun main() {
+    val score = 85
+
+    if (score >= 90) {
+        println("Excellent work!")
+    }
+
+    if (score >= 80) {
+        println("Great job!")
+    }
+
+    if (score >= 70) {
+        println("Good effort!")
+    }
+}
+```
+
+**Output:**
+```
+Great job!
+Good effort!
+```
+
+**Important:** Each if statement is checked independently. If `score = 85`, both the second and third conditions are true, so both messages print.
 
 ---
 
-## Properties
+## Comparison Operators
 
-**Properties** are variables that belong to a class. They define the state of an object.
+To create conditions, you need to compare values using **comparison operators**:
 
-**Two Types**:
-- **`val`** (immutable): Cannot be changed after initialization
-- **`var`** (mutable): Can be changed
+| Operator | Meaning | Example | Result |
+|----------|---------|---------|--------|
+| `==` | Equal to | `5 == 5` | `true` |
+| `==` | Equal to | `5 == 3` | `false` |
+| `!=` | Not equal to | `5 != 3` | `true` |
+| `!=` | Not equal to | `5 != 5` | `false` |
+| `<` | Less than | `3 < 5` | `true` |
+| `<` | Less than | `5 < 3` | `false` |
+| `>` | Greater than | `5 > 3` | `true` |
+| `<=` | Less than or equal | `5 <= 5` | `true` |
+| `>=` | Greater than or equal | `5 >= 3` | `true` |
+
+### Common Comparison Examples
+
+**Numeric comparisons:**
+```kotlin
+val age = 25
+val minimumAge = 18
+
+if (age >= minimumAge) {
+    println("Access granted")
+}
+```
+
+**String comparisons:**
+```kotlin
+val password = "secret123"
+
+if (password == "secret123") {
+    println("Login successful")
+}
+
+if (password != "admin") {
+    println("You are not an administrator")
+}
+```
+
+**Boolean comparisons:**
+```kotlin
+val isLoggedIn = true
+
+if (isLoggedIn == true) {
+    println("Welcome back!")
+}
+
+// Even better - Boolean variables don't need ==
+if (isLoggedIn) {
+    println("Welcome back!")
+}
+```
+
+### Critical Mistake: = vs ==
+
+**The #1 beginner mistake:**
+
+❌ **WRONG:**
+```kotlin
+if (age = 18) {  // ERROR! This tries to ASSIGN 18 to age
+    println("You are 18")
+}
+```
+
+✅ **CORRECT:**
+```kotlin
+if (age == 18) {  // This COMPARES age to 18
+    println("You are 18")
+}
+```
+
+**Remember:**
+- `=` is for **assignment** (storing a value)
+- `==` is for **comparison** (checking equality)
+
+---
+
+## The Else Clause
+
+Often you want to do one thing if a condition is true, and something **different** if it's false. That's where `else` comes in:
 
 ```kotlin
-class BankAccount {
-    val accountNumber: String = "123456"  // Can't change
-    var balance: Double = 0.0              // Can change
+fun main() {
+    val age = 16
 
-    fun deposit(amount: Double) {
-        balance += amount
+    if (age >= 18) {
+        println("You are an adult.")
+    } else {
+        println("You are a minor.")
+    }
+}
+```
+
+**Output:**
+```
+You are a minor.
+```
+
+**How it works:**
+- If the condition (`age >= 18`) is **true**, execute the first block
+- If the condition is **false**, execute the else block
+- Exactly ONE of the two blocks will execute, never both
+
+### The Either/Or Pattern
+
+Think of if-else as a fork in the road:
+
+```
+          if (condition)
+               /  \
+             /      \
+          true     false
+           /          \
+       {block1}    {block2}
+           \          /
+            \        /
+              \    /
+           (continue)
+```
+
+**Real-world example:**
+```kotlin
+fun main() {
+    val hasKey = true
+
+    if (hasKey) {
+        println("Opening door with key")
+    } else {
+        println("Ringing doorbell")
     }
 
-    fun withdraw(amount: Double) {
-        if (amount <= balance) {
-            balance -= amount
+    println("Entering home")
+}
+```
+
+**Output:**
+```
+Opening door with key
+Entering home
+```
+
+---
+
+## Else If: Multiple Conditions
+
+What if you have more than two possibilities? Use **else if** to chain conditions:
+
+```kotlin
+fun main() {
+    val score = 85
+
+    if (score >= 90) {
+        println("Grade: A - Excellent!")
+    } else if (score >= 80) {
+        println("Grade: B - Great work!")
+    } else if (score >= 70) {
+        println("Grade: C - Good job!")
+    } else if (score >= 60) {
+        println("Grade: D - Needs improvement")
+    } else {
+        println("Grade: F - Please see instructor")
+    }
+}
+```
+
+**Output:**
+```
+Grade: B - Great work!
+```
+
+### How Else If Works
+
+The program checks conditions **in order** from top to bottom:
+
+1. Check first condition (`score >= 90`) → `85 >= 90` → **false**, skip
+2. Check second condition (`score >= 80`) → `85 >= 80` → **true**, execute and **STOP**
+3. Don't check any remaining conditions
+
+**Critical:** Once a condition is true, the rest are ignored. Order matters!
+
+**Example showing order importance:**
+
+❌ **WRONG ORDER:**
+```kotlin
+val score = 95
+
+if (score >= 60) {
+    println("Grade: D")  // This executes!
+} else if (score >= 90) {
+    println("Grade: A")  // Never reached
+}
+```
+**Output:** `Grade: D` (Wrong! Should be A)
+
+✅ **CORRECT ORDER:**
+```kotlin
+val score = 95
+
+if (score >= 90) {
+    println("Grade: A")  // This executes!
+} else if (score >= 60) {
+    println("Grade: D")  // Never reached (but that's okay)
+}
+```
+**Output:** `Grade: A` (Correct!)
+
+**Rule:** Put the most specific conditions first, most general conditions last.
+
+---
+
+## Nested If Statements
+
+You can put if statements inside other if statements:
+
+```kotlin
+fun main() {
+    val age = 25
+    val hasLicense = true
+
+    if (age >= 16) {
+        println("You are old enough to drive")
+
+        if (hasLicense) {
+            println("You can drive legally!")
         } else {
-            println("Insufficient funds!")
+            println("But you need a license first")
         }
+    } else {
+        println("You are too young to drive")
     }
 }
+```
 
+**Output:**
+```
+You are old enough to drive
+You can drive legally!
+```
+
+**How it works:**
+1. Check outer condition (`age >= 16`) → true, enter outer block
+2. Print "You are old enough to drive"
+3. Check inner condition (`hasLicense`) → true, execute
+4. Print "You can drive legally!"
+
+**Nested if statement pattern:**
+```kotlin
+if (outerCondition) {
+    // Outer block
+    if (innerCondition) {
+        // Inner block (only reached if BOTH conditions are true)
+    }
+}
+```
+
+**Alternative:** In the next lesson, you'll learn about **logical operators** (`&&`, `||`) which often eliminate the need for nesting.
+
+---
+
+## If as an Expression (Kotlin Special Feature!)
+
+Here's something unique to Kotlin: `if` is not just a statement, it's an **expression** that can return a value!
+
+**Traditional approach (statement):**
+```kotlin
+val message: String
+
+if (age >= 18) {
+    message = "Adult"
+} else {
+    message = "Minor"
+}
+
+println(message)
+```
+
+**Kotlin's expression approach:**
+```kotlin
+val message = if (age >= 18) "Adult" else "Minor"
+println(message)
+```
+
+Both do the same thing, but the expression form is cleaner and more concise!
+
+### More Expression Examples
+
+**Example 1: Max of two numbers**
+```kotlin
 fun main() {
-    val account = BankAccount()
-    println(account.balance)  // 0.0
+    val a = 10
+    val b = 20
+    val max = if (a > b) a else b
 
-    account.deposit(100.0)
-    println(account.balance)  // 100.0
-
-    account.withdraw(30.0)
-    println(account.balance)  // 70.0
-
-    // account.accountNumber = "999999"  // ❌ Error: Val cannot be reassigned
+    println("Maximum: $max")  // Output: Maximum: 20
 }
 ```
 
----
-
-## Constructors
-
-### Primary Constructor
-
-A **constructor** is a special function that initializes an object when it's created. The **primary constructor** is defined in the class header.
-
-**Without Constructor** (tedious):
-
+**Example 2: Fee calculation**
 ```kotlin
-val person = Person()
-person.name = "Alice"
-person.age = 25
-```
-
-**With Constructor** (clean):
-
-```kotlin
-class Person(val name: String, val age: Int) {
-    fun introduce() {
-        println("Hi, I'm $name and I'm $age years old.")
-    }
-}
-
 fun main() {
-    val person = Person("Alice", 25)
-    person.introduce()  // Hi, I'm Alice and I'm 25 years old.
+    val age = 12
+    val fee = if (age < 18) 5 else 10
+
+    println("Admission fee: $$fee")  // Output: Admission fee: $5
 }
 ```
 
-**Explanation**:
-- `class Person(val name: String, val age: Int)` defines properties in the constructor
-- `val` or `var` makes them properties (accessible throughout the class)
-- Without `val`/`var`, they're just constructor parameters
+**Example 3: Multi-line expression blocks**
+```kotlin
+val result = if (score >= 60) {
+    val bonus = 10
+    score + bonus  // Last expression is returned
+} else {
+    score  // Last expression is returned
+}
+```
 
-**Constructor with Default Values**:
+**Important:** When using if as an expression, you **must** have an else clause (the expression must always produce a value).
+
+---
+
+## Hands-On Practice
+
+### Exercise 1: Temperature Advisor
+
+**Challenge:** Write a program that:
+1. Takes a temperature value
+2. Prints different advice based on the temperature:
+   - If temp >= 100: "Extreme heat warning! Stay indoors."
+   - If temp >= 80: "It's hot! Stay hydrated."
+   - If temp >= 60: "Nice weather!"
+   - If temp < 60: "It's chilly! Bring a jacket."
+
+<details>
+<summary>Click to see solution</summary>
 
 ```kotlin
-class Car(
-    val brand: String,
-    val model: String,
-    val year: Int = 2024,  // Default value
-    var mileage: Int = 0   // Default value
-) {
-    fun displayInfo() {
-        println("$year $brand $model - $mileage miles")
-    }
-}
-
 fun main() {
-    val car1 = Car("Toyota", "Camry")  // Uses defaults
-    car1.displayInfo()  // 2024 Toyota Camry - 0 miles
+    val temperature = 75
 
-    val car2 = Car("Honda", "Civic", 2020, 15000)
-    car2.displayInfo()  // 2020 Honda Civic - 15000 miles
+    if (temperature >= 100) {
+        println("Extreme heat warning! Stay indoors.")
+    } else if (temperature >= 80) {
+        println("It's hot! Stay hydrated.")
+    } else if (temperature >= 60) {
+        println("Nice weather!")
+    } else {
+        println("It's chilly! Bring a jacket.")
+    }
 }
 ```
 
-### Init Block
+**Output:**
+```
+Nice weather!
+```
 
-The **`init` block** runs when an object is created. Use it for validation or setup logic.
+**Key concepts:**
+- Multiple conditions with else if
+- Ordered from most specific to least specific
+- Each temperature falls into exactly one category
+</details>
+
+---
+
+### Exercise 2: Even or Odd Checker
+
+**Challenge:** Write a program that:
+1. Takes a number
+2. Checks if it's even or odd
+3. Prints the result
+
+**Hint:** Use the modulo operator `%`. A number is even if `number % 2 == 0`.
+
+<details>
+<summary>Click to see solution</summary>
 
 ```kotlin
-class BankAccount(val accountNumber: String, initialBalance: Double) {
-    var balance: Double = 0.0
-
-    init {
-        require(initialBalance >= 0) { "Initial balance cannot be negative" }
-        balance = initialBalance
-        println("Account $accountNumber created with balance $$balance")
-    }
-}
-
 fun main() {
-    val account = BankAccount("123456", 100.0)
-    // Output: Account 123456 created with balance $100.0
+    val number = 17
 
-    // val badAccount = BankAccount("999999", -50.0)  // ❌ Exception!
+    if (number % 2 == 0) {
+        println("$number is even")
+    } else {
+        println("$number is odd")
+    }
 }
 ```
 
-### Secondary Constructors
+**Output:**
+```
+17 is odd
+```
 
-**Secondary constructors** provide alternative ways to create objects.
+**How it works:**
+- `%` (modulo) gives the remainder after division
+- `17 % 2` = 1 (remainder when dividing 17 by 2)
+- `1 == 0` is false, so else block executes
+
+**Even number example:**
+- `18 % 2` = 0
+- `0 == 0` is true, so if block executes
+</details>
+
+---
+
+### Exercise 3: Login System
+
+**Challenge:** Create a simple login system that:
+1. Stores a correct username and password
+2. Takes user input for username and password
+3. Checks if both match
+4. Prints "Login successful" or "Login failed"
+
+<details>
+<summary>Click to see solution</summary>
 
 ```kotlin
-class Person(val name: String, val age: Int) {
-    var email: String = ""
-
-    // Secondary constructor
-    constructor(name: String, age: Int, email: String) : this(name, age) {
-        this.email = email
-    }
-
-    fun displayInfo() {
-        println("Name: $name, Age: $age, Email: $email")
-    }
-}
-
 fun main() {
-    val person1 = Person("Alice", 25)
-    person1.displayInfo()  // Name: Alice, Age: 25, Email:
+    val correctUsername = "admin"
+    val correctPassword = "pass123"
 
-    val person2 = Person("Bob", 30, "bob@example.com")
-    person2.displayInfo()  // Name: Bob, Age: 30, Email: bob@example.com
+    print("Enter username: ")
+    val username = readLine()!!
+
+    print("Enter password: ")
+    val password = readLine()!!
+
+    if (username == correctUsername && password == correctPassword) {
+        println("Login successful! Welcome, $username!")
+    } else {
+        println("Login failed! Invalid credentials.")
+    }
 }
 ```
 
-**Note**: In modern Kotlin, **default parameters** are preferred over secondary constructors.
+**Sample run:**
+```
+Enter username: admin
+Enter password: pass123
+Login successful! Welcome, admin!
+```
+
+**Note:** We're using `&&` (AND operator) which you'll learn more about in the next lesson. For now, understand that both conditions must be true for the if block to execute.
+</details>
 
 ---
 
-## Methods
+### Exercise 4: Discount Calculator
 
-**Methods** are functions that belong to a class. They define the behavior of an object.
+**Challenge:** Write a program that:
+1. Takes a purchase amount
+2. Applies discounts based on the amount:
+   - $100+: 20% discount
+   - $50-$99: 10% discount
+   - Under $50: No discount
+3. Prints the final price
+
+<details>
+<summary>Click to see solution</summary>
 
 ```kotlin
-class Calculator {
-    fun add(a: Int, b: Int): Int {
-        return a + b
-    }
-
-    fun subtract(a: Int, b: Int): Int {
-        return a - b
-    }
-
-    fun multiply(a: Int, b: Int): Int {
-        return a * b
-    }
-
-    fun divide(a: Int, b: Int): Double {
-        require(b != 0) { "Cannot divide by zero" }
-        return a.toDouble() / b
-    }
-}
-
 fun main() {
-    val calc = Calculator()
+    val purchaseAmount = 75.0
 
-    println(calc.add(5, 3))        // 8
-    println(calc.subtract(10, 4))  // 6
-    println(calc.multiply(3, 7))   // 21
-    println(calc.divide(15, 3))    // 5.0
+    val discount = if (purchaseAmount >= 100) {
+        0.20
+    } else if (purchaseAmount >= 50) {
+        0.10
+    } else {
+        0.0
+    }
+
+    val finalPrice = purchaseAmount * (1 - discount)
+
+    println("Original price: $$purchaseAmount")
+    println("Discount: ${discount * 100}%")
+    println("Final price: $$finalPrice")
 }
 ```
 
+**Output:**
+```
+Original price: $75.0
+Discount: 10.0%
+Final price: $67.5
+```
+
+**Key concepts:**
+- Using if as an expression to calculate the discount
+- Storing the result in a variable
+- Performing calculations with the result
+</details>
+
 ---
 
-## The `this` Keyword
+## Common Pitfalls and Best Practices
 
-**`this`** refers to the current instance of the class. Use it to:
-1. Distinguish between properties and parameters with the same name
-2. Reference the current object
+### Pitfall 1: Missing Braces
 
+While braces are optional for single statements, **always use them** for clarity:
+
+⚠️ **Risky (works but confusing):**
 ```kotlin
-class Person(name: String, age: Int) {
-    var name: String = name
-    var age: Int = age
-
-    fun updateName(name: String) {
-        this.name = name  // this.name is the property, name is the parameter
-    }
-
-    fun haveBirthday() {
-        this.age++  // Optional: this.age++ is the same as age++
-    }
-
-    fun compareAge(otherPerson: Person): String {
-        return when {
-            this.age > otherPerson.age -> "$name is older than ${otherPerson.name}"
-            this.age < otherPerson.age -> "$name is younger than ${otherPerson.name}"
-            else -> "$name and ${otherPerson.name} are the same age"
-        }
-    }
-}
-
-fun main() {
-    val alice = Person("Alice", 25)
-    val bob = Person("Bob", 30)
-
-    alice.updateName("Alicia")
-    println(alice.name)  // Alicia
-
-    println(alice.compareAge(bob))  // Alicia is younger than Bob
-}
+if (age >= 18)
+    println("Adult")
+else
+    println("Minor")
 ```
 
----
-
-## Exercise 1: Create a Student Class
-
-**Goal**: Create a `Student` class with properties and methods.
-
-**Requirements**:
-1. Properties: `name` (String), `studentId` (String), `grade` (Int, 0-100)
-2. Method: `isPass()` returns true if grade >= 60, false otherwise
-3. Method: `displayInfo()` prints student details
-4. Create 3 students and test the methods
-
----
-
-## Solution: Student Class
-
+✅ **Better (clear and safe):**
 ```kotlin
-class Student(val name: String, val studentId: String, var grade: Int) {
-
-    init {
-        require(grade in 0..100) { "Grade must be between 0 and 100" }
-    }
-
-    fun isPass(): Boolean {
-        return grade >= 60
-    }
-
-    fun displayInfo() {
-        val status = if (isPass()) "PASS" else "FAIL"
-        println("Student: $name (ID: $studentId)")
-        println("Grade: $grade - $status")
-    }
-}
-
-fun main() {
-    val student1 = Student("Alice Johnson", "S001", 85)
-    val student2 = Student("Bob Smith", "S002", 55)
-    val student3 = Student("Carol Davis", "S003", 92)
-
-    student1.displayInfo()
-    println()
-    student2.displayInfo()
-    println()
-    student3.displayInfo()
+if (age >= 18) {
+    println("Adult")
+} else {
+    println("Minor")
 }
 ```
 
-**Output**:
-```
-Student: Alice Johnson (ID: S001)
-Grade: 85 - PASS
+### Pitfall 2: Semicolons After Conditions
 
-Student: Bob Smith (ID: S002)
-Grade: 55 - FAIL
-
-Student: Carol Davis (ID: S003)
-Grade: 92 - PASS
-```
-
----
-
-## Exercise 2: Create a Rectangle Class
-
-**Goal**: Create a `Rectangle` class that calculates area and perimeter.
-
-**Requirements**:
-1. Properties: `width` (Double), `height` (Double)
-2. Method: `area()` returns width * height
-3. Method: `perimeter()` returns 2 * (width + height)
-4. Method: `isSquare()` returns true if width == height
-5. Create rectangles and test all methods
-
----
-
-## Solution: Rectangle Class
-
+❌ **WRONG:**
 ```kotlin
-class Rectangle(val width: Double, val height: Double) {
-
-    init {
-        require(width > 0 && height > 0) { "Width and height must be positive" }
-    }
-
-    fun area(): Double {
-        return width * height
-    }
-
-    fun perimeter(): Double {
-        return 2 * (width + height)
-    }
-
-    fun isSquare(): Boolean {
-        return width == height
-    }
-
-    fun displayInfo() {
-        println("Rectangle: ${width} x ${height}")
-        println("  Area: ${area()}")
-        println("  Perimeter: ${perimeter()}")
-        println("  Is Square: ${isSquare()}")
-    }
-}
-
-fun main() {
-    val rect1 = Rectangle(5.0, 10.0)
-    val rect2 = Rectangle(7.0, 7.0)
-
-    rect1.displayInfo()
-    println()
-    rect2.displayInfo()
+if (age >= 18); {  // Semicolon breaks the if statement!
+    println("Adult")
 }
 ```
 
-**Output**:
-```
-Rectangle: 5.0 x 10.0
-  Area: 50.0
-  Perimeter: 30.0
-  Is Square: false
+This creates an empty if statement, and the code block always executes!
 
-Rectangle: 7.0 x 7.0
-  Area: 49.0
-  Perimeter: 28.0
-  Is Square: true
-```
-
----
-
-## Exercise 3: Create a BankAccount Class
-
-**Goal**: Build a complete bank account system.
-
-**Requirements**:
-1. Properties: `accountHolder` (String), `accountNumber` (String), `balance` (Double, private)
-2. Method: `deposit(amount: Double)` adds to balance
-3. Method: `withdraw(amount: Double)` subtracts from balance (check sufficient funds)
-4. Method: `getBalance()` returns current balance
-5. Method: `transfer(amount: Double, targetAccount: BankAccount)` transfers money
-6. Create accounts and perform transactions
-
----
-
-## Solution: BankAccount Class
-
+✅ **CORRECT:**
 ```kotlin
-class BankAccount(val accountHolder: String, val accountNumber: String) {
-    private var balance: Double = 0.0
-
-    fun deposit(amount: Double) {
-        require(amount > 0) { "Deposit amount must be positive" }
-        balance += amount
-        println("Deposited $$amount. New balance: $$balance")
-    }
-
-    fun withdraw(amount: Double): Boolean {
-        require(amount > 0) { "Withdrawal amount must be positive" }
-
-        return if (amount <= balance) {
-            balance -= amount
-            println("Withdrew $$amount. New balance: $$balance")
-            true
-        } else {
-            println("Insufficient funds! Balance: $$balance, Requested: $$amount")
-            false
-        }
-    }
-
-    fun getBalance(): Double {
-        return balance
-    }
-
-    fun transfer(amount: Double, targetAccount: BankAccount): Boolean {
-        println("\nTransferring $$amount from ${this.accountHolder} to ${targetAccount.accountHolder}")
-
-        return if (withdraw(amount)) {
-            targetAccount.deposit(amount)
-            println("Transfer successful!")
-            true
-        } else {
-            println("Transfer failed!")
-            false
-        }
-    }
-
-    fun displayInfo() {
-        println("Account Holder: $accountHolder")
-        println("Account Number: $accountNumber")
-        println("Balance: $$balance")
-    }
-}
-
-fun main() {
-    val aliceAccount = BankAccount("Alice Johnson", "ACC001")
-    val bobAccount = BankAccount("Bob Smith", "ACC002")
-
-    // Alice deposits money
-    aliceAccount.deposit(1000.0)
-    println()
-
-    // Alice withdraws money
-    aliceAccount.withdraw(200.0)
-    println()
-
-    // Alice tries to withdraw more than balance
-    aliceAccount.withdraw(1000.0)
-    println()
-
-    // Alice transfers to Bob
-    aliceAccount.transfer(300.0, bobAccount)
-    println()
-
-    // Display final balances
-    aliceAccount.displayInfo()
-    println()
-    bobAccount.displayInfo()
+if (age >= 18) {
+    println("Adult")
 }
 ```
 
-**Output**:
-```
-Deposited $1000.0. New balance: $1000.0
+### Pitfall 3: Comparing Floating-Point Numbers with ==
 
-Withdrew $200.0. New balance: $800.0
+Floating-point arithmetic can be imprecise:
 
-Insufficient funds! Balance: $800.0, Requested: $1000.0
-
-Transferring $300.0 from Alice Johnson to Bob Smith
-Withdrew $300.0. New balance: $500.0
-Deposited $300.0. New balance: $300.0
-Transfer successful!
-
-Account Holder: Alice Johnson
-Account Number: ACC001
-Balance: $500.0
-
-Account Holder: Bob Smith
-Account Number: ACC002
-Balance: $300.0
-```
-
----
-
-## Checkpoint Quiz
-
-### Question 1
-What is a class in OOP?
-
-A) A function that performs calculations
-B) A blueprint or template for creating objects
-C) A variable that stores data
-D) A loop that iterates over collections
-
-### Question 2
-What is the difference between `val` and `var` for properties?
-
-A) `val` is for integers, `var` is for strings
-B) `val` is immutable (read-only), `var` is mutable (read-write)
-C) `val` is for classes, `var` is for functions
-D) There is no difference
-
-### Question 3
-What does the `this` keyword refer to?
-
-A) The main function
-B) The parent class
-C) The current instance of the class
-D) A static variable
-
-### Question 4
-What is a constructor?
-
-A) A method that destroys objects
-B) A special function that initializes objects when they're created
-C) A variable that stores class data
-D) A loop that creates multiple objects
-
-### Question 5
-Which of the following correctly creates an instance of a `Car` class?
-
-A) `Car car = new Car()`
-B) `val car = Car()`
-C) `Car car()`
-D) `new Car() as car`
-
----
-
-## Quiz Answers
-
-**Question 1: B) A blueprint or template for creating objects**
-
-A class defines the structure (properties) and behavior (methods) that objects will have. It's like a blueprint for a house—the blueprint itself isn't a house, but you can build many houses from it.
-
+❌ **Risky:**
 ```kotlin
-class Car(val brand: String)  // Blueprint
-
-val car1 = Car("Toyota")  // Object 1
-val car2 = Car("Honda")   // Object 2
+val result = 0.1 + 0.2
+if (result == 0.3) {  // Might be false due to floating-point precision!
+    println("Equal")
+}
 ```
 
----
-
-**Question 2: B) `val` is immutable (read-only), `var` is mutable (read-write)**
-
+✅ **Better:**
 ```kotlin
-class Person(val name: String, var age: Int)
-
-val person = Person("Alice", 25)
-// person.name = "Bob"  // ❌ Error: Val cannot be reassigned
-person.age = 26         // ✅ OK: Var can be changed
+val result = 0.1 + 0.2
+val epsilon = 0.0001
+if (Math.abs(result - 0.3) < epsilon) {
+    println("Approximately equal")
+}
 ```
 
----
+### Best Practice 1: Readable Conditions
 
-**Question 3: C) The current instance of the class**
+Use descriptive variable names and comments for complex conditions:
 
-`this` refers to the object itself. It's useful when you need to distinguish between properties and parameters with the same name.
-
+❌ **Unclear:**
 ```kotlin
-class Person(name: String) {
-    var name: String = name  // this.name (property) = name (parameter)
+if (x > 0 && y < 100) {
+    // ...
+}
+```
 
-    fun greet() {
-        println("I am ${this.name}")  // References this object's name
-    }
+✅ **Clear:**
+```kotlin
+val hasValidAge = age > 0
+val isBelowMaxAge = age < 100
+
+if (hasValidAge && isBelowMaxAge) {
+    // ...
+}
+```
+
+### Best Practice 2: Positive Conditions
+
+When possible, write conditions in positive form:
+
+⚠️ **Harder to read:**
+```kotlin
+if (!isInvalid) {
+    // Do something
+}
+```
+
+✅ **Easier to read:**
+```kotlin
+if (isValid) {
+    // Do something
 }
 ```
 
 ---
 
-**Question 4: B) A special function that initializes objects when they're created**
+## Quick Quiz
 
-Constructors set up the initial state of an object.
+Test your understanding:
 
+**Question 1:** What will this code print?
 ```kotlin
-class BankAccount(val accountNumber: String, initialBalance: Double) {
-    var balance = initialBalance
+val score = 75
+if (score >= 80) {
+    println("Great!")
+} else {
+    println("Keep trying!")
+}
+```
+
+<details>
+<summary>Answer</summary>
+
+**Output:** `Keep trying!`
+
+**Explanation:** `75 >= 80` is false, so the else block executes.
+</details>
+
+---
+
+**Question 2:** What's wrong with this code?
+```kotlin
+if (age = 18) {
+    println("You are 18")
+}
+```
+
+<details>
+<summary>Answer</summary>
+
+**Error:** Using `=` instead of `==`
+
+`=` is assignment, `==` is comparison. Should be:
+```kotlin
+if (age == 18) {
+    println("You are 18")
+}
+```
+</details>
+
+---
+
+**Question 3:** What will this print if temperature = 85?
+```kotlin
+if (temperature > 90) {
+    println("A")
+}
+if (temperature > 80) {
+    println("B")
+}
+if (temperature > 70) {
+    println("C")
+}
+```
+
+<details>
+<summary>Answer</summary>
+
+**Output:**
+```
+B
+C
+```
+
+**Explanation:** These are three separate if statements (not else if). Both `85 > 80` and `85 > 70` are true, so both B and C print.
+</details>
+
+---
+
+**Question 4:** Is this valid Kotlin code?
+```kotlin
+val result = if (x > 0) "Positive" else "Non-positive"
+```
+
+<details>
+<summary>Answer</summary>
+
+**Yes!** This is valid. In Kotlin, `if` is an expression and can return a value. The result will be "Positive" if x > 0, otherwise "Non-positive".
+</details>
+
+---
+
+## Advanced Bonus: When to Use If vs When
+
+While you'll learn about `when` expressions in the next lesson, here's a preview of when to use each:
+
+**Use if/else for:**
+- Binary decisions (two outcomes)
+- Range comparisons
+- Simple conditions
+
+**Use when (covered next lesson) for:**
+- Multiple specific values
+- Complex condition patterns
+- More than 3-4 options
+
+**Example - if is fine here:**
+```kotlin
+if (age < 18) {
+    "Minor"
+} else {
+    "Adult"
+}
+```
+
+**Example - when is better (preview):**
+```kotlin
+when (dayOfWeek) {
+    1 -> "Monday"
+    2 -> "Tuesday"
+    3 -> "Wednesday"
+    // ... cleaner than many else ifs
+}
+```
+
+---
+
+## Summary
+
+Congratulations! You've mastered conditional logic with if statements. Let's recap:
+
+**Key Concepts:**
+- **Conditional logic** lets programs make decisions based on conditions
+- **If statements** execute code blocks when conditions are true
+- **Comparison operators** (`==`, `!=`, `<`, `>`, `<=`, `>=`) create conditions
+- **Else** provides an alternative path when the condition is false
+- **Else if** chains multiple conditions (checked top to bottom)
+- **Nested if** statements check conditions within conditions
+- **Kotlin's if expression** can return values (unique feature!)
+
+**Common Patterns:**
+```kotlin
+// Simple if
+if (condition) { /* code */ }
+
+// If-else
+if (condition) { /* code */ } else { /* code */ }
+
+// If-else if chain
+if (condition1) { /* code */ }
+else if (condition2) { /* code */ }
+else { /* code */ }
+
+// If as expression
+val result = if (condition) value1 else value2
+```
+
+**Best Practices:**
+- Always use `==` for comparison, not `=`
+- Use braces `{ }` even for single statements
+- Order else-if conditions from specific to general
+- Use descriptive variable names for complex conditions
+- Prefer positive conditions over negative when possible
+
+---
+
+## What's Next?
+
+You can now make basic decisions, but what if you need to combine multiple conditions? "IF it's raining AND I don't have an umbrella, THEN get wet!"
+
+In the next lesson, you'll learn **logical operators** (`&&`, `||`, `!`) to combine and invert conditions, making your decision-making even more powerful!
+
+**Preview:**
+```kotlin
+if (isRaining && !hasUmbrella) {
+    println("You'll get wet!")
 }
 
-val account = BankAccount("123456", 1000.0)  // Constructor called here
+if (age < 13 || age > 65) {
+    println("Discounted ticket")
+}
 ```
 
 ---
 
-**Question 5: B) `val car = Car()`**
-
-Kotlin doesn't use the `new` keyword like Java. You create objects by calling the class name with parentheses.
-
-```kotlin
-// ✅ Correct Kotlin syntax
-val car = Car("Toyota")
-
-// ❌ Wrong - Java syntax
-// Car car = new Car("Toyota")
-```
-
----
-
-## What You've Learned
-
-✅ What OOP is and why it's powerful
-✅ How to define classes with properties and methods
-✅ Creating objects (instances) from classes
-✅ Using constructors (primary, init blocks, secondary)
-✅ The difference between `val` and `var` properties
-✅ The `this` keyword and when to use it
-✅ Building practical classes (Student, Rectangle, BankAccount)
-
----
-
-## Next Steps
-
-In **Lesson 2.2: Properties and Initialization**, you'll learn:
-- Custom getters and setters
-- Late initialization with `lateinit`
-- Lazy initialization for performance
-- Backing fields for advanced property control
-- Property delegation basics
-
-You're building a strong OOP foundation! Keep going!
-
----
-
-**Congratulations on completing Lesson 2.1!** 🎉
-
-You've taken your first steps into Object-Oriented Programming. This is a fundamental shift in how you think about code—from procedures to objects that model the real world.
+**Great work! You've completed Lesson 2.1. Mark it complete and continue to Lesson 2.2!** 🎉

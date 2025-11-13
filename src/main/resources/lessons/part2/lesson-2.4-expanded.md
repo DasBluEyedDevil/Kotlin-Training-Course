@@ -1,1095 +1,960 @@
-# Lesson 2.4: Interfaces and Abstract Classes
+# Lesson 2.4: Repeating Tasks - For Loops and Iteration
 
-**Estimated Time**: 65 minutes
+**Estimated Time**: 60 minutes
+**Difficulty**: Beginner
+**Prerequisites**: Lesson 2.3 (When expressions)
 
 ---
 
 ## Topic Introduction
 
-You've learned about inheritance and abstract classes. Now let's explore **interfaces**—one of OOP's most powerful tools for designing flexible, maintainable systems.
+Imagine you need to send birthday invitations to 50 friends. Would you write 50 separate print statements? Of course not! You'd use a loop to repeat the same task with different values. That's the power of iteration—doing something multiple times without writing repetitive code.
 
-An **interface** defines a contract: "Any class that implements me must provide these capabilities." Unlike abstract classes (which you can only inherit from one), a class can implement multiple interfaces, enabling composition of behaviors.
+In programming, we frequently need to:
+- Process every item in a list
+- Repeat an action a specific number of times
+- Count through a sequence of numbers
+- Iterate through collections of data
 
-This lesson will teach you:
-- How to define and implement interfaces
-- The difference between interfaces and abstract classes
-- When to use each
-- Default interface methods
-- Real-world design patterns
+Kotlin's `for` loop makes all of this elegant and easy. Unlike many languages where loops can be complex and error-prone, Kotlin's for loop is designed to be safe, concise, and expressive.
 
----
+In this lesson, you'll learn:
+- What iteration means and why it's essential
+- How to use for loops with ranges
+- Iterating through collections and lists
+- Working with indices
+- Advanced loop techniques: step, downTo, until
+- Best practices for clean, efficient loops
 
-## The Concept
-
-### What is an Interface?
-
-An **interface** is a contract that defines what a class can do, without specifying how it does it.
-
-**Real-World Analogy: Power Outlets**
-
-A power outlet is an interface:
-- **Contract**: "I provide electricity through these two/three holes"
-- **Devices** (implementations): Phone chargers, laptops, lamps all plug into the same outlet
-- **Different implementations**: Each device uses the electricity differently, but all follow the outlet interface
-
-```
-  Interface: PowerSource
-       ↓
-  ┌───────────────────────────┐
-  │ fun provideElectricity()  │
-  └───────────────────────────┘
-           ↓         ↓         ↓
-     PhoneCharger  Laptop   Lamp
-```
-
-### Why Interfaces?
-
-**Problems interfaces solve**:
-1. **Multiple inheritance**: A class can implement multiple interfaces
-2. **Loose coupling**: Code depends on contracts, not implementations
-3. **Testability**: Easy to create mock implementations for testing
-4. **Flexibility**: Swap implementations without changing client code
+By the end, you'll be able to process data efficiently and write powerful, concise code!
 
 ---
 
-## Defining Interfaces
+## The Concept: Repetition in Programming
 
-**Syntax**:
+### Real-World Iteration
 
+You perform iteration constantly in daily life:
+
+**Making pancakes:**
+```
+FOR each pancake (1 to 10):
+    1. Pour batter on griddle
+    2. Wait for bubbles
+    3. Flip pancake
+    4. Cook other side
+    5. Remove to plate
+```
+
+**Checking email:**
+```
+FOR each unread email:
+    1. Open email
+    2. Read content
+    3. Decide: Reply, Archive, or Delete
+    4. Mark as read
+```
+
+**Grading papers:**
+```
+FOR each student submission:
+    1. Review work
+    2. Calculate score
+    3. Write feedback
+    4. Record grade
+```
+
+In each case, you're **repeating the same steps** for different items. That's exactly what loops do in programming!
+
+### The Manual vs Loop Comparison
+
+**Without loops (manual repetition):**
 ```kotlin
-interface InterfaceName {
-    fun methodName()  // Abstract by default
-    val propertyName: Type  // Must be overridden
+println("Welcome, Alice!")
+println("Welcome, Bob!")
+println("Welcome, Charlie!")
+println("Welcome, Diana!")
+println("Welcome, Eve!")
+// Imagine doing this for 100 names...
+```
+
+**With loops (automatic repetition):**
+```kotlin
+val names = listOf("Alice", "Bob", "Charlie", "Diana", "Eve")
+for (name in names) {
+    println("Welcome, $name!")
 }
 ```
 
-**Example: Simple Interface**
+The loop version:
+- Works for any number of names
+- Less code to write and maintain
+- Easy to modify (change the greeting in one place)
+- No chance of typos from copying and pasting
+
+---
+
+## Basic For Loop with Ranges
+
+### Your First For Loop
 
 ```kotlin
-interface Drawable {
-    fun draw()
-}
-
-class Circle : Drawable {
-    override fun draw() {
-        println("Drawing a circle")
-    }
-}
-
-class Square : Drawable {
-    override fun draw() {
-        println("Drawing a square")
-    }
-}
-
 fun main() {
-    val shapes: List<Drawable> = listOf(Circle(), Square())
-
-    shapes.forEach { shape ->
-        shape.draw()
+    for (i in 1..5) {
+        println("Count: $i")
     }
 }
 ```
 
-**Output**:
+**Output:**
 ```
-Drawing a circle
-Drawing a square
+Count: 1
+Count: 2
+Count: 3
+Count: 4
+Count: 5
 ```
 
----
+**How it works:**
+1. `for` - Keyword that starts the loop
+2. `i` - Loop variable (can be any name)
+3. `in` - Keyword meaning "within" or "through"
+4. `1..5` - Range from 1 to 5 (inclusive)
+5. Loop body executes once for each value in the range
 
-## Implementing Multiple Interfaces
-
-Unlike classes (single inheritance), you can implement multiple interfaces!
+### Anatomy of a For Loop
 
 ```kotlin
-interface Flyable {
-    fun fly()
+for (variable in collection) {
+    // Code to repeat
+    // variable changes each iteration
 }
+```
 
-interface Swimmable {
-    fun swim()
-}
+**Visual flow:**
+```
+Start
+  ↓
+for (i in 1..5)
+  ↓
+i = 1 → Execute body → Print "Count: 1"
+  ↓
+i = 2 → Execute body → Print "Count: 2"
+  ↓
+i = 3 → Execute body → Print "Count: 3"
+  ↓
+i = 4 → Execute body → Print "Count: 4"
+  ↓
+i = 5 → Execute body → Print "Count: 5"
+  ↓
+End (no more values)
+```
 
-interface Walkable {
-    fun walk()
-}
+### Practical Example: Countdown Timer
 
-class Duck : Flyable, Swimmable, Walkable {
-    override fun fly() {
-        println("Duck is flying")
-    }
-
-    override fun swim() {
-        println("Duck is swimming")
-    }
-
-    override fun walk() {
-        println("Duck is walking")
-    }
-}
-
-class Fish : Swimmable {
-    override fun swim() {
-        println("Fish is swimming")
-    }
-}
-
-class Bird : Flyable, Walkable {
-    override fun fly() {
-        println("Bird is flying")
-    }
-
-    override fun walk() {
-        println("Bird is walking")
-    }
-}
-
+```kotlin
 fun main() {
-    val duck = Duck()
-    duck.fly()
-    duck.swim()
-    duck.walk()
+    println("Rocket launch countdown:")
 
-    println()
+    for (countdown in 10 downTo 1) {
+        println("$countdown...")
+        Thread.sleep(1000)  // Wait 1 second (1000 milliseconds)
+    }
 
-    val fish = Fish()
-    fish.swim()
-
-    println()
-
-    val bird = Bird()
-    bird.fly()
-    bird.walk()
+    println("🚀 BLAST OFF!")
 }
 ```
 
-**Output**:
+**Output:**
 ```
-Duck is flying
-Duck is swimming
-Duck is walking
-
-Fish is swimming
-
-Bird is flying
-Bird is walking
+Rocket launch countdown:
+10...
+9...
+8...
+...
+1...
+🚀 BLAST OFF!
 ```
 
 ---
 
-## Interface Properties
+## Understanding Ranges
 
-Interfaces can declare properties, but they can't have backing fields.
+Kotlin has several ways to create ranges:
+
+### Inclusive Range (..)
 
 ```kotlin
-interface Vehicle {
-    val maxSpeed: Int  // Must be overridden
-    val type: String
-        get() = "Generic Vehicle"  // Can provide default
-
-    fun start()
-    fun stop()
+for (i in 1..10) {
+    print("$i ")
 }
+// Output: 1 2 3 4 5 6 7 8 9 10
+```
 
-class Car(override val maxSpeed: Int) : Vehicle {
-    override val type: String
-        get() = "Car"
+Both 1 and 10 are **included**.
 
-    override fun start() {
-        println("Car starting with key")
-    }
+### Exclusive Range (until)
 
-    override fun stop() {
-        println("Car stopping")
-    }
+```kotlin
+for (i in 1 until 10) {
+    print("$i ")
 }
+// Output: 1 2 3 4 5 6 7 8 9
+```
 
-class Motorcycle(override val maxSpeed: Int) : Vehicle {
-    override val type: String = "Motorcycle"  // Can also initialize directly
+10 is **excluded** (stops before 10).
 
-    override fun start() {
-        println("Motorcycle starting with button")
-    }
-
-    override fun stop() {
-        println("Motorcycle stopping")
-    }
+**Use case:** Perfect for array/list indices which start at 0:
+```kotlin
+val items = listOf("A", "B", "C")
+for (i in 0 until items.size) {
+    println("Item $i: ${items[i]}")
 }
+```
 
+### Reverse Range (downTo)
+
+```kotlin
+for (i in 10 downTo 1) {
+    print("$i ")
+}
+// Output: 10 9 8 7 6 5 4 3 2 1
+```
+
+Counts **backwards** from 10 to 1.
+
+### Step Ranges (step)
+
+```kotlin
+for (i in 0..10 step 2) {
+    print("$i ")
+}
+// Output: 0 2 4 6 8 10
+```
+
+Increments by 2 instead of 1 (counts even numbers).
+
+**Combined example:**
+```kotlin
+for (i in 10 downTo 0 step 2) {
+    print("$i ")
+}
+// Output: 10 8 6 4 2 0
+```
+
+### Range Quick Reference
+
+```kotlin
+1..10       // 1, 2, 3, ..., 10 (inclusive)
+1 until 10  // 1, 2, 3, ..., 9 (exclusive end)
+10 downTo 1 // 10, 9, 8, ..., 1 (reverse)
+1..10 step 2 // 1, 3, 5, 7, 9 (every 2nd)
+```
+
+---
+
+## Iterating Through Collections
+
+### For Loop with Lists
+
+```kotlin
 fun main() {
-    val car = Car(180)
-    println("${car.type} - Max Speed: ${car.maxSpeed} km/h")
-    car.start()
+    val fruits = listOf("Apple", "Banana", "Cherry", "Date")
 
-    val bike = Motorcycle(220)
-    println("${bike.type} - Max Speed: ${bike.maxSpeed} km/h")
-    bike.start()
+    for (fruit in fruits) {
+        println("I like $fruit")
+    }
 }
 ```
 
----
+**Output:**
+```
+I like Apple
+I like Banana
+I like Cherry
+I like Date
+```
 
-## Default Interface Methods
+**How it works:** The loop variable `fruit` takes on each value in the list, one at a time.
 
-Kotlin interfaces can have default implementations (unlike Java pre-8):
+### For Loop with Strings
+
+Strings are collections of characters, so you can iterate through them:
 
 ```kotlin
-interface Logger {
-    fun log(message: String) {
-        println("[LOG] $message")  // Default implementation
-    }
-
-    fun error(message: String) {
-        println("[ERROR] $message")  // Default implementation
-    }
-
-    fun debug(message: String)  // Must be implemented
-}
-
-class ConsoleLogger : Logger {
-    override fun debug(message: String) {
-        println("[DEBUG] $message")
-    }
-    // log() and error() use default implementations
-}
-
-class FileLogger : Logger {
-    override fun log(message: String) {
-        println("[FILE LOG] Writing to file: $message")
-    }
-
-    override fun error(message: String) {
-        println("[FILE ERROR] Writing error to file: $message")
-    }
-
-    override fun debug(message: String) {
-        println("[FILE DEBUG] Writing debug to file: $message")
-    }
-}
-
 fun main() {
-    val console = ConsoleLogger()
-    console.log("Application started")
-    console.error("Connection failed")
-    console.debug("Variable value: 42")
+    val word = "KOTLIN"
 
-    println()
-
-    val file = FileLogger()
-    file.log("Application started")
-    file.error("Connection failed")
-    file.debug("Variable value: 42")
-}
-```
-
----
-
-## Abstract Classes vs Interfaces
-
-### When to Use Abstract Classes
-
-Use **abstract classes** when:
-- You have shared **state** (properties with backing fields)
-- You want to provide **common implementation** for subclasses
-- You have a clear "is-a" relationship
-- You need **constructors with parameters**
-
-```kotlin
-abstract class Animal(val name: String, var age: Int) {
-    var energy: Int = 100  // State with backing field
-
-    abstract fun makeSound()
-
-    fun eat() {  // Common implementation
-        energy += 20
-        println("$name is eating. Energy: $energy")
-    }
-
-    fun sleep() {  // Common implementation
-        energy = 100
-        println("$name is sleeping. Energy restored!")
-    }
-}
-
-class Dog(name: String, age: Int) : Animal(name, age) {
-    override fun makeSound() {
-        println("$name says: Woof!")
+    for (letter in word) {
+        println("Letter: $letter")
     }
 }
 ```
 
-### When to Use Interfaces
-
-Use **interfaces** when:
-- You want to define **capabilities** or **behaviors**
-- You need **multiple inheritance** of type
-- You don't need shared state
-- You want loose coupling
-
-```kotlin
-interface Flyable {
-    fun fly()
-}
-
-interface Swimmable {
-    fun swim()
-}
-
-// A class can implement multiple interfaces
-class Duck : Flyable, Swimmable {
-    override fun fly() = println("Duck flying")
-    override fun swim() = println("Duck swimming")
-}
+**Output:**
+```
+Letter: K
+Letter: O
+Letter: T
+Letter: L
+Letter: I
+Letter: N
 ```
 
-### Comparison Table
-
-| Feature | Abstract Class | Interface |
-|---------|---------------|-----------|
-| State (backing fields) | ✅ Yes | ❌ No |
-| Constructor | ✅ Yes | ❌ No |
-| Multiple inheritance | ❌ No (single only) | ✅ Yes (multiple) |
-| Default implementations | ✅ Yes | ✅ Yes (since Kotlin 1.0) |
-| Access modifiers | ✅ Yes (public, protected, private) | ✅ Limited (public only) |
-| When to use | "is-a" relationship | "can-do" capability |
-
----
-
-## Real-World Example: E-Commerce System
+### Practical Example: Shopping Cart Total
 
 ```kotlin
-// Interface for payment processing
-interface PaymentProcessor {
-    fun processPayment(amount: Double): Boolean
-    fun refund(transactionId: String): Boolean
-
-    fun validatePayment(amount: Double): Boolean {
-        return amount > 0  // Default implementation
-    }
-}
-
-// Interface for notification
-interface Notifiable {
-    fun sendNotification(message: String)
-}
-
-// Credit card payment
-class CreditCardProcessor : PaymentProcessor {
-    override fun processPayment(amount: Double): Boolean {
-        if (!validatePayment(amount)) return false
-        println("Processing credit card payment: $$amount")
-        println("Payment successful!")
-        return true
-    }
-
-    override fun refund(transactionId: String): Boolean {
-        println("Refunding transaction: $transactionId")
-        return true
-    }
-}
-
-// PayPal payment
-class PayPalProcessor : PaymentProcessor, Notifiable {
-    override fun processPayment(amount: Double): Boolean {
-        if (!validatePayment(amount)) return false
-        println("Processing PayPal payment: $$amount")
-        sendNotification("Payment processed via PayPal")
-        return true
-    }
-
-    override fun refund(transactionId: String): Boolean {
-        println("Refunding PayPal transaction: $transactionId")
-        sendNotification("Refund processed")
-        return true
-    }
-
-    override fun sendNotification(message: String) {
-        println("📧 Email sent: $message")
-    }
-}
-
-// Bitcoin payment
-class BitcoinProcessor : PaymentProcessor, Notifiable {
-    override fun processPayment(amount: Double): Boolean {
-        if (!validatePayment(amount)) return false
-        println("Processing Bitcoin payment: $$amount")
-        println("Waiting for blockchain confirmation...")
-        sendNotification("Bitcoin payment received")
-        return true
-    }
-
-    override fun refund(transactionId: String): Boolean {
-        println("Bitcoin refunds take 24-48 hours")
-        return false
-    }
-
-    override fun sendNotification(message: String) {
-        println("📱 Push notification: $message")
-    }
-}
-
-fun checkout(processor: PaymentProcessor, amount: Double) {
-    println("\n=== Checkout ===")
-    val success = processor.processPayment(amount)
-
-    if (success) {
-        println("Order confirmed!")
-    } else {
-        println("Payment failed!")
-    }
-}
-
 fun main() {
-    val creditCard = CreditCardProcessor()
-    val paypal = PayPalProcessor()
-    val bitcoin = BitcoinProcessor()
+    val prices = listOf(29.99, 49.99, 19.99, 99.99, 15.99)
+    var total = 0.0
 
-    checkout(creditCard, 99.99)
-    checkout(paypal, 149.99)
-    checkout(bitcoin, 299.99)
+    for (price in prices) {
+        total += price
+    }
+
+    println("Shopping cart total: $$total")
 }
+```
+
+**Output:**
+```
+Shopping cart total: $215.95
 ```
 
 ---
 
-## Exercise 1: Media Player System
+## Working with Indices
 
-**Goal**: Create a flexible media player system using interfaces.
+Sometimes you need both the **index** (position) and the **value**:
 
-**Requirements**:
-1. Interface `Playable` with methods: `play()`, `pause()`, `stop()`
-2. Interface `Downloadable` with method: `download()`
-3. Class `Song` implements `Playable` and `Downloadable`
-4. Class `Podcast` implements `Playable` and `Downloadable`
-5. Class `LiveStream` implements only `Playable` (can't download)
-6. Create a playlist that can hold any `Playable` item
+### Using indices Property
+
+```kotlin
+fun main() {
+    val languages = listOf("Kotlin", "Python", "JavaScript", "Swift")
+
+    for (i in languages.indices) {
+        println("Language #${i + 1}: ${languages[i]}")
+    }
+}
+```
+
+**Output:**
+```
+Language #1: Kotlin
+Language #2: Python
+Language #3: JavaScript
+Language #4: Swift
+```
+
+**Note:** `languages.indices` creates a range `0 until languages.size`.
+
+### Using withIndex()
+
+The elegant approach—get both index and value:
+
+```kotlin
+fun main() {
+    val languages = listOf("Kotlin", "Python", "JavaScript", "Swift")
+
+    for ((index, language) in languages.withIndex()) {
+        println("Language #${index + 1}: $language")
+    }
+}
+```
+
+**Output:** (same as above)
+
+**Bonus:** More readable and less error-prone!
+
+### Practical Example: Leaderboard
+
+```kotlin
+fun main() {
+    val players = listOf("Alice", "Bob", "Charlie", "Diana")
+    val scores = listOf(950, 880, 920, 900)
+
+    println("=== Game Leaderboard ===")
+
+    for (i in players.indices) {
+        val rank = i + 1
+        println("#$rank - ${players[i]}: ${scores[i]} points")
+    }
+}
+```
+
+**Output:**
+```
+=== Game Leaderboard ===
+#1 - Alice: 950 points
+#2 - Bob: 880 points
+#3 - Charlie: 920 points
+#4 - Diana: 900 points
+```
 
 ---
 
-## Solution: Media Player System
+## Nested Loops
+
+You can put loops inside other loops:
+
+### Basic Nested Loop
 
 ```kotlin
-interface Playable {
-    val title: String
-    var isPlaying: Boolean
-
-    fun play() {
-        isPlaying = true
-        println("▶️  Playing: $title")
-    }
-
-    fun pause() {
-        isPlaying = false
-        println("⏸️  Paused: $title")
-    }
-
-    fun stop() {
-        isPlaying = false
-        println("⏹️  Stopped: $title")
-    }
-}
-
-interface Downloadable {
-    val sizeInMB: Double
-
-    fun download() {
-        println("⬇️  Downloading... ($sizeInMB MB)")
-        println("✅ Download complete!")
-    }
-}
-
-class Song(
-    override val title: String,
-    val artist: String,
-    override val sizeInMB: Double
-) : Playable, Downloadable {
-    override var isPlaying: Boolean = false
-
-    override fun play() {
-        println("🎵 Song")
-        super.play()
-        println("   Artist: $artist")
-    }
-}
-
-class Podcast(
-    override val title: String,
-    val host: String,
-    val episode: Int,
-    override val sizeInMB: Double
-) : Playable, Downloadable {
-    override var isPlaying: Boolean = false
-
-    override fun play() {
-        println("🎙️  Podcast")
-        super.play()
-        println("   Host: $host, Episode: $episode")
-    }
-}
-
-class LiveStream(
-    override val title: String,
-    val streamer: String
-) : Playable {
-    override var isPlaying: Boolean = false
-
-    override fun play() {
-        println("📡 Live Stream")
-        super.play()
-        println("   Streamer: $streamer")
-    }
-}
-
-class MediaPlayer {
-    private val playlist = mutableListOf<Playable>()
-    private var currentIndex = 0
-
-    fun addToPlaylist(item: Playable) {
-        playlist.add(item)
-        println("Added to playlist: ${item.title}")
-    }
-
-    fun playAll() {
-        println("\n=== Playing All ===")
-        playlist.forEach { it.play() }
-    }
-
-    fun downloadAll() {
-        println("\n=== Downloading All (if possible) ===")
-        playlist.forEach { item ->
-            if (item is Downloadable) {
-                item.download()
-            } else {
-                println("⚠️  ${item.title} cannot be downloaded (live stream)")
-            }
+fun main() {
+    for (i in 1..3) {
+        for (j in 1..3) {
+            print("($i,$j) ")
         }
+        println()  // New line after inner loop completes
     }
 }
+```
 
+**Output:**
+```
+(1,1) (1,2) (1,3)
+(2,1) (2,2) (2,3)
+(3,1) (3,2) (3,3)
+```
+
+**How it works:**
+- Outer loop runs 3 times (i = 1, 2, 3)
+- For each outer iteration, inner loop runs 3 times (j = 1, 2, 3)
+- Total: 3 × 3 = 9 iterations
+
+### Practical Example: Multiplication Table
+
+```kotlin
 fun main() {
-    val player = MediaPlayer()
+    println("Multiplication Table (1-5):")
+    println()
 
-    val song1 = Song("Bohemian Rhapsody", "Queen", 5.8)
-    val song2 = Song("Imagine", "John Lennon", 3.2)
-    val podcast = Podcast("Tech Talk Daily", "Jane Doe", 42, 25.5)
-    val stream = LiveStream("Gaming Night", "ProGamer123")
+    // Header row
+    print("   ")
+    for (i in 1..5) {
+        print("%4d".format(i))
+    }
+    println()
+    println("   " + "----".repeat(5))
 
-    player.addToPlaylist(song1)
-    player.addToPlaylist(song2)
-    player.addToPlaylist(podcast)
-    player.addToPlaylist(stream)
-
-    player.playAll()
-    player.downloadAll()
+    // Table rows
+    for (i in 1..5) {
+        print("%2d |".format(i))
+        for (j in 1..5) {
+            print("%4d".format(i * j))
+        }
+        println()
+    }
 }
+```
+
+**Output:**
+```
+Multiplication Table (1-5):
+
+      1   2   3   4   5
+   --------------------
+ 1 |   1   2   3   4   5
+ 2 |   2   4   6   8  10
+ 3 |   3   6   9  12  15
+ 4 |   4   8  12  16  20
+ 5 |   5  10  15  20  25
+```
+
+### Pattern Printing: Triangle
+
+```kotlin
+fun main() {
+    val size = 5
+
+    for (row in 1..size) {
+        for (col in 1..row) {
+            print("* ")
+        }
+        println()
+    }
+}
+```
+
+**Output:**
+```
+*
+* *
+* * *
+* * * *
+* * * * *
 ```
 
 ---
 
-## Exercise 2: Smart Home System
+## Hands-On Exercises
 
-**Goal**: Create a smart home system with different device types.
+### Exercise 1: Sum of Numbers
 
-**Requirements**:
-1. Interface `SmartDevice` with properties: `name`, `isOn`, methods: `turnOn()`, `turnOff()`
-2. Interface `Schedulable` with method: `schedule(time: String)`
-3. Interface `VoiceControllable` with method: `respondToVoice(command: String)`
-4. Class `SmartLight` implements all three interfaces
-5. Class `SmartThermostat` implements `SmartDevice` and `Schedulable`
-6. Class `SmartSpeaker` implements `SmartDevice` and `VoiceControllable`
-7. Create a home controller that manages all devices
+**Challenge:** Calculate the sum of all numbers from 1 to 100 using a for loop.
+
+<details>
+<summary>Click to see solution</summary>
+
+```kotlin
+fun main() {
+    var sum = 0
+
+    for (i in 1..100) {
+        sum += i
+    }
+
+    println("Sum of 1 to 100: $sum")
+}
+```
+
+**Output:**
+```
+Sum of 1 to 100: 5050
+```
+
+**Key concepts:**
+- Using a range with for loop
+- Accumulating values in a variable
+- The `+=` compound operator
+
+**Bonus - Math fact:** The formula is n(n+1)/2 = 100(101)/2 = 5050
+</details>
 
 ---
 
-## Solution: Smart Home System
+### Exercise 2: FizzBuzz
+
+**Challenge:** The classic FizzBuzz problem:
+- Print numbers 1 to 30
+- For multiples of 3, print "Fizz" instead
+- For multiples of 5, print "Buzz" instead
+- For multiples of both 3 and 5, print "FizzBuzz"
+
+<details>
+<summary>Click to see solution</summary>
 
 ```kotlin
-interface SmartDevice {
-    val name: String
-    var isOn: Boolean
-
-    fun turnOn() {
-        isOn = true
-        println("✅ $name is now ON")
-    }
-
-    fun turnOff() {
-        isOn = false
-        println("❌ $name is now OFF")
-    }
-
-    fun getStatus(): String {
-        return "$name: ${if (isOn) "ON" else "OFF"}"
-    }
-}
-
-interface Schedulable {
-    fun schedule(time: String)
-}
-
-interface VoiceControllable {
-    fun respondToVoice(command: String)
-}
-
-class SmartLight(
-    override val name: String,
-    var brightness: Int = 100
-) : SmartDevice, Schedulable, VoiceControllable {
-    override var isOn: Boolean = false
-
-    fun setBrightness(level: Int) {
-        require(level in 0..100) { "Brightness must be 0-100" }
-        brightness = level
-        println("💡 $name brightness set to $level%")
-    }
-
-    override fun schedule(time: String) {
-        println("⏰ $name scheduled to turn on at $time")
-    }
-
-    override fun respondToVoice(command: String) {
+fun main() {
+    for (i in 1..30) {
         when {
-            "on" in command.lowercase() -> turnOn()
-            "off" in command.lowercase() -> turnOff()
-            "brightness" in command.lowercase() -> {
-                val level = command.filter { it.isDigit() }.toIntOrNull() ?: 50
-                setBrightness(level)
-            }
-            else -> println("🔊 $name: Command not understood")
+            i % 15 == 0 -> println("FizzBuzz")
+            i % 3 == 0 -> println("Fizz")
+            i % 5 == 0 -> println("Buzz")
+            else -> println(i)
         }
     }
 }
+```
 
-class SmartThermostat(
-    override val name: String,
-    var temperature: Int = 72
-) : SmartDevice, Schedulable {
-    override var isOn: Boolean = false
+**Output:**
+```
+1
+2
+Fizz
+4
+Buzz
+Fizz
+7
+8
+Fizz
+Buzz
+11
+Fizz
+13
+14
+FizzBuzz
+...
+```
 
-    fun setTemperature(temp: Int) {
-        require(temp in 60..85) { "Temperature must be 60-85°F" }
-        temperature = temp
-        println("🌡️  $name temperature set to $temp°F")
-    }
+**Key concepts:**
+- Combining for loops with when expressions
+- Using modulo operator for divisibility
+- Order matters (check 15 before 3 or 5)
+</details>
 
-    override fun schedule(time: String) {
-        println("⏰ $name scheduled to set temperature at $time")
-    }
-}
+---
 
-class SmartSpeaker(
-    override val name: String,
-    var volume: Int = 50
-) : SmartDevice, VoiceControllable {
-    override var isOn: Boolean = false
+### Exercise 3: Reverse a String
 
-    fun setVolume(level: Int) {
-        require(level in 0..100) { "Volume must be 0-100" }
-        volume = level
-        println("🔊 $name volume set to $level")
-    }
+**Challenge:** Write a program that reverses a string using a for loop.
 
-    override fun respondToVoice(command: String) {
-        when {
-            "play music" in command.lowercase() -> {
-                if (isOn) println("🎵 Playing music...")
-                else println("❌ Turn me on first!")
-            }
-            "volume" in command.lowercase() -> {
-                val level = command.filter { it.isDigit() }.toIntOrNull() ?: 50
-                setVolume(level)
-            }
-            else -> println("🔊 $name: I can play music or adjust volume")
-        }
-    }
-}
+**Example:** "KOTLIN" → "NILTOK"
 
-class HomeController {
-    private val devices = mutableListOf<SmartDevice>()
+<details>
+<summary>Click to see solution</summary>
 
-    fun addDevice(device: SmartDevice) {
-        devices.add(device)
-        println("➕ Added ${device.name} to home system")
-    }
-
-    fun turnAllOn() {
-        println("\n=== Turning All Devices ON ===")
-        devices.forEach { it.turnOn() }
-    }
-
-    fun turnAllOff() {
-        println("\n=== Turning All Devices OFF ===")
-        devices.forEach { it.turnOff() }
-    }
-
-    fun showStatus() {
-        println("\n=== Home Status ===")
-        devices.forEach { device ->
-            println(device.getStatus())
-        }
-    }
-
-    fun scheduleAll(time: String) {
-        println("\n=== Scheduling Devices ===")
-        devices.forEach { device ->
-            if (device is Schedulable) {
-                device.schedule(time)
-            }
-        }
-    }
-
-    fun voiceCommand(command: String) {
-        println("\n=== Voice Command: '$command' ===")
-        devices.forEach { device ->
-            if (device is VoiceControllable) {
-                device.respondToVoice(command)
-            }
-        }
-    }
-}
-
+```kotlin
 fun main() {
-    val home = HomeController()
+    val original = "KOTLIN"
+    var reversed = ""
 
-    val livingRoomLight = SmartLight("Living Room Light")
-    val bedroomLight = SmartLight("Bedroom Light")
-    val thermostat = SmartThermostat("Main Thermostat")
-    val speaker = SmartSpeaker("Kitchen Speaker")
+    for (i in original.length - 1 downTo 0) {
+        reversed += original[i]
+    }
 
-    home.addDevice(livingRoomLight)
-    home.addDevice(bedroomLight)
-    home.addDevice(thermostat)
-    home.addDevice(speaker)
-
-    home.turnAllOn()
-    home.showStatus()
-
-    home.scheduleAll("7:00 AM")
-
-    home.voiceCommand("turn on")
-    home.voiceCommand("set brightness to 75")
-    home.voiceCommand("play music")
-
-    home.turnAllOff()
-    home.showStatus()
+    println("Original: $original")
+    println("Reversed: $reversed")
 }
 ```
 
----
+**Output:**
+```
+Original: KOTLIN
+Reversed: NILTOK
+```
 
-## Exercise 3: Plugin System
-
-**Goal**: Create an extensible plugin system.
-
-**Requirements**:
-1. Interface `Plugin` with properties: `name`, `version`, methods: `initialize()`, `execute()`, `shutdown()`
-2. Interface `Configurable` with method: `configure(settings: Map<String, String>)`
-3. Create 3 different plugin types
-4. Create a `PluginManager` that loads and manages plugins
-
----
-
-## Solution: Plugin System
-
+**Alternative solution using indices:**
 ```kotlin
-interface Plugin {
-    val name: String
-    val version: String
-
-    fun initialize()
-    fun execute()
-    fun shutdown()
-}
-
-interface Configurable {
-    fun configure(settings: Map<String, String>)
-}
-
-class LoggerPlugin : Plugin, Configurable {
-    override val name = "Logger"
-    override val version = "1.0.0"
-    private var logLevel = "INFO"
-
-    override fun initialize() {
-        println("[$name] Initializing logger plugin...")
-    }
-
-    override fun execute() {
-        println("[$name] Logging at level: $logLevel")
-        println("[$name] Log entry: Application running smoothly")
-    }
-
-    override fun shutdown() {
-        println("[$name] Shutting down logger...")
-    }
-
-    override fun configure(settings: Map<String, String>) {
-        logLevel = settings["logLevel"] ?: "INFO"
-        println("[$name] Configured with log level: $logLevel")
-    }
-}
-
-class DatabasePlugin : Plugin, Configurable {
-    override val name = "Database"
-    override val version = "2.1.0"
-    private var connectionString = ""
-
-    override fun initialize() {
-        println("[$name] Connecting to database...")
-    }
-
-    override fun execute() {
-        println("[$name] Querying database at: $connectionString")
-        println("[$name] Query result: 42 records found")
-    }
-
-    override fun shutdown() {
-        println("[$name] Closing database connection...")
-    }
-
-    override fun configure(settings: Map<String, String>) {
-        connectionString = settings["connectionString"] ?: "localhost:5432"
-        println("[$name] Configured to connect to: $connectionString")
-    }
-}
-
-class CachePlugin : Plugin {
-    override val name = "Cache"
-    override val version = "1.5.2"
-    private val cache = mutableMapOf<String, String>()
-
-    override fun initialize() {
-        println("[$name] Initializing cache system...")
-    }
-
-    override fun execute() {
-        cache["user:1"] = "Alice"
-        cache["user:2"] = "Bob"
-        println("[$name] Cache populated with ${cache.size} items")
-    }
-
-    override fun shutdown() {
-        cache.clear()
-        println("[$name] Cache cleared and shutdown")
-    }
-}
-
-class PluginManager {
-    private val plugins = mutableListOf<Plugin>()
-
-    fun registerPlugin(plugin: Plugin) {
-        plugins.add(plugin)
-        println("\n✅ Registered plugin: ${plugin.name} v${plugin.version}")
-    }
-
-    fun configurePlugin(pluginName: String, settings: Map<String, String>) {
-        val plugin = plugins.find { it.name == pluginName }
-        if (plugin is Configurable) {
-            plugin.configure(settings)
-        } else {
-            println("⚠️  Plugin '$pluginName' is not configurable")
-        }
-    }
-
-    fun initializeAll() {
-        println("\n=== Initializing All Plugins ===")
-        plugins.forEach { it.initialize() }
-    }
-
-    fun executeAll() {
-        println("\n=== Executing All Plugins ===")
-        plugins.forEach { it.execute() }
-    }
-
-    fun shutdownAll() {
-        println("\n=== Shutting Down All Plugins ===")
-        plugins.forEach { it.shutdown() }
-    }
-
-    fun listPlugins() {
-        println("\n=== Installed Plugins ===")
-        plugins.forEach { plugin ->
-            val configurable = if (plugin is Configurable) "(Configurable)" else ""
-            println("${plugin.name} v${plugin.version} $configurable")
-        }
-    }
-}
-
 fun main() {
-    val manager = PluginManager()
+    val original = "KOTLIN"
+    var reversed = ""
 
-    // Register plugins
-    val logger = LoggerPlugin()
-    val database = DatabasePlugin()
-    val cache = CachePlugin()
+    for (char in original.reversed()) {
+        reversed += char
+    }
 
-    manager.registerPlugin(logger)
-    manager.registerPlugin(database)
-    manager.registerPlugin(cache)
-
-    manager.listPlugins()
-
-    // Configure
-    manager.configurePlugin("Logger", mapOf("logLevel" to "DEBUG"))
-    manager.configurePlugin("Database", mapOf("connectionString" to "prod-db.example.com:5432"))
-
-    // Run lifecycle
-    manager.initializeAll()
-    manager.executeAll()
-    manager.shutdownAll()
+    println("Original: $original")
+    println("Reversed: $reversed")
 }
 ```
 
----
-
-## Checkpoint Quiz
-
-### Question 1
-What is the main difference between an interface and an abstract class?
-
-A) Interfaces can't have methods
-B) A class can implement multiple interfaces but inherit from only one abstract class
-C) Abstract classes are faster
-D) There is no difference
-
-### Question 2
-Can interfaces have properties with backing fields?
-
-A) Yes, always
-B) No, never
-C) Only if marked `open`
-D) Only if they're `lateinit`
-
-### Question 3
-Can interface methods have default implementations in Kotlin?
-
-A) No, never
-B) Yes, always
-C) Yes, but not in Java
-D) Yes, since Kotlin 1.0
-
-### Question 4
-When should you use an interface instead of an abstract class?
-
-A) When you need constructors
-B) When you need to define capabilities without shared state
-C) When you need multiple inheritance of type
-D) Both B and C
-
-### Question 5
-What's required for a class property declared in an interface?
-
-A) It must have a backing field
-B) It must be overridden by implementing classes (unless it has a default getter)
-C) It must be mutable
-D) It must be private
+**Key concepts:**
+- String indexing
+- Reverse iteration with downTo
+- String concatenation
+</details>
 
 ---
 
-## Quiz Answers
+### Exercise 4: Find Maximum Value
 
-**Question 1: B) A class can implement multiple interfaces but inherit from only one abstract class**
+**Challenge:** Given a list of numbers, find the maximum value using a for loop.
 
-This is one of the key differences and a major reason to use interfaces.
+<details>
+<summary>Click to see solution</summary>
 
 ```kotlin
-interface Flyable { }
-interface Swimmable { }
+fun main() {
+    val numbers = listOf(45, 23, 67, 12, 89, 34, 56)
+    var max = numbers[0]  // Start with first number
 
-class Duck : Flyable, Swimmable { }  // ✅ Multiple interfaces
+    for (number in numbers) {
+        if (number > max) {
+            max = number
+        }
+    }
 
-abstract class Animal { }
-abstract class Vehicle { }
-// class FlyingCar : Animal, Vehicle { }  // ❌ Can't inherit from two classes
-```
-
----
-
-**Question 2: B) No, never**
-
-Interfaces can't have backing fields. Properties must either be abstract or have custom getters.
-
-```kotlin
-interface Example {
-    val x: Int  // ✅ Abstract (must override)
-    val y: Int
-        get() = 42  // ✅ Custom getter
-    // val z: Int = 10  // ❌ Backing field not allowed
+    println("Numbers: $numbers")
+    println("Maximum value: $max")
 }
 ```
 
+**Output:**
+```
+Numbers: [45, 23, 67, 12, 89, 34, 56]
+Maximum value: 89
+```
+
+**Alternative using indices:**
+```kotlin
+fun main() {
+    val numbers = listOf(45, 23, 67, 12, 89, 34, 56)
+    var max = numbers[0]
+    var maxIndex = 0
+
+    for (i in numbers.indices) {
+        if (numbers[i] > max) {
+            max = numbers[i]
+            maxIndex = i
+        }
+    }
+
+    println("Maximum value: $max at index $maxIndex")
+}
+```
+
+**Key concepts:**
+- Tracking maximum value
+- Comparing values in a loop
+- Initializing with first element
+</details>
+
 ---
 
-**Question 3: D) Yes, since Kotlin 1.0**
+## Common Pitfalls and Best Practices
 
-Kotlin interfaces can have default method implementations from the start.
+### Pitfall 1: Off-By-One Errors
 
+❌ **Common mistake:**
 ```kotlin
-interface Logger {
-    fun log(msg: String) {
-        println("[LOG] $msg")  // ✅ Default implementation
+val items = listOf("A", "B", "C")
+for (i in 1..items.size) {  // Bug! Goes from 1 to 3
+    println(items[i])  // Crash! Index out of bounds
+}
+```
+
+✅ **Correct:**
+```kotlin
+val items = listOf("A", "B", "C")
+for (i in 0 until items.size) {  // 0 to 2
+    println(items[i])
+}
+
+// Or better - use indices
+for (i in items.indices) {
+    println(items[i])
+}
+
+// Or best - iterate directly
+for (item in items) {
+    println(item)
+}
+```
+
+### Pitfall 2: Modifying Collection While Iterating
+
+❌ **Dangerous:**
+```kotlin
+val numbers = mutableListOf(1, 2, 3, 4, 5)
+for (number in numbers) {
+    if (number % 2 == 0) {
+        numbers.remove(number)  // Can cause issues!
     }
 }
 ```
 
----
+✅ **Safe approach:**
+```kotlin
+val numbers = mutableListOf(1, 2, 3, 4, 5)
+val toRemove = mutableListOf<Int>()
 
-**Question 4: D) Both B and C**
+for (number in numbers) {
+    if (number % 2 == 0) {
+        toRemove.add(number)
+    }
+}
 
-Use interfaces when you want to define capabilities ("can-do") without shared state, and when you need multiple inheritance.
+numbers.removeAll(toRemove)
+```
+
+Or use built-in functions:
+```kotlin
+val numbers = mutableListOf(1, 2, 3, 4, 5)
+numbers.removeIf { it % 2 == 0 }
+```
+
+### Pitfall 3: Unnecessary Index Variables
+
+⚠️ **Okay but verbose:**
+```kotlin
+val names = listOf("Alice", "Bob", "Charlie")
+for (i in names.indices) {
+    println(names[i])
+}
+```
+
+✅ **Better:**
+```kotlin
+val names = listOf("Alice", "Bob", "Charlie")
+for (name in names) {
+    println(name)
+}
+```
+
+**Rule:** Only use indices when you actually need them.
+
+### Best Practice 1: Descriptive Variable Names
+
+❌ **Unclear:**
+```kotlin
+for (x in myList) {
+    println(x)
+}
+```
+
+✅ **Clear:**
+```kotlin
+for (student in students) {
+    println(student)
+}
+```
+
+### Best Practice 2: Use Ranges Appropriately
 
 ```kotlin
-interface Printable { fun print() }
-interface Scannable { fun scan() }
+// Counting up
+for (i in 1..10) { }
 
-class AllInOnePrinter : Printable, Scannable {
-    override fun print() { }
-    override fun scan() { }
+// Counting down
+for (i in 10 downTo 1) { }
+
+// Skip values
+for (i in 0..100 step 10) { }
+
+// Exclusive end
+for (i in 0 until list.size) { }
+```
+
+### Best Practice 3: Choose the Right Loop Type
+
+```kotlin
+// Need the value only? Iterate directly
+for (fruit in fruits) { println(fruit) }
+
+// Need index and value? Use withIndex()
+for ((index, fruit) in fruits.withIndex()) {
+    println("$index: $fruit")
+}
+
+// Need just the index? Use indices
+for (i in fruits.indices) {
+    println("Position $i")
 }
 ```
 
 ---
 
-**Question 5: B) It must be overridden by implementing classes (unless it has a default getter)**
+## Quick Quiz
 
-Interface properties without default getters must be overridden.
+**Question 1:** What does this print?
+```kotlin
+for (i in 1..5 step 2) {
+    print("$i ")
+}
+```
+
+<details>
+<summary>Answer</summary>
+
+**Output:** `1 3 5`
+
+**Explanation:** Starts at 1, increments by 2 each time, up to 5.
+- First iteration: i = 1
+- Second iteration: i = 3
+- Third iteration: i = 5
+- Stop (next would be 7, which is > 5)
+</details>
+
+---
+
+**Question 2:** How many times does this loop run?
+```kotlin
+for (i in 0 until 10) {
+    println(i)
+}
+```
+
+<details>
+<summary>Answer</summary>
+
+**Answer:** 10 times (prints 0 through 9)
+
+**Explanation:** `until` is exclusive of the end value. So `0 until 10` means 0, 1, 2, 3, 4, 5, 6, 7, 8, 9.
+</details>
+
+---
+
+**Question 3:** What's the output?
+```kotlin
+val word = "Hi"
+for (char in word) {
+    print("$char ")
+}
+```
+
+<details>
+<summary>Answer</summary>
+
+**Output:** `H i`
+
+**Explanation:** Strings are iterable. The loop goes through each character: 'H' then 'i'.
+</details>
+
+---
+
+**Question 4:** How do you loop backwards from 10 to 1?
+
+<details>
+<summary>Answer</summary>
 
 ```kotlin
-interface Vehicle {
-    val speed: Int  // Must override
-    val type: String
-        get() = "Generic"  // Has default, override optional
+for (i in 10 downTo 1) {
+    println(i)
 }
+```
+
+**Explanation:** Use `downTo` to create a reverse range.
+</details>
+
+---
+
+## Summary
+
+Congratulations! You've mastered for loops in Kotlin. Let's recap:
+
+**Key Concepts:**
+- **For loops** repeat code for each item in a collection or range
+- **Ranges** define sequences: `1..10`, `1 until 10`, `10 downTo 1`
+- **Step** allows custom increments: `0..100 step 5`
+- **Collections** can be iterated directly or with indices
+- **withIndex()** provides both index and value
+- **Nested loops** enable multi-dimensional iteration
+
+**For Loop Patterns:**
+```kotlin
+// Range iteration
+for (i in 1..10) { }
+
+// Collection iteration
+for (item in collection) { }
+
+// With index
+for ((index, item) in collection.withIndex()) { }
+
+// Using indices
+for (i in collection.indices) { }
+
+// Reverse
+for (i in 10 downTo 1) { }
+
+// With step
+for (i in 0..100 step 10) { }
+```
+
+**Best Practices:**
+- Iterate directly when you don't need indices
+- Use `indices` or `until` to avoid off-by-one errors
+- Use descriptive variable names
+- Don't modify collections while iterating
+- Choose the simplest loop form for your needs
+
+---
+
+## What's Next?
+
+For loops are great when you know how many times to iterate, but what about situations where you need to repeat until a condition is met? What if you need to keep asking for valid input until the user gets it right?
+
+In **Lesson 2.5: While Loops and Do-While**, you'll learn:
+- While loops for condition-based repetition
+- Do-while loops (execute at least once)
+- Break and continue for loop control
+- Infinite loops and how to guard against them
+
+**Preview:**
+```kotlin
+var attempts = 0
+while (attempts < 3) {
+    println("Attempt ${attempts + 1}")
+    attempts++
+}
+
+do {
+    val input = readln()
+} while (input != "quit")
 ```
 
 ---
 
-## What You've Learned
-
-✅ Defining and implementing interfaces
-✅ Multiple interface implementation
-✅ Interface properties (without backing fields)
-✅ Default interface methods
-✅ Interfaces vs abstract classes
-✅ Real-world design patterns with interfaces
-
----
-
-## Next Steps
-
-In **Lesson 2.5: Data Classes and Sealed Classes**, you'll learn:
-- Data classes for holding data
-- Automatic `equals()`, `hashCode()`, `toString()`, `copy()`
-- Destructuring declarations
-- Sealed classes for restricted hierarchies
-- When to use each special class type
-
-You're building a complete OOP toolkit!
-
----
-
-**Congratulations on completing Lesson 2.4!** 🎉
-
-Interfaces are essential for designing flexible, maintainable systems. You now understand when to use interfaces vs abstract classes!
+**Fantastic progress! You've completed Lesson 2.4. Keep up the momentum!** 🎉
