@@ -20,20 +20,60 @@ A comprehensive, interactive desktop application for learning Kotlin programming
 
 ## 📚 Course Structure
 
-### Part 1: The Absolute Basics ✅ (Complete!)
+### Part 1: The Absolute Basics ✅ (9 lessons)
 - What is programming?
 - Your first Kotlin code
 - Variables, data types, and functions
 - User input and output
-- **9 comprehensive lessons**
+- **Capstone: Personal Profile Generator**
 
-### Part 2-7: Coming Soon
-- Control flow (if/when, loops)
-- Object-oriented programming
-- Advanced Kotlin features
-- Backend development with Ktor
-- Frontend development with Kotlin/JS
-- Full-stack capstone project
+### Part 2: Controlling the Flow ✅ (7 lessons)
+- If/else statements and logical operators
+- When expressions
+- For loops, while loops
+- Collections: Lists and Maps
+- **Complete with interactive challenges**
+
+### Part 3: Object-Oriented Programming ✅ (4 lessons)
+- Classes and objects
+- Null safety
+- Inheritance and polymorphism
+- Data classes and sealed classes
+- **Capstone: Library Management System**
+
+### Part 4: Advanced Kotlin ✅ (2 lessons)
+- Lambda expressions and higher-order functions
+- Extension functions
+- Coroutines introduction
+- **Capstone: URL Shortener Logic**
+
+### Part 5: Backend Development ✅ (2 lessons)
+- REST APIs with Ktor
+- Database integration with Exposed
+- Authentication and middleware
+- **Complete TODO API implementation**
+
+### Part 6: Frontend Development ✅ (1 lesson)
+- React Kotlin and Kotlin/JS
+- State management
+- API integration
+- **Full interactive UI components**
+
+### Part 7: Full-Stack Capstone ✅ (1 lesson)
+- Complete task management system
+- Backend + Frontend integration
+- Authentication flow
+- **Production-ready application**
+
+---
+
+## 📊 Total Course Content
+
+- **26 comprehensive lessons**
+- **7 complete parts**
+- **Multiple capstone projects**
+- **Interactive coding challenges throughout**
+- **~10-12 hours of estimated learning time**
 
 ---
 

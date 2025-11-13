@@ -35,6 +35,12 @@ public class LessonManager {
         // Later, this can be loaded from course-structure.json
 
         createPart1Lessons();
+        createPart2Lessons();
+        createPart3Lessons();
+        createPart4Lessons();
+        createPart5Lessons();
+        createPart6Lessons();
+        createPart7Lessons();
     }
 
     /**
@@ -208,5 +214,86 @@ public class LessonManager {
                 .distinct()
                 .sorted()
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Creates Part 2 lesson structure
+     */
+    private void createPart2Lessons() {
+        addLesson(new Lesson("2.1", "Making Decisions (If Statements)", 2, 1,
+                "lessons/part2/lesson-2.1.md", 25));
+
+        addLesson(new Lesson("2.2", "Combining Conditions (Logical Operators)", 2, 2,
+                "lessons/part2/lesson-2.2.md", 20));
+
+        addLesson(new Lesson("2.3", "The When Expression", 2, 3,
+                "lessons/part2/lesson-2.3.md", 20));
+
+        addLesson(new Lesson("2.4", "Repeating Tasks (For Loops)", 2, 4,
+                "lessons/part2/lesson-2.4.md", 25));
+
+        addLesson(new Lesson("2.5", "While Loops and Do-While", 2, 5,
+                "lessons/part2/lesson-2.5.md", 20));
+
+        addLesson(new Lesson("2.6", "Lists - Storing Multiple Items", 2, 6,
+                "lessons/part2/lesson-2.6.md", 30));
+
+        addLesson(new Lesson("2.7", "Maps - Key-Value Pairs", 2, 7,
+                "lessons/part2/lesson-2.7.md", 25));
+    }
+
+    /**
+     * Creates Part 3 lesson structure
+     */
+    private void createPart3Lessons() {
+        addLesson(new Lesson("3.1", "Introduction to Classes and Objects", 3, 1,
+                "lessons/part3/lesson-3.1.md", 35));
+
+        addLesson(new Lesson("3.2", "Null Safety - Kotlin's Safety Net", 3, 2,
+                "lessons/part3/lesson-3.2.md", 25));
+
+        addLesson(new Lesson("3.3", "Inheritance and Polymorphism", 3, 3,
+                "lessons/part3/lesson-3.3.md", 30));
+
+        addLesson(new Lesson("3.4", "Data Classes and Part 3 Wrap-Up", 3, 4,
+                "lessons/part3/lesson-3.4.md", 30));
+    }
+
+    /**
+     * Creates Part 4 lesson structure
+     */
+    private void createPart4Lessons() {
+        addLesson(new Lesson("4.1", "Lambda Expressions and Higher-Order Functions", 4, 1,
+                "lessons/part4/lesson-4.1.md", 40));
+
+        addLesson(new Lesson("4.2", "Extension Functions and Coroutines Intro", 4, 2,
+                "lessons/part4/lesson-4.2.md", 35));
+    }
+
+    /**
+     * Creates Part 5 lesson structure
+     */
+    private void createPart5Lessons() {
+        addLesson(new Lesson("5.1", "Introduction to Backend Development with Ktor", 5, 1,
+                "lessons/part5/lesson-5.1.md", 45));
+
+        addLesson(new Lesson("5.2", "Databases and Authentication", 5, 2,
+                "lessons/part5/lesson-5.2.md", 40));
+    }
+
+    /**
+     * Creates Part 6 lesson structure
+     */
+    private void createPart6Lessons() {
+        addLesson(new Lesson("6.1", "Introduction to Frontend Development with Kotlin/JS", 6, 1,
+                "lessons/part6/lesson-6.1.md", 45));
+    }
+
+    /**
+     * Creates Part 7 lesson structure
+     */
+    private void createPart7Lessons() {
+        addLesson(new Lesson("7.1", "Full-Stack Capstone Project", 7, 1,
+                "lessons/part7/lesson-7.1.md", 60));
     }
 }
