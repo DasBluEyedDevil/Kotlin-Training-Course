@@ -1,1188 +1,921 @@
-# Lesson 3.3: Collection Operations
+# Lesson 2.3: Inheritance and Polymorphism
 
 **Estimated Time**: 70 minutes
-**Difficulty**: Intermediate
-**Prerequisites**: Lessons 3.1-3.2 (Functional programming basics, lambdas)
 
 ---
 
 ## Topic Introduction
 
-Collections are everywhere in programming. Lists of users, sets of products, maps of configurations—they're fundamental to real applications. The way you work with collections defines your code quality.
+You've learned to create classes and manage properties. Now it's time to explore one of OOP's most powerful features: **inheritance**.
 
-Kotlin's collection operations transform data manipulation from verbose loops into expressive, declarative pipelines. Instead of writing "how" to process data step-by-step, you declare "what" you want.
+Inheritance allows you to create new classes based on existing ones, reusing and extending their functionality. Combined with **polymorphism**, you can write flexible, maintainable code that models complex real-world relationships.
 
-In this lesson, you'll master:
-- Essential operations: map, filter, reduce
-- Finding elements: find, first, last, any, all, none
-- Advanced grouping: groupBy, partition, associate
-- Flattening nested structures: flatMap, flatten
-- Sequences for lazy evaluation and performance
-
-By the end, you'll process data with elegance and efficiency!
+Imagine you're building a system for different types of employees: managers, developers, and interns. They all share common attributes (name, ID, salary) but have unique behaviors. Inheritance lets you capture these commonalities and differences elegantly.
 
 ---
 
-## The Concept: Transforming vs Iterating
+## The Concept
 
-### The Traditional Way (Imperative)
+### What is Inheritance?
 
-```kotlin
-// Calculate total price of items over $100
-val items = listOf(50.0, 120.0, 75.0, 200.0, 95.0)
-var total = 0.0
-for (price in items) {
-    if (price > 100) {
-        total += price
-    }
-}
-println(total)  // 320.0
+**Inheritance** is a mechanism where a new class (child/subclass) is based on an existing class (parent/superclass), inheriting its properties and methods.
+
+**Real-World Analogy: Vehicle Hierarchy**
+
+```
+        Vehicle
+       /   |   \
+     Car  Bike  Truck
+    /
+  SportsCar
 ```
 
-### The Functional Way (Declarative)
+- **Vehicle** (parent): Has wheels, can move, has fuel
+- **Car** (child): Inherits from Vehicle, adds doors and trunk
+- **SportsCar** (grandchild): Inherits from Car, adds turbo boost
 
-```kotlin
-val items = listOf(50.0, 120.0, 75.0, 200.0, 95.0)
-val total = items
-    .filter { it > 100 }
-    .sum()
-println(total)  // 320.0
-```
-
-**Benefits**:
-- Clearer intent (filter, then sum)
-- No mutable state (`var total`)
-- Chainable operations
-- Less error-prone
-- Easier to test and reason about
+**Why Inheritance?**
+- **Code Reuse**: Don't repeat common functionality
+- **Logical Organization**: Model real-world relationships
+- **Maintainability**: Change once, affect all subclasses
+- **Polymorphism**: Treat different types uniformly
 
 ---
 
-## Map: Transforming Elements
+## Inheritance Basics
 
-`map` transforms each element using a function.
+### The `open` Keyword
 
-### Basic Map
-
-```kotlin
-val numbers = listOf(1, 2, 3, 4, 5)
-
-// Transform each number
-val doubled = numbers.map { it * 2 }
-println(doubled)  // [2, 4, 6, 8, 10]
-
-val squared = numbers.map { it * it }
-println(squared)  // [1, 4, 9, 16, 25]
-
-// Transform to different type
-val asStrings = numbers.map { "Number: $it" }
-println(asStrings)  // [Number: 1, Number: 2, ...]
-```
-
-### Map with Objects
+In Kotlin, classes are **final by default** (cannot be inherited). Use `open` to allow inheritance.
 
 ```kotlin
-data class Person(val name: String, val age: Int)
-
-val people = listOf(
-    Person("Alice", 25),
-    Person("Bob", 30),
-    Person("Charlie", 35)
-)
-
-// Extract property
-val names = people.map { it.name }
-println(names)  // [Alice, Bob, Charlie]
-
-// Or use member reference
-val ages = people.map(Person::age)
-println(ages)  // [25, 30, 35]
-
-// Transform to different object
-data class NameTag(val label: String)
-val tags = people.map { NameTag("Hello, I'm ${it.name}") }
-println(tags)
-// [NameTag(label=Hello, I'm Alice), ...]
-```
-
-### MapIndexed: Transform with Index
-
-```kotlin
-val fruits = listOf("apple", "banana", "cherry")
-
-val indexed = fruits.mapIndexed { index, fruit ->
-    "$index: $fruit"
-}
-println(indexed)  // [0: apple, 1: banana, 2: cherry]
-```
-
-### MapNotNull: Transform and Filter Nulls
-
-```kotlin
-val input = listOf("1", "2", "abc", "3", "xyz")
-
-val numbers = input.mapNotNull { it.toIntOrNull() }
-println(numbers)  // [1, 2, 3]
-```
-
----
-
-## Filter: Selecting Elements
-
-`filter` keeps only elements matching a predicate.
-
-### Basic Filter
-
-```kotlin
-val numbers = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-
-// Keep even numbers
-val evens = numbers.filter { it % 2 == 0 }
-println(evens)  // [2, 4, 6, 8, 10]
-
-// Keep numbers greater than 5
-val bigNumbers = numbers.filter { it > 5 }
-println(bigNumbers)  // [6, 7, 8, 9, 10]
-
-// Multiple conditions
-val filtered = numbers.filter { it > 3 && it < 8 }
-println(filtered)  // [4, 5, 6, 7]
-```
-
-### Filter with Objects
-
-```kotlin
-data class Product(val name: String, val price: Double, val inStock: Boolean)
-
-val products = listOf(
-    Product("Laptop", 1200.0, true),
-    Product("Mouse", 25.0, false),
-    Product("Keyboard", 75.0, true),
-    Product("Monitor", 300.0, true)
-)
-
-// Available products
-val available = products.filter { it.inStock }
-println(available.map { it.name })  // [Laptop, Keyboard, Monitor]
-
-// Expensive products in stock
-val expensiveAvailable = products.filter { it.price > 100 && it.inStock }
-println(expensiveAvailable.map { it.name })  // [Laptop, Monitor]
-```
-
-### FilterNot: Opposite of Filter
-
-```kotlin
-val numbers = listOf(1, 2, 3, 4, 5)
-
-// Keep odd numbers (not even)
-val odds = numbers.filterNot { it % 2 == 0 }
-println(odds)  // [1, 3, 5]
-```
-
-### FilterIsInstance: Filter by Type
-
-```kotlin
-val mixed: List<Any> = listOf(1, "hello", 2, "world", 3.14, true)
-
-val strings = mixed.filterIsInstance<String>()
-println(strings)  // [hello, world]
-
-val numbers = mixed.filterIsInstance<Int>()
-println(numbers)  // [1, 2]
-```
-
----
-
-## Reduce and Fold: Accumulating Values
-
-Reduce/fold combine all elements into a single value.
-
-### Reduce
-
-```kotlin
-val numbers = listOf(1, 2, 3, 4, 5)
-
-// Sum all numbers
-val sum = numbers.reduce { acc, number -> acc + number }
-println(sum)  // 15
-
-// Product of all numbers
-val product = numbers.reduce { acc, number -> acc * number }
-println(product)  // 120
-
-// Find maximum
-val max = numbers.reduce { acc, number ->
-    if (number > acc) number else acc
-}
-println(max)  // 5
-```
-
-### Fold: Reduce with Initial Value
-
-```kotlin
-val numbers = listOf(1, 2, 3, 4, 5)
-
-// Sum with initial value
-val sum = numbers.fold(0) { acc, number -> acc + number }
-println(sum)  // 15
-
-// Start with 100
-val sumWith100 = numbers.fold(100) { acc, number -> acc + number }
-println(sumWith100)  // 115
-
-// Build a string
-val text = numbers.fold("Numbers: ") { acc, number ->
-    "$acc$number, "
-}
-println(text)  // Numbers: 1, 2, 3, 4, 5,
-```
-
-### Practical Example: Complex Accumulation
-
-```kotlin
-data class Transaction(val amount: Double, val type: String)
-
-val transactions = listOf(
-    Transaction(100.0, "income"),
-    Transaction(50.0, "expense"),
-    Transaction(200.0, "income"),
-    Transaction(30.0, "expense"),
-    Transaction(150.0, "income")
-)
-
-// Calculate net balance
-val balance = transactions.fold(0.0) { acc, transaction ->
-    when (transaction.type) {
-        "income" -> acc + transaction.amount
-        "expense" -> acc - transaction.amount
-        else -> acc
-    }
-}
-println("Balance: $$balance")  // Balance: $370.0
-```
-
----
-
-## Finding Elements
-
-### find: First Match or Null
-
-```kotlin
-val numbers = listOf(1, 2, 3, 4, 5, 6)
-
-val firstEven = numbers.find { it % 2 == 0 }
-println(firstEven)  // 2
-
-val firstBig = numbers.find { it > 10 }
-println(firstBig)  // null
-```
-
-### findLast: Last Match or Null
-
-```kotlin
-val numbers = listOf(1, 2, 3, 4, 5, 6)
-
-val lastEven = numbers.findLast { it % 2 == 0 }
-println(lastEven)  // 6
-```
-
-### first and last
-
-```kotlin
-val numbers = listOf(1, 2, 3, 4, 5)
-
-// First element
-println(numbers.first())  // 1
-
-// First matching predicate
-println(numbers.first { it > 3 })  // 4
-
-// Throws exception if not found
-// println(numbers.first { it > 10 })  // NoSuchElementException
-
-// Safe version
-println(numbers.firstOrNull { it > 10 })  // null
-
-// Last element
-println(numbers.last())  // 5
-```
-
-### any, all, none: Boolean Checks
-
-```kotlin
-val numbers = listOf(1, 2, 3, 4, 5)
-
-// Any element matches?
-println(numbers.any { it > 3 })  // true
-println(numbers.any { it > 10 })  // false
-
-// All elements match?
-println(numbers.all { it > 0 })  // true
-println(numbers.all { it > 3 })  // false
-
-// No elements match?
-println(numbers.none { it < 0 })  // true
-println(numbers.none { it > 3 })  // false
-```
-
-### Practical Example: Validation
-
-```kotlin
-data class User(val name: String, val age: Int, val email: String)
-
-val users = listOf(
-    User("Alice", 25, "alice@example.com"),
-    User("Bob", 17, "bob@example.com"),
-    User("Charlie", 30, "charlie@example.com")
-)
-
-// Check if any user is underage
-val hasMinors = users.any { it.age < 18 }
-println("Has minors: $hasMinors")  // true
-
-// Check if all have valid emails
-val allValidEmails = users.all { it.email.contains("@") }
-println("All valid emails: $allValidEmails")  // true
-
-// Check if no user has empty name
-val noEmptyNames = users.none { it.name.isEmpty() }
-println("No empty names: $noEmptyNames")  // true
-```
-
----
-
-## Grouping and Partitioning
-
-### groupBy: Group into Map
-
-```kotlin
-data class Person(val name: String, val age: Int, val city: String)
-
-val people = listOf(
-    Person("Alice", 25, "NYC"),
-    Person("Bob", 30, "LA"),
-    Person("Charlie", 25, "NYC"),
-    Person("Diana", 30, "LA")
-)
-
-// Group by age
-val byAge = people.groupBy { it.age }
-println(byAge)
-// {25=[Person(Alice, 25, NYC), Person(Charlie, 25, NYC)],
-//  30=[Person(Bob, 30, LA), Person(Diana, 30, LA)]}
-
-// Group by city
-val byCity = people.groupBy { it.city }
-println(byCity.keys)  // [NYC, LA]
-
-// Group and transform
-val namesByCity = people.groupBy(
-    keySelector = { it.city },
-    valueTransform = { it.name }
-)
-println(namesByCity)
-// {NYC=[Alice, Charlie], LA=[Bob, Diana]}
-```
-
-### partition: Split into Two Groups
-
-```kotlin
-val numbers = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-
-// Split into even and odd
-val (evens, odds) = numbers.partition { it % 2 == 0 }
-println("Evens: $evens")  // [2, 4, 6, 8, 10]
-println("Odds: $odds")    // [1, 3, 5, 7, 9]
-
-// Practical example
-data class Task(val name: String, val completed: Boolean)
-
-val tasks = listOf(
-    Task("Write code", true),
-    Task("Write tests", false),
-    Task("Review PR", true),
-    Task("Deploy", false)
-)
-
-val (completed, pending) = tasks.partition { it.completed }
-println("Completed: ${completed.map { it.name }}")  // [Write code, Review PR]
-println("Pending: ${pending.map { it.name }}")      // [Write tests, Deploy]
-```
-
-### associate: Create Map
-
-```kotlin
-val people = listOf("Alice", "Bob", "Charlie")
-
-// Create map from list
-val ages = people.associateWith { it.length }
-println(ages)  // {Alice=5, Bob=3, Charlie=7}
-
-// Associate with key
-val byFirstLetter = people.associateBy { it.first() }
-println(byFirstLetter)  // {A=Alice, B=Bob, C=Charlie}
-
-// Full control
-val custom = people.associate { name ->
-    name.uppercase() to name.length
-}
-println(custom)  // {ALICE=5, BOB=3, CHARLIE=7}
-```
-
----
-
-## FlatMap and Flatten
-
-### flatten: Flatten Nested Collections
-
-```kotlin
-val nested = listOf(
-    listOf(1, 2, 3),
-    listOf(4, 5),
-    listOf(6, 7, 8, 9)
-)
-
-val flat = nested.flatten()
-println(flat)  // [1, 2, 3, 4, 5, 6, 7, 8, 9]
-```
-
-### flatMap: Map Then Flatten
-
-```kotlin
-data class Order(val id: Int, val items: List<String>)
-
-val orders = listOf(
-    Order(1, listOf("Laptop", "Mouse")),
-    Order(2, listOf("Keyboard", "Monitor", "Cable")),
-    Order(3, listOf("Phone"))
-)
-
-// Get all items across all orders
-val allItems = orders.flatMap { it.items }
-println(allItems)
-// [Laptop, Mouse, Keyboard, Monitor, Cable, Phone]
-
-// Equivalent to map + flatten
-val allItems2 = orders.map { it.items }.flatten()
-println(allItems2)
-// [Laptop, Mouse, Keyboard, Monitor, Cable, Phone]
-```
-
-### Practical Example: Hierarchical Data
-
-```kotlin
-data class Department(val name: String, val employees: List<Employee>)
-data class Employee(val name: String, val skills: List<String>)
-
-val departments = listOf(
-    Department("Engineering", listOf(
-        Employee("Alice", listOf("Kotlin", "Java", "Python")),
-        Employee("Bob", listOf("JavaScript", "TypeScript"))
-    )),
-    Department("Design", listOf(
-        Employee("Charlie", listOf("Figma", "Photoshop")),
-        Employee("Diana", listOf("Illustrator", "Sketch"))
-    ))
-)
-
-// All employees across departments
-val allEmployees = departments.flatMap { it.employees }
-println("Total employees: ${allEmployees.size}")  // 4
-
-// All unique skills across company
-val allSkills = departments
-    .flatMap { it.employees }
-    .flatMap { it.skills }
-    .toSet()
-println("All skills: $allSkills")
-// [Kotlin, Java, Python, JavaScript, TypeScript, Figma, Photoshop, Illustrator, Sketch]
-```
-
----
-
-## Sequences: Lazy Evaluation
-
-Collections process eagerly (all at once). Sequences process lazily (on demand).
-
-### The Problem with Eager Evaluation
-
-```kotlin
-val numbers = (1..1_000_000).toList()
-
-// Each operation creates intermediate list
-val result = numbers
-    .map { it * 2 }        // Creates 1M element list
-    .filter { it > 100 }   // Creates another list
-    .take(10)              // Finally takes 10
-
-// Memory inefficient!
-```
-
-### Sequences to the Rescue
-
-```kotlin
-val numbers = (1..1_000_000).asSequence()
-
-val result = numbers
-    .map { it * 2 }        // Doesn't execute yet
-    .filter { it > 100 }   // Doesn't execute yet
-    .take(10)              // Still lazy
-    .toList()              // NOW it executes, processes only what's needed
-
-println(result)
-// [102, 104, 106, 108, 110, 112, 114, 116, 118, 120]
-```
-
-### How Sequences Work
-
-```kotlin
-val numbers = sequenceOf(1, 2, 3, 4, 5)
-
-val result = numbers
-    .map {
-        println("Mapping $it")
-        it * 2
-    }
-    .filter {
-        println("Filtering $it")
-        it > 4
-    }
-    .toList()
-
-// Output shows element-by-element processing:
-// Mapping 1
-// Filtering 2
-// Mapping 2
-// Filtering 4
-// Mapping 3
-// Filtering 6
-// Mapping 4
-// Filtering 8
-// Mapping 5
-// Filtering 10
-
-println(result)  // [6, 8, 10]
-```
-
-### When to Use Sequences
-
-**Use sequences when**:
-- ✅ Large collections (1000+ elements)
-- ✅ Multiple chained operations
-- ✅ Only need part of result (take, first)
-- ✅ Infinite data streams
-
-**Use regular collections when**:
-- ✅ Small collections (< 100 elements)
-- ✅ Single operation
-- ✅ Need the entire result anyway
-
-### Performance Comparison
-
-```kotlin
-fun measureTime(label: String, block: () -> Unit) {
-    val start = System.currentTimeMillis()
-    block()
-    val elapsed = System.currentTimeMillis() - start
-    println("$label: ${elapsed}ms")
+// ❌ Cannot inherit from this
+class Animal {
+    fun eat() = println("Eating...")
 }
 
-val largeList = (1..10_000_000).toList()
-
-measureTime("List") {
-    val result = largeList
-        .map { it * 2 }
-        .filter { it > 1000 }
-        .take(100)
-        .sum()
+// ✅ Can inherit from this
+open class Bird {
+    open fun fly() = println("Flying...")
 }
-
-measureTime("Sequence") {
-    val result = largeList.asSequence()
-        .map { it * 2 }
-        .filter { it > 1000 }
-        .take(100)
-        .sum()
-}
-
-// Typical output:
-// List: 450ms
-// Sequence: 0ms (processes only ~51 elements!)
 ```
 
----
+**Why are classes final by default?**
+- Safety: Prevents unintended inheritance
+- Performance: Compiler optimizations
+- Design: Encourages composition over inheritance
 
-## Chaining Operations
+### Creating a Subclass
 
-The real power comes from combining operations.
-
-### Example 1: E-Commerce Analysis
+Use a colon (`:`) to inherit from a superclass.
 
 ```kotlin
-data class Product(val name: String, val category: String, val price: Double, val rating: Double)
-
-val products = listOf(
-    Product("Laptop", "Electronics", 1200.0, 4.5),
-    Product("Mouse", "Electronics", 25.0, 4.2),
-    Product("Desk", "Furniture", 300.0, 4.7),
-    Product("Chair", "Furniture", 250.0, 4.6),
-    Product("Monitor", "Electronics", 400.0, 4.8),
-    Product("Lamp", "Furniture", 50.0, 4.1)
-)
-
-// Find expensive, highly-rated electronics
-val topElectronics = products
-    .filter { it.category == "Electronics" }
-    .filter { it.price > 100 }
-    .filter { it.rating >= 4.5 }
-    .sortedByDescending { it.rating }
-    .map { it.name }
-
-println("Top electronics: $topElectronics")
-// [Monitor, Laptop]
-
-// Average price by category
-val avgPriceByCategory = products
-    .groupBy { it.category }
-    .mapValues { (_, products) ->
-        products.map { it.price }.average()
+open class Animal(val name: String) {
+    open fun makeSound() {
+        println("Some generic animal sound")
     }
 
-println("Average prices: $avgPriceByCategory")
-// {Electronics=541.67, Furniture=200.0}
-```
-
-### Example 2: Student Grade Analysis
-
-```kotlin
-data class Student(val name: String, val grades: List<Int>, val major: String)
-
-val students = listOf(
-    Student("Alice", listOf(85, 90, 92), "CS"),
-    Student("Bob", listOf(78, 82, 80), "Math"),
-    Student("Charlie", listOf(95, 98, 96), "CS"),
-    Student("Diana", listOf(88, 85, 90), "Math"),
-    Student("Eve", listOf(70, 75, 72), "CS")
-)
-
-// CS students with average > 85
-val topCSStudents = students
-    .filter { it.major == "CS" }
-    .map { student ->
-        student.name to student.grades.average()
+    fun sleep() {
+        println("$name is sleeping...")
     }
-    .filter { (_, avg) -> avg > 85 }
-    .sortedByDescending { (_, avg) -> avg }
-
-println("Top CS students:")
-topCSStudents.forEach { (name, avg) ->
-    println("  $name: ${"%.1f".format(avg)}")
 }
-// Top CS students:
-//   Charlie: 96.3
-//   Alice: 89.0
 
-// All grades flattened and analyzed
-val allGrades = students.flatMap { it.grades }
-println("Total grades: ${allGrades.size}")  // 15
-println("Highest grade: ${allGrades.maxOrNull()}")  // 98
-println("Average: ${"%.1f".format(allGrades.average())}")  // 84.7
-```
+class Dog(name: String) : Animal(name) {
+    override fun makeSound() {
+        println("$name says: Woof! Woof!")
+    }
 
----
+    fun fetch() {
+        println("$name is fetching the ball!")
+    }
+}
 
-## Exercise 1: Sales Data Analysis
+class Cat(name: String) : Animal(name) {
+    override fun makeSound() {
+        println("$name says: Meow!")
+    }
 
-**Goal**: Analyze sales data using collection operations.
-
-**Task**: Given sales data, calculate:
-1. Total revenue
-2. Number of sales over $100
-3. Average sale amount
-4. Best-selling product
-
-```kotlin
-data class Sale(val product: String, val amount: Double, val quantity: Int)
+    fun scratch() {
+        println("$name is scratching the furniture!")
+    }
+}
 
 fun main() {
-    val sales = listOf(
-        Sale("Laptop", 1200.0, 2),
-        Sale("Mouse", 25.0, 10),
-        Sale("Keyboard", 75.0, 5),
-        Sale("Monitor", 300.0, 3),
-        Sale("Laptop", 1200.0, 1),
-        Sale("Mouse", 25.0, 15)
-    )
+    val dog = Dog("Buddy")
+    dog.makeSound()  // Buddy says: Woof! Woof!
+    dog.sleep()      // Buddy is sleeping...
+    dog.fetch()      // Buddy is fetching the ball!
 
-    // TODO: Implement analysis
+    val cat = Cat("Whiskers")
+    cat.makeSound()  // Whiskers says: Meow!
+    cat.sleep()      // Whiskers is sleeping...
+    cat.scratch()    // Whiskers is scratching the furniture!
+}
+```
+
+**Key Points**:
+- `Dog` and `Cat` inherit from `Animal`
+- They inherit `sleep()` (can use it without redefining)
+- They override `makeSound()` with their own implementation
+- They add unique methods (`fetch()`, `scratch()`)
+
+---
+
+## Overriding Methods
+
+To override a method from the superclass:
+1. The superclass method must be marked `open`
+2. Use the `override` keyword in the subclass
+
+```kotlin
+open class Shape {
+    open fun draw() {
+        println("Drawing a shape")
+    }
+
+    open fun area(): Double {
+        return 0.0
+    }
+}
+
+class Circle(val radius: Double) : Shape() {
+    override fun draw() {
+        println("Drawing a circle with radius $radius")
+    }
+
+    override fun area(): Double {
+        return Math.PI * radius * radius
+    }
+}
+
+class Rectangle(val width: Double, val height: Double) : Shape() {
+    override fun draw() {
+        println("Drawing a rectangle $width x $height")
+    }
+
+    override fun area(): Double {
+        return width * height
+    }
+}
+
+fun main() {
+    val circle = Circle(5.0)
+    circle.draw()  // Drawing a circle with radius 5.0
+    println("Area: ${circle.area()}")  // Area: 78.53981633974483
+
+    val rect = Rectangle(4.0, 6.0)
+    rect.draw()  // Drawing a rectangle 4.0 x 6.0
+    println("Area: ${rect.area()}")  // Area: 24.0
 }
 ```
 
 ---
 
-## Solution 1: Sales Data Analysis
+## The `super` Keyword
+
+Use `super` to call the superclass's implementation.
 
 ```kotlin
-data class Sale(val product: String, val amount: Double, val quantity: Int)
+open class Employee(val name: String, val salary: Double) {
+    open fun displayInfo() {
+        println("Employee: $name")
+        println("Salary: $$salary")
+    }
+
+    open fun work() {
+        println("$name is working...")
+    }
+}
+
+class Manager(name: String, salary: Double, val teamSize: Int) : Employee(name, salary) {
+    override fun displayInfo() {
+        super.displayInfo()  // Call parent's implementation
+        println("Team Size: $teamSize")
+        println("Role: Manager")
+    }
+
+    override fun work() {
+        println("$name is managing a team of $teamSize people")
+    }
+
+    fun conductMeeting() {
+        println("$name is conducting a team meeting")
+    }
+}
+
+class Developer(name: String, salary: Double, val programmingLanguage: String) : Employee(name, salary) {
+    override fun displayInfo() {
+        super.displayInfo()
+        println("Language: $programmingLanguage")
+        println("Role: Developer")
+    }
+
+    override fun work() {
+        println("$name is coding in $programmingLanguage")
+    }
+}
 
 fun main() {
-    val sales = listOf(
-        Sale("Laptop", 1200.0, 2),
-        Sale("Mouse", 25.0, 10),
-        Sale("Keyboard", 75.0, 5),
-        Sale("Monitor", 300.0, 3),
-        Sale("Laptop", 1200.0, 1),
-        Sale("Mouse", 25.0, 15)
+    val manager = Manager("Alice", 120000.0, 5)
+    manager.displayInfo()
+    println()
+    manager.work()
+    manager.conductMeeting()
+
+    println("\n---\n")
+
+    val dev = Developer("Bob", 90000.0, "Kotlin")
+    dev.displayInfo()
+    println()
+    dev.work()
+}
+```
+
+**Output**:
+```
+Employee: Alice
+Salary: $120000.0
+Team Size: 5
+Role: Manager
+
+Alice is managing a team of 5 people
+Alice is conducting a team meeting
+
+---
+
+Employee: Bob
+Salary: $90000.0
+Language: Kotlin
+Role: Developer
+
+Bob is coding in Kotlin
+```
+
+---
+
+## Abstract Classes
+
+**Abstract classes** are classes that cannot be instantiated directly. They serve as blueprints for subclasses.
+
+Use abstract classes when:
+- You want to provide a common base with some implemented methods
+- You want to force subclasses to implement specific methods
+
+```kotlin
+abstract class Vehicle(val brand: String, val model: String) {
+    var speed: Int = 0
+
+    // Abstract method (no implementation)
+    abstract fun start()
+
+    // Abstract method
+    abstract fun stop()
+
+    // Concrete method (has implementation)
+    fun accelerate(amount: Int) {
+        speed += amount
+        println("$brand $model accelerating to $speed km/h")
+    }
+
+    fun brake(amount: Int) {
+        speed -= amount
+        if (speed < 0) speed = 0
+        println("$brand $model slowing down to $speed km/h")
+    }
+}
+
+class Car(brand: String, model: String) : Vehicle(brand, model) {
+    override fun start() {
+        println("$brand $model: Turning key, engine starts")
+    }
+
+    override fun stop() {
+        println("$brand $model: Turning off engine")
+        speed = 0
+    }
+}
+
+class ElectricBike(brand: String, model: String) : Vehicle(brand, model) {
+    override fun start() {
+        println("$brand $model: Pressing power button, motor starts silently")
+    }
+
+    override fun stop() {
+        println("$brand $model: Releasing throttle, motor stops")
+        speed = 0
+    }
+}
+
+fun main() {
+    // val vehicle = Vehicle("Generic", "Model")  // ❌ Cannot instantiate abstract class
+
+    val car = Car("Toyota", "Camry")
+    car.start()          // Toyota Camry: Turning key, engine starts
+    car.accelerate(50)   // Toyota Camry accelerating to 50 km/h
+    car.accelerate(30)   // Toyota Camry accelerating to 80 km/h
+    car.brake(20)        // Toyota Camry slowing down to 60 km/h
+    car.stop()           // Toyota Camry: Turning off engine
+
+    println()
+
+    val bike = ElectricBike("Tesla", "E-Bike Pro")
+    bike.start()         // Tesla E-Bike Pro: Pressing power button, motor starts silently
+    bike.accelerate(25)  // Tesla E-Bike Pro accelerating to 25 km/h
+    bike.stop()          // Tesla E-Bike Pro: Releasing throttle, motor stops
+}
+```
+
+---
+
+## Polymorphism
+
+**Polymorphism** means "many forms." It allows you to treat objects of different types through a common interface.
+
+**Example: Animal Sounds**
+
+```kotlin
+open class Animal(val name: String) {
+    open fun makeSound() {
+        println("Some generic sound")
+    }
+}
+
+class Dog(name: String) : Animal(name) {
+    override fun makeSound() {
+        println("$name: Woof! Woof!")
+    }
+}
+
+class Cat(name: String) : Animal(name) {
+    override fun makeSound() {
+        println("$name: Meow!")
+    }
+}
+
+class Cow(name: String) : Animal(name) {
+    override fun makeSound() {
+        println("$name: Moo!")
+    }
+}
+
+fun makeAnimalSpeak(animal: Animal) {
+    animal.makeSound()  // Polymorphism: calls the correct method based on actual type
+}
+
+fun main() {
+    val animals: List<Animal> = listOf(
+        Dog("Buddy"),
+        Cat("Whiskers"),
+        Cow("Bessie"),
+        Dog("Max"),
+        Cat("Fluffy")
     )
 
-    // 1. Total revenue
-    val totalRevenue = sales.sumOf { it.amount * it.quantity }
-    println("Total revenue: $${"%.2f".format(totalRevenue)}")
-    // Total revenue: $5500.00
+    // Polymorphism in action
+    animals.forEach { animal ->
+        makeAnimalSpeak(animal)
+    }
+}
+```
 
-    // 2. Number of sales over $100 total
-    val bigSales = sales.count { it.amount * it.quantity > 100 }
-    println("Sales over $100: $bigSales")
-    // Sales over $100: 5
+**Output**:
+```
+Buddy: Woof! Woof!
+Whiskers: Meow!
+Bessie: Moo!
+Max: Woof! Woof!
+Fluffy: Meow!
+```
 
-    // 3. Average sale amount
-    val avgSale = sales.map { it.amount * it.quantity }.average()
-    println("Average sale: $${"%.2f".format(avgSale)}")
-    // Average sale: $916.67
+**Key Point**: Even though `animals` is a list of `Animal`, each object calls its own specific `makeSound()` implementation!
 
-    // 4. Best-selling product (by quantity)
-    val bestSeller = sales
-        .groupBy { it.product }
-        .mapValues { (_, sales) -> sales.sumOf { it.quantity } }
-        .maxByOrNull { it.value }
+---
 
-    println("Best seller: ${bestSeller?.key} (${bestSeller?.value} units)")
-    // Best seller: Mouse (25 units)
+## Type Checking and Casting
 
-    // Bonus: Revenue by product
-    val revenueByProduct = sales
-        .groupBy { it.product }
-        .mapValues { (_, sales) ->
-            sales.sumOf { it.amount * it.quantity }
+### Type Checking with `is`
+
+```kotlin
+fun describe(obj: Any) {
+    when (obj) {
+        is String -> println("String of length ${obj.length}")
+        is Int -> println("Integer: $obj")
+        is List<*> -> println("List with ${obj.size} items")
+        is Dog -> println("Dog named ${obj.name}")
+        else -> println("Unknown type")
+    }
+}
+```
+
+### Smart Casting
+
+Kotlin automatically casts after type checking:
+
+```kotlin
+fun feedAnimal(animal: Animal) {
+    if (animal is Dog) {
+        // animal is automatically cast to Dog here
+        animal.fetch()
+    } else if (animal is Cat) {
+        // animal is automatically cast to Cat here
+        animal.scratch()
+    }
+}
+```
+
+### Explicit Casting
+
+```kotlin
+val animal: Animal = Dog("Buddy")
+
+// Safe cast (returns null if cast fails)
+val dog: Dog? = animal as? Dog
+dog?.fetch()
+
+// Unsafe cast (throws exception if cast fails)
+val dog2: Dog = animal as Dog
+dog2.fetch()
+```
+
+---
+
+## Exercise 1: Employee Hierarchy
+
+**Goal**: Create an employee management system with inheritance.
+
+**Requirements**:
+1. Abstract class `Employee` with properties: `name`, `id`, `baseSalary`
+2. Abstract method: `calculateSalary(): Double`
+3. Method: `displayInfo()`
+4. Class `FullTimeEmployee` extends `Employee`:
+   - Adds `bonus` property
+   - Implements `calculateSalary()` as baseSalary + bonus
+5. Class `Contractor` extends `Employee`:
+   - Adds `hourlyRate` and `hoursWorked` properties
+   - Implements `calculateSalary()` as hourlyRate * hoursWorked
+6. Class `Intern` extends `Employee`:
+   - Adds `stipend` property
+   - Implements `calculateSalary()` as stipend (fixed amount)
+7. Create a list of mixed employees and calculate total payroll
+
+---
+
+## Solution: Employee Hierarchy
+
+```kotlin
+abstract class Employee(val name: String, val id: String, val baseSalary: Double) {
+    abstract fun calculateSalary(): Double
+
+    open fun displayInfo() {
+        println("ID: $id")
+        println("Name: $name")
+        println("Salary: $${calculateSalary()}")
+    }
+}
+
+class FullTimeEmployee(
+    name: String,
+    id: String,
+    baseSalary: Double,
+    val bonus: Double
+) : Employee(name, id, baseSalary) {
+
+    override fun calculateSalary(): Double {
+        return baseSalary + bonus
+    }
+
+    override fun displayInfo() {
+        println("=== Full-Time Employee ===")
+        super.displayInfo()
+        println("Base Salary: $$baseSalary")
+        println("Bonus: $$bonus")
+    }
+}
+
+class Contractor(
+    name: String,
+    id: String,
+    val hourlyRate: Double,
+    val hoursWorked: Double
+) : Employee(name, id, 0.0) {
+
+    override fun calculateSalary(): Double {
+        return hourlyRate * hoursWorked
+    }
+
+    override fun displayInfo() {
+        println("=== Contractor ===")
+        super.displayInfo()
+        println("Hourly Rate: $$hourlyRate")
+        println("Hours Worked: $hoursWorked")
+    }
+}
+
+class Intern(
+    name: String,
+    id: String,
+    val stipend: Double
+) : Employee(name, id, 0.0) {
+
+    override fun calculateSalary(): Double {
+        return stipend
+    }
+
+    override fun displayInfo() {
+        println("=== Intern ===")
+        super.displayInfo()
+        println("Monthly Stipend: $$stipend")
+    }
+}
+
+fun main() {
+    val employees: List<Employee> = listOf(
+        FullTimeEmployee("Alice Johnson", "FT001", 80000.0, 10000.0),
+        FullTimeEmployee("Bob Smith", "FT002", 75000.0, 8000.0),
+        Contractor("Carol Davis", "CT001", 50.0, 160.0),
+        Contractor("David Wilson", "CT002", 60.0, 120.0),
+        Intern("Eve Brown", "IN001", 2000.0),
+        Intern("Frank Miller", "IN002", 1800.0)
+    )
+
+    employees.forEach { employee ->
+        employee.displayInfo()
+        println()
+    }
+
+    val totalPayroll = employees.sumOf { it.calculateSalary() }
+    println("=== Payroll Summary ===")
+    println("Total Employees: ${employees.size}")
+    println("Total Payroll: $$totalPayroll")
+}
+```
+
+---
+
+## Exercise 2: Shape Hierarchy
+
+**Goal**: Create a comprehensive shape system.
+
+**Requirements**:
+1. Abstract class `Shape` with abstract methods: `area()`, `perimeter()`, `draw()`
+2. Class `Circle` extends `Shape` with radius
+3. Class `Rectangle` extends `Shape` with width and height
+4. Class `Triangle` extends `Shape` with three sides
+5. Create a function that prints total area of all shapes
+
+---
+
+## Solution: Shape Hierarchy
+
+```kotlin
+import kotlin.math.sqrt
+
+abstract class Shape(val color: String) {
+    abstract fun area(): Double
+    abstract fun perimeter(): Double
+    abstract fun draw()
+
+    fun displayInfo() {
+        println("Color: $color")
+        println("Area: ${String.format("%.2f", area())}")
+        println("Perimeter: ${String.format("%.2f", perimeter())}")
+    }
+}
+
+class Circle(color: String, val radius: Double) : Shape(color) {
+    override fun area(): Double = Math.PI * radius * radius
+
+    override fun perimeter(): Double = 2 * Math.PI * radius
+
+    override fun draw() {
+        println("⭕ Drawing a $color circle with radius $radius")
+    }
+}
+
+class Rectangle(color: String, val width: Double, val height: Double) : Shape(color) {
+    override fun area(): Double = width * height
+
+    override fun perimeter(): Double = 2 * (width + height)
+
+    override fun draw() {
+        println("▭ Drawing a $color rectangle ${width}x${height}")
+    }
+}
+
+class Triangle(color: String, val side1: Double, val side2: Double, val side3: Double) : Shape(color) {
+
+    init {
+        require(isValid()) { "Invalid triangle: sides don't satisfy triangle inequality" }
+    }
+
+    private fun isValid(): Boolean {
+        return side1 + side2 > side3 && side1 + side3 > side2 && side2 + side3 > side1
+    }
+
+    override fun area(): Double {
+        // Heron's formula
+        val s = perimeter() / 2
+        return sqrt(s * (s - side1) * (s - side2) * (s - side3))
+    }
+
+    override fun perimeter(): Double = side1 + side2 + side3
+
+    override fun draw() {
+        println("△ Drawing a $color triangle with sides $side1, $side2, $side3")
+    }
+}
+
+fun printTotalArea(shapes: List<Shape>) {
+    val total = shapes.sumOf { it.area() }
+    println("Total area of all shapes: ${String.format("%.2f", total)}")
+}
+
+fun main() {
+    val shapes: List<Shape> = listOf(
+        Circle("Red", 5.0),
+        Rectangle("Blue", 4.0, 6.0),
+        Triangle("Green", 3.0, 4.0, 5.0),
+        Circle("Yellow", 3.0),
+        Rectangle("Purple", 10.0, 2.0)
+    )
+
+    shapes.forEach { shape ->
+        shape.draw()
+        shape.displayInfo()
+        println()
+    }
+
+    printTotalArea(shapes)
+}
+```
+
+---
+
+## Exercise 3: Bank Account Hierarchy
+
+**Goal**: Build different types of bank accounts with shared and unique features.
+
+**Requirements**:
+1. Open class `BankAccount` with `accountNumber`, `holder`, `balance`
+2. Methods: `deposit()`, `withdraw()`, `displayBalance()`
+3. Class `SavingsAccount` extends `BankAccount`:
+   - Adds `interestRate` property
+   - Method `applyInterest()`
+   - Withdrawal limit of 3 times per month
+4. Class `CheckingAccount` extends `BankAccount`:
+   - Adds `overdraftLimit` property
+   - Can withdraw beyond balance up to overdraft limit
+5. Test all account types
+
+---
+
+## Solution: Bank Account Hierarchy
+
+```kotlin
+open class BankAccount(val accountNumber: String, val holder: String) {
+    protected var balance: Double = 0.0
+
+    open fun deposit(amount: Double) {
+        require(amount > 0) { "Deposit amount must be positive" }
+        balance += amount
+        println("Deposited $$amount. New balance: $$balance")
+    }
+
+    open fun withdraw(amount: Double): Boolean {
+        require(amount > 0) { "Withdrawal amount must be positive" }
+
+        return if (amount <= balance) {
+            balance -= amount
+            println("Withdrew $$amount. New balance: $$balance")
+            true
+        } else {
+            println("Insufficient funds! Balance: $$balance")
+            false
         }
-        .toList()
-        .sortedByDescending { it.second }
-
-    println("\nRevenue by product:")
-    revenueByProduct.forEach { (product, revenue) ->
-        println("  $product: $${"%.2f".format(revenue)}")
     }
-    // Laptop: $3600.00
-    // Monitor: $900.00
-    // Mouse: $625.00
-    // Keyboard: $375.00
-}
-```
 
-**Explanation**:
-- `sumOf` calculates total with transformation
-- `count` with predicate counts matches
-- `groupBy` + `mapValues` aggregates by key
-- `maxByOrNull` finds maximum based on criteria
-
----
-
-## Exercise 2: Text Processing
-
-**Goal**: Process log files using collection operations.
-
-**Task**: Parse log entries and:
-1. Count errors
-2. Find unique users
-3. Group by log level
-4. Get most recent error
-
-```kotlin
-data class LogEntry(
-    val timestamp: Long,
-    val level: String,
-    val user: String,
-    val message: String
-)
-
-fun main() {
-    val logs = listOf(
-        LogEntry(1000, "INFO", "alice", "User logged in"),
-        LogEntry(2000, "ERROR", "bob", "Connection failed"),
-        LogEntry(3000, "INFO", "alice", "Data saved"),
-        LogEntry(4000, "WARN", "charlie", "Slow query"),
-        LogEntry(5000, "ERROR", "alice", "Timeout"),
-        LogEntry(6000, "INFO", "bob", "Request completed")
-    )
-
-    // TODO: Process logs
-}
-```
-
----
-
-## Solution 2: Text Processing
-
-```kotlin
-data class LogEntry(
-    val timestamp: Long,
-    val level: String,
-    val user: String,
-    val message: String
-)
-
-fun main() {
-    val logs = listOf(
-        LogEntry(1000, "INFO", "alice", "User logged in"),
-        LogEntry(2000, "ERROR", "bob", "Connection failed"),
-        LogEntry(3000, "INFO", "alice", "Data saved"),
-        LogEntry(4000, "WARN", "charlie", "Slow query"),
-        LogEntry(5000, "ERROR", "alice", "Timeout"),
-        LogEntry(6000, "INFO", "bob", "Request completed")
-    )
-
-    // 1. Count errors
-    val errorCount = logs.count { it.level == "ERROR" }
-    println("Error count: $errorCount")  // 2
-
-    // 2. Unique users
-    val uniqueUsers = logs.map { it.user }.toSet()
-    println("Unique users: $uniqueUsers")  // [alice, bob, charlie]
-
-    // 3. Group by log level
-    val byLevel = logs.groupBy { it.level }
-    println("\nLogs by level:")
-    byLevel.forEach { (level, entries) ->
-        println("  $level: ${entries.size}")
+    fun displayBalance() {
+        println("Account: $accountNumber ($holder)")
+        println("Balance: $$balance")
     }
-    // INFO: 3
-    // ERROR: 2
-    // WARN: 1
-
-    // 4. Most recent error
-    val recentError = logs
-        .filter { it.level == "ERROR" }
-        .maxByOrNull { it.timestamp }
-
-    println("\nMost recent error:")
-    println("  User: ${recentError?.user}")
-    println("  Message: ${recentError?.message}")
-    // User: alice
-    // Message: Timeout
-
-    // Bonus: Activity by user
-    val activityByUser = logs
-        .groupBy { it.user }
-        .mapValues { (_, entries) -> entries.size }
-        .toList()
-        .sortedByDescending { it.second }
-
-    println("\nActivity by user:")
-    activityByUser.forEach { (user, count) ->
-        println("  $user: $count actions")
-    }
-    // alice: 3 actions
-    // bob: 2 actions
-    // charlie: 1 actions
-}
-```
-
-**Explanation**:
-- `count` with predicate for conditional counting
-- `map` + `toSet` for unique values
-- `groupBy` organizes by key
-- `filter` + `maxByOrNull` finds specific maximum
-- Chaining operations creates powerful pipelines
-
----
-
-## Exercise 3: Sequence Performance
-
-**Goal**: Compare list vs sequence performance.
-
-**Task**: Process large dataset and measure time difference.
-
-```kotlin
-fun main() {
-    val largeList = (1..1_000_000).toList()
-
-    // TODO: Compare list vs sequence for:
-    // - Map to double
-    // - Filter > 1000
-    // - Take first 100
-    // - Sum
-}
-```
-
----
-
-## Solution 3: Sequence Performance
-
-```kotlin
-fun measureTime(label: String, block: () -> Any): Any {
-    val start = System.currentTimeMillis()
-    val result = block()
-    val elapsed = System.currentTimeMillis() - start
-    println("$label: ${elapsed}ms")
-    return result
 }
 
-fun main() {
-    val largeList = (1..1_000_000).toList()
+class SavingsAccount(
+    accountNumber: String,
+    holder: String,
+    val interestRate: Double
+) : BankAccount(accountNumber, holder) {
 
-    // Using List (eager evaluation)
-    val listResult = measureTime("List processing") {
-        largeList
-            .map { it * 2 }        // Processes all 1M
-            .filter { it > 1000 }  // Processes all results
-            .take(100)             // Finally takes 100
-            .sum()
-    }
-    println("Result: $listResult\n")
+    private var withdrawalsThisMonth = 0
+    private val maxWithdrawals = 3
 
-    // Using Sequence (lazy evaluation)
-    val sequenceResult = measureTime("Sequence processing") {
-        largeList.asSequence()
-            .map { it * 2 }        // Lazy
-            .filter { it > 1000 }  // Lazy
-            .take(100)             // Lazy
-            .sum()                 // Triggers evaluation
-    }
-    println("Result: $sequenceResult\n")
-
-    // Demonstrate step-by-step processing
-    println("=== Sequence Element-by-Element ===")
-    (1..5).asSequence()
-        .map {
-            println("  Map: $it -> ${it * 2}")
-            it * 2
+    override fun withdraw(amount: Double): Boolean {
+        if (withdrawalsThisMonth >= maxWithdrawals) {
+            println("Withdrawal limit reached! Maximum $maxWithdrawals withdrawals per month.")
+            return false
         }
-        .filter {
-            println("  Filter: $it > 4? ${it > 4}")
-            it > 4
+
+        val success = super.withdraw(amount)
+        if (success) {
+            withdrawalsThisMonth++
+            println("Withdrawals remaining this month: ${maxWithdrawals - withdrawalsThisMonth}")
         }
-        .take(2)
-        .forEach { println("  Result: $it") }
+        return success
+    }
 
-    // Typical output:
-    // List processing: 180ms
-    // Result: 130100
-    //
-    // Sequence processing: 0ms
-    // Result: 130100
-    //
-    // === Sequence Element-by-Element ===
-    //   Map: 1 -> 2
-    //   Filter: 2 > 4? false
-    //   Map: 2 -> 4
-    //   Filter: 4 > 4? false
-    //   Map: 3 -> 6
-    //   Filter: 6 > 4? true
-    //   Result: 6
-    //   Map: 4 -> 8
-    //   Filter: 8 > 4? true
-    //   Result: 8
+    fun applyInterest() {
+        val interest = balance * interestRate / 100
+        balance += interest
+        println("Interest applied: $$interest. New balance: $$balance")
+    }
 
-    // Explanation
-    println("\n=== Why Sequence is Faster ===")
-    println("List: Processes all 1M elements through each operation")
-    println("Sequence: Processes elements one-by-one, stops after finding 100")
-    println("For this example, sequence processes ~501 elements vs 1M")
+    fun resetMonthlyWithdrawals() {
+        withdrawalsThisMonth = 0
+        println("Monthly withdrawal limit reset")
+    }
+}
+
+class CheckingAccount(
+    accountNumber: String,
+    holder: String,
+    val overdraftLimit: Double
+) : BankAccount(accountNumber, holder) {
+
+    override fun withdraw(amount: Double): Boolean {
+        require(amount > 0) { "Withdrawal amount must be positive" }
+
+        val availableFunds = balance + overdraftLimit
+
+        return if (amount <= availableFunds) {
+            balance -= amount
+            println("Withdrew $$amount. New balance: $$balance")
+            if (balance < 0) {
+                println("⚠️ Account overdrawn by $${-balance}")
+            }
+            true
+        } else {
+            println("Exceeds overdraft limit! Available: $$availableFunds")
+            false
+        }
+    }
+}
+
+fun main() {
+    println("=== Savings Account ===")
+    val savings = SavingsAccount("SAV001", "Alice Johnson", 2.5)
+    savings.deposit(1000.0)
+    savings.applyInterest()
+    savings.withdraw(100.0)
+    savings.withdraw(100.0)
+    savings.withdraw(100.0)
+    savings.withdraw(100.0)  // Should fail (limit reached)
+    savings.displayBalance()
+
+    println("\n=== Checking Account ===")
+    val checking = CheckingAccount("CHK001", "Bob Smith", 500.0)
+    checking.deposit(1000.0)
+    checking.withdraw(1200.0)  // Uses overdraft
+    checking.withdraw(400.0)   // Should fail (exceeds overdraft limit)
+    checking.displayBalance()
 }
 ```
-
-**Explanation**:
-- Lists create intermediate collections at each step
-- Sequences process elements one at a time
-- With `take(100)`, sequence stops after 100 matches
-- Sequences excel when you don't need all results
-- The performance difference grows with data size
 
 ---
 
 ## Checkpoint Quiz
 
 ### Question 1
-What's the difference between `map` and `flatMap`?
+What keyword is required to allow a class to be inherited?
 
-A) They do the same thing
-B) `map` transforms each element; `flatMap` transforms and flattens nested structures
-C) `flatMap` is faster than `map`
-D) `map` only works with numbers
+A) `extend`
+B) `open`
+C) `inherit`
+D) `abstract`
 
 ### Question 2
-What does `filter` return?
+What is polymorphism?
 
-A) A single element
-B) A Boolean
-C) A new collection with only elements matching the predicate
-D) The count of matching elements
+A) Creating multiple classes
+B) The ability to treat objects of different types through a common interface
+C) Overriding methods
+D) Using multiple inheritance
 
 ### Question 3
-What's the difference between `reduce` and `fold`?
+When should you use an abstract class?
 
-A) No difference
-B) `fold` requires an initial value; `reduce` uses the first element as initial value
-C) `reduce` is deprecated
-D) `fold` only works with numbers
+A) When you never want instances of that class
+B) When you want to provide a common base with some implemented methods
+C) When you want to force subclasses to implement specific methods
+D) Both B and C
 
 ### Question 4
-When should you use sequences instead of regular collections?
+What does the `super` keyword do?
 
-A) Always
-B) Never
-C) For large collections with multiple operations, especially when you don't need all results
-D) Only for strings
+A) Creates a new superclass
+B) Calls the subclass's implementation
+C) Calls the superclass's implementation
+D) Deletes the superclass
 
 ### Question 5
-What does `partition` do?
+What is smart casting in Kotlin?
 
-A) Splits a collection into N equal parts
-B) Splits a collection into two groups based on a predicate
-C) Removes duplicate elements
-D) Sorts the collection
+A) Converting strings to integers
+B) Automatic type casting after a type check with `is`
+C) Casting to any type
+D) A compiler optimization
 
 ---
 
 ## Quiz Answers
 
-**Question 1: B) `map` transforms each element; `flatMap` transforms and flattens nested structures**
+**Question 1: B) `open`**
+
+Kotlin classes are final by default. Use `open` to allow inheritance.
 
 ```kotlin
-val orders = listOf(
-    Order(1, listOf("A", "B")),
-    Order(2, listOf("C"))
-)
+open class Animal { }  // ✅ Can inherit
+class Dog : Animal()   // ✅ Works
 
-// map: List<Order> -> List<List<String>>
-val nested = orders.map { it.items }  // [[A, B], [C]]
-
-// flatMap: List<Order> -> List<String>
-val flat = orders.flatMap { it.items }  // [A, B, C]
+class Plant { }        // ❌ Final by default
+// class Tree : Plant() // ❌ Error
 ```
-
-`flatMap` = `map` + `flatten`
 
 ---
 
-**Question 2: C) A new collection with only elements matching the predicate**
+**Question 2: B) The ability to treat objects of different types through a common interface**
+
+Polymorphism lets you write code that works with a superclass but automatically uses the correct subclass implementation.
 
 ```kotlin
-val numbers = listOf(1, 2, 3, 4, 5)
-
-val evens = numbers.filter { it % 2 == 0 }
-println(evens)  // [2, 4]
+fun makeSound(animal: Animal) {
+    animal.makeSound()  // Calls Dog, Cat, or Cow's version
+}
 ```
-
-`filter` returns a new list; the original is unchanged (immutability).
 
 ---
 
-**Question 3: B) `fold` requires an initial value; `reduce` uses the first element as initial value**
+**Question 3: D) Both B and C**
+
+Abstract classes provide partial implementation (some methods implemented, some abstract) and force subclasses to implement abstract methods.
 
 ```kotlin
-val numbers = listOf(1, 2, 3, 4)
-
-// reduce: starts with first element (1)
-val sum1 = numbers.reduce { acc, n -> acc + n }  // 10
-
-// fold: starts with provided value (0)
-val sum2 = numbers.fold(0) { acc, n -> acc + n }  // 10
-
-// fold with different initial value
-val sum3 = numbers.fold(100) { acc, n -> acc + n }  // 110
-
-// reduce throws on empty list; fold doesn't
-val empty = emptyList<Int>()
-// empty.reduce { acc, n -> acc + n }  // Exception!
-val safe = empty.fold(0) { acc, n -> acc + n }  // 0
+abstract class Shape {
+    abstract fun area(): Double  // Must implement
+    fun display() { }           // Already implemented
+}
 ```
-
-`fold` is safer and more flexible.
 
 ---
 
-**Question 4: C) For large collections with multiple operations, especially when you don't need all results**
+**Question 4: C) Calls the superclass's implementation**
+
+Use `super` to access the parent class's methods or properties.
 
 ```kotlin
-// Good for sequence: large data, multiple ops, partial results
-(1..10_000_000).asSequence()
-    .map { it * 2 }
-    .filter { it > 1000 }
-    .take(10)  // Only need 10!
-    .toList()
-
-// Bad for sequence: small data, single op
-listOf(1, 2, 3)
-    .map { it * 2 }  // Just use regular list
+override fun displayInfo() {
+    super.displayInfo()  // Call parent's version first
+    println("Additional info")
+}
 ```
-
-Sequences have overhead; only beneficial for specific scenarios.
 
 ---
 
-**Question 5: B) Splits a collection into two groups based on a predicate**
+**Question 5: B) Automatic type casting after a type check with `is`**
+
+After checking a type with `is`, Kotlin automatically casts the variable.
 
 ```kotlin
-val numbers = listOf(1, 2, 3, 4, 5, 6)
-
-val (evens, odds) = numbers.partition { it % 2 == 0 }
-println(evens)  // [2, 4, 6]
-println(odds)   // [1, 3, 5]
+if (animal is Dog) {
+    animal.fetch()  // No explicit cast needed!
+}
 ```
-
-Returns a `Pair` of lists: (matching, not-matching).
 
 ---
 
 ## What You've Learned
 
-✅ Essential operations: map, filter, reduce, fold
-✅ Finding elements: find, first, last, any, all, none
-✅ Grouping and partitioning: groupBy, partition, associate
-✅ Flattening nested structures: flatMap, flatten
-✅ Sequences for lazy evaluation and performance
-✅ Chaining operations into powerful pipelines
-✅ When to use each operation
-✅ Performance considerations
+✅ Inheritance basics with `open` and `:` syntax
+✅ Overriding methods with `override`
+✅ Using `super` to call parent implementations
+✅ Abstract classes for shared functionality
+✅ Polymorphism for flexible code
+✅ Type checking with `is` and smart casting
 
 ---
 
 ## Next Steps
 
-In **Lesson 3.4: Scope Functions**, you'll master:
-- let, run, with, apply, also
-- When to use each scope function
-- `this` vs `it` context
-- Return value differences
-- Chaining scope functions
+In **Lesson 2.4: Interfaces and Abstract Classes**, you'll learn:
+- Defining and implementing interfaces
+- Multiple interface implementation
+- Default interface methods
+- When to use interfaces vs abstract classes
+- Real-world design patterns
 
-Get ready for Kotlin's most elegant features!
-
----
-
-## Key Takeaways
-
-**Collection Operations Transform Code**:
-- Replace loops with declarative operations
-- Chain operations for readability
-- Immutable transformations prevent bugs
-
-**Choose the Right Tool**:
-- `map`: Transform each element
-- `filter`: Select elements
-- `reduce/fold`: Combine into single value
-- `flatMap`: Transform and flatten
-- `groupBy`: Organize by key
-
-**Performance Matters**:
-- Regular collections: Small data, simple operations
-- Sequences: Large data, multiple operations, partial results
-- Measure when performance is critical
+You're mastering inheritance! Keep building on this foundation!
 
 ---
 
-**Congratulations on completing Lesson 3.3!** 🎉
+**Congratulations on completing Lesson 2.3!** 🎉
 
-You now wield the power of functional collection operations. This knowledge will make your data processing code elegant and efficient. Practice chaining operations—it becomes second nature quickly!
+Inheritance and polymorphism are cornerstones of OOP. You now have the tools to create flexible, maintainable class hierarchies!

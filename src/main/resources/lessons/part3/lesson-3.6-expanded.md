@@ -1,971 +1,977 @@
-# Lesson 3.6: Part 3 Capstone - Data Processing Pipeline
+# Lesson 2.6: Object Declarations and Companion Objects
 
-**Estimated Time**: 90 minutes
-**Difficulty**: Advanced
-**Prerequisites**: Lessons 3.1-3.5 (All functional programming concepts)
+**Estimated Time**: 60 minutes
 
 ---
 
-## Project Introduction
+## Topic Introduction
 
-Congratulations on reaching the capstone project! You've learned functional programming from the ground up—lambdas, higher-order functions, collection operations, scope functions, composition, and currying.
+So far, you've created classes and instantiated them into objects. But what if you need:
+- Only **one instance** of a class (singleton pattern)?
+- **Static-like members** (methods/properties that belong to the class, not instances)?
+- **Anonymous objects** for one-time use?
 
-Now it's time to apply everything to a real-world project: a **Data Processing Pipeline** that analyzes sales data.
+Kotlin provides elegant solutions through:
+- **Object expressions** - Anonymous objects
+- **Object declarations** - Singletons
+- **Companion objects** - Static-like members within classes
 
-### What You'll Build
-
-A complete functional data processing system that:
-- Reads and parses CSV data
-- Cleans and validates data
-- Transforms and enriches data
-- Aggregates statistics
-- Generates reports
-- Uses functional programming throughout
-
-### Skills You'll Practice
-
-✅ Collection operations (map, filter, groupBy, etc.)
-✅ Higher-order functions
-✅ Function composition
-✅ Scope functions
-✅ Extension functions
-✅ Sequences for performance
-✅ Functional pipelines
-✅ Error handling functionally
+These features eliminate boilerplate code and provide type-safe alternatives to Java's static members.
 
 ---
 
-## Project Requirements
+## The Concept
 
-### Dataset: Sales Data
+### What are Objects in Kotlin?
 
-You'll process sales data with these fields:
-- Order ID
-- Date
-- Customer Name
-- Product
-- Category
-- Quantity
-- Price
-- Region
+In Kotlin, `object` is a keyword with three uses:
 
-### Features to Implement
+1. **Object Expression**: Create anonymous objects (like Java's anonymous classes)
+2. **Object Declaration**: Create singletons
+3. **Companion Object**: Define class-level members (like Java's static)
 
-**Core Features**:
-1. Data parsing from CSV
-2. Data validation and cleaning
-3. Revenue calculation
-4. Category-based analysis
-5. Regional analysis
-6. Top products/customers
-7. Time-based trends
-8. Report generation
-
-**Functional Requirements**:
-- Use functional pipelines (no imperative loops)
-- Create reusable transformation functions
-- Compose operations for complex analysis
-- Use sequences for large datasets
-- Apply scope functions appropriately
+**Why Objects?**
+- **Singletons**: Ensure only one instance exists (database connections, app config)
+- **Utilities**: Group related functions without instantiation
+- **Constants**: Define immutable values accessible anywhere
+- **Factory methods**: Create instances with custom logic
 
 ---
 
-## Sample Data
+## Object Expressions
 
-```
-OrderID,Date,Customer,Product,Category,Quantity,Price,Region
-1001,2024-01-15,Alice Johnson,Laptop,Electronics,1,1200.00,North
-1002,2024-01-16,Bob Smith,Mouse,Electronics,2,25.00,South
-1003,2024-01-17,Alice Johnson,Keyboard,Electronics,1,75.00,North
-1004,2024-01-18,Charlie Brown,Desk,Furniture,1,300.00,East
-1005,2024-01-19,Diana Prince,Chair,Furniture,2,150.00,West
-1006,2024-01-20,Bob Smith,Monitor,Electronics,1,400.00,South
-1007,2024-01-21,Alice Johnson,Lamp,Furniture,3,50.00,North
-1008,2024-01-22,Eve Davis,Laptop,Electronics,1,1200.00,East
-1009,2024-01-23,Frank Miller,Mouse,Electronics,5,25.00,West
-1010,2024-01-24,Charlie Brown,Desk,Furniture,1,300.00,East
-1011,2024-01-25,Alice Johnson,Monitor,Electronics,1,400.00,North
-1012,2024-01-26,Bob Smith,Keyboard,Electronics,2,75.00,South
-1013,2024-01-27,Diana Prince,Laptop,Electronics,1,1200.00,West
-1014,2024-01-28,Eve Davis,Chair,Furniture,2,150.00,East
-1015,2024-01-29,Frank Miller,Lamp,Furniture,1,50.00,West
-```
+**Object expressions** create anonymous objects - objects of an unnamed class.
 
----
-
-## Step 1: Data Model
-
-First, define your data structures.
+### Basic Object Expression
 
 ```kotlin
-data class SalesRecord(
-    val orderId: Int,
-    val date: String,
-    val customer: String,
-    val product: String,
-    val category: String,
-    val quantity: Int,
-    val price: Double,
-    val region: String
-) {
-    val revenue: Double
-        get() = quantity * price
-}
-
-// Result types for functional error handling
-sealed class ParseResult {
-    data class Success(val records: List<SalesRecord>) : ParseResult()
-    data class Error(val message: String, val lineNumber: Int) : ParseResult()
-}
-```
-
----
-
-## Step 2: CSV Parser
-
-Create a functional CSV parser.
-
-```kotlin
-object CsvParser {
-    fun parseLine(line: String, lineNumber: Int): SalesRecord? {
-        return try {
-            val parts = line.split(",")
-            if (parts.size != 8) return null
-
-            SalesRecord(
-                orderId = parts[0].toInt(),
-                date = parts[1],
-                customer = parts[2],
-                product = parts[3],
-                category = parts[4],
-                quantity = parts[5].toInt(),
-                price = parts[6].toDouble(),
-                region = parts[7]
-            )
-        } catch (e: Exception) {
-            println("Error parsing line $lineNumber: ${e.message}")
-            null
-        }
-    }
-
-    fun parseCSV(csvData: String): List<SalesRecord> {
-        return csvData
-            .lines()
-            .drop(1)  // Skip header
-            .filter { it.isNotBlank() }
-            .mapIndexedNotNull { index, line -> parseLine(line, index + 2) }
-    }
-}
-```
-
----
-
-## Step 3: Validation Pipeline
-
-Create data validation functions.
-
-```kotlin
-// Validation functions
-typealias Validator<T> = (T) -> Boolean
-
-object Validators {
-    val validQuantity: Validator<SalesRecord> = { it.quantity > 0 }
-    val validPrice: Validator<SalesRecord> = { it.price > 0 }
-    val validCustomer: Validator<SalesRecord> = { it.customer.isNotBlank() }
-    val validProduct: Validator<SalesRecord> = { it.product.isNotBlank() }
-
-    fun validateRecord(record: SalesRecord): Boolean {
-        return listOf(
-            validQuantity,
-            validPrice,
-            validCustomer,
-            validProduct
-        ).all { it(record) }
-    }
-}
-
-// Extension function for validation
-fun List<SalesRecord>.validated(): List<SalesRecord> {
-    return this.filter(Validators::validateRecord)
-}
-```
-
----
-
-## Step 4: Data Transformation Pipeline
-
-Create transformation and enrichment functions.
-
-```kotlin
-// Extension functions for transformations
-fun SalesRecord.normalize() = this.copy(
-    customer = customer.trim(),
-    product = product.trim(),
-    category = category.trim(),
-    region = region.trim().uppercase()
-)
-
-fun List<SalesRecord>.normalized() = this.map { it.normalize() }
-
-// Revenue calculations
-fun List<SalesRecord>.totalRevenue() = this.sumOf { it.revenue }
-
-fun List<SalesRecord>.averageOrderValue() =
-    if (this.isEmpty()) 0.0 else this.totalRevenue() / this.size
-```
-
----
-
-## Step 5: Analysis Functions
-
-Create analysis functions using functional operations.
-
-```kotlin
-object Analytics {
-    // Category analysis
-    fun categoryBreakdown(records: List<SalesRecord>): Map<String, Double> {
-        return records
-            .groupBy { it.category }
-            .mapValues { (_, sales) -> sales.totalRevenue() }
-    }
-
-    // Regional analysis
-    fun regionalBreakdown(records: List<SalesRecord>): Map<String, Double> {
-        return records
-            .groupBy { it.region }
-            .mapValues { (_, sales) -> sales.totalRevenue() }
-    }
-
-    // Top products
-    fun topProducts(records: List<SalesRecord>, limit: Int = 5): List<Pair<String, Double>> {
-        return records
-            .groupBy { it.product }
-            .mapValues { (_, sales) -> sales.totalRevenue() }
-            .toList()
-            .sortedByDescending { it.second }
-            .take(limit)
-    }
-
-    // Top customers
-    fun topCustomers(records: List<SalesRecord>, limit: Int = 5): List<Pair<String, Double>> {
-        return records
-            .groupBy { it.customer }
-            .mapValues { (_, sales) -> sales.totalRevenue() }
-            .toList()
-            .sortedByDescending { it.second }
-            .take(limit)
-    }
-
-    // Product statistics
-    data class ProductStats(
-        val totalOrders: Int,
-        val totalQuantity: Int,
-        val totalRevenue: Double,
-        val averagePrice: Double
-    )
-
-    fun productStatistics(records: List<SalesRecord>): Map<String, ProductStats> {
-        return records
-            .groupBy { it.product }
-            .mapValues { (_, sales) ->
-                ProductStats(
-                    totalOrders = sales.size,
-                    totalQuantity = sales.sumOf { it.quantity },
-                    totalRevenue = sales.totalRevenue(),
-                    averagePrice = sales.map { it.price }.average()
-                )
-            }
-    }
-}
-```
-
----
-
-## Step 6: Report Generator
-
-Create a report generator using functional composition.
-
-```kotlin
-object ReportGenerator {
-    fun generateSummary(records: List<SalesRecord>): String {
-        return buildString {
-            appendLine("=" .repeat(60))
-            appendLine("SALES REPORT SUMMARY")
-            appendLine("=".repeat(60))
-            appendLine()
-
-            appendLine("📊 Overall Statistics")
-            appendLine("-".repeat(60))
-            appendLine("Total Orders: ${records.size}")
-            appendLine("Total Revenue: ${"$%.2f".format(records.totalRevenue())}")
-            appendLine("Average Order Value: ${"$%.2f".format(records.averageOrderValue())}")
-            appendLine()
-
-            val categoryData = Analytics.categoryBreakdown(records)
-            appendLine("📦 Category Breakdown")
-            appendLine("-".repeat(60))
-            categoryData
-                .toList()
-                .sortedByDescending { it.second }
-                .forEach { (category, revenue) ->
-                    appendLine("  $category: ${"$%.2f".format(revenue)}")
-                }
-            appendLine()
-
-            val regionalData = Analytics.regionalBreakdown(records)
-            appendLine("🌍 Regional Breakdown")
-            appendLine("-".repeat(60))
-            regionalData
-                .toList()
-                .sortedByDescending { it.second }
-                .forEach { (region, revenue) ->
-                    appendLine("  $region: ${"$%.2f".format(revenue)}")
-                }
-            appendLine()
-
-            appendLine("🏆 Top 5 Products")
-            appendLine("-".repeat(60))
-            Analytics.topProducts(records, 5)
-                .forEachIndexed { index, (product, revenue) ->
-                    appendLine("  ${index + 1}. $product: ${"$%.2f".format(revenue)}")
-                }
-            appendLine()
-
-            appendLine("👥 Top 5 Customers")
-            appendLine("-".repeat(60))
-            Analytics.topCustomers(records, 5)
-                .forEachIndexed { index, (customer, revenue) ->
-                    appendLine("  ${index + 1}. $customer: ${"$%.2f".format(revenue)}")
-                }
-            appendLine()
-
-            appendLine("=".repeat(60))
-        }
-    }
-
-    fun generateDetailedReport(records: List<SalesRecord>): String {
-        return buildString {
-            appendLine(generateSummary(records))
-            appendLine()
-            appendLine("📊 DETAILED PRODUCT STATISTICS")
-            appendLine("=".repeat(60))
-
-            Analytics.productStatistics(records)
-                .toList()
-                .sortedByDescending { it.second.totalRevenue }
-                .forEach { (product, stats) ->
-                    appendLine()
-                    appendLine("Product: $product")
-                    appendLine("  Orders: ${stats.totalOrders}")
-                    appendLine("  Quantity Sold: ${stats.totalQuantity}")
-                    appendLine("  Total Revenue: ${"$%.2f".format(stats.totalRevenue)}")
-                    appendLine("  Average Price: ${"$%.2f".format(stats.averagePrice)}")
-                }
-        }
-    }
-}
-```
-
----
-
-## Step 7: Complete Pipeline
-
-Put it all together in a functional pipeline.
-
-```kotlin
-class SalesDataPipeline {
-    private val transformations = mutableListOf<(List<SalesRecord>) -> List<SalesRecord>>()
-
-    fun addTransformation(transform: (List<SalesRecord>) -> List<SalesRecord>) = apply {
-        transformations.add(transform)
-    }
-
-    fun process(csvData: String): List<SalesRecord> {
-        var records = CsvParser.parseCSV(csvData)
-
-        // Apply all transformations in sequence
-        transformations.forEach { transform ->
-            records = transform(records)
-        }
-
-        return records
-    }
-}
-
-// Create pipeline
-fun createPipeline() = SalesDataPipeline()
-    .addTransformation { it.validated() }
-    .addTransformation { it.normalized() }
-
-// Infix function for readable filtering
-infix fun List<SalesRecord>.inCategory(category: String) =
-    this.filter { it.category.equals(category, ignoreCase = true) }
-
-infix fun List<SalesRecord>.inRegion(region: String) =
-    this.filter { it.region.equals(region, ignoreCase = true) }
-
-fun List<SalesRecord>.withRevenueAbove(amount: Double) =
-    this.filter { it.revenue > amount }
-```
-
----
-
-## Complete Solution
-
-Here's the full working solution:
-
-```kotlin
-// Data Model
-data class SalesRecord(
-    val orderId: Int,
-    val date: String,
-    val customer: String,
-    val product: String,
-    val category: String,
-    val quantity: Int,
-    val price: Double,
-    val region: String
-) {
-    val revenue: Double get() = quantity * price
-}
-
-// CSV Parser
-object CsvParser {
-    fun parseLine(line: String): SalesRecord? {
-        return try {
-            val parts = line.split(",")
-            if (parts.size != 8) return null
-            SalesRecord(
-                orderId = parts[0].toInt(),
-                date = parts[1],
-                customer = parts[2],
-                product = parts[3],
-                category = parts[4],
-                quantity = parts[5].toInt(),
-                price = parts[6].toDouble(),
-                region = parts[7]
-            )
-        } catch (e: Exception) {
-            null
-        }
-    }
-
-    fun parseCSV(csvData: String): List<SalesRecord> {
-        return csvData.lines()
-            .drop(1)
-            .filter { it.isNotBlank() }
-            .mapNotNull { parseLine(it) }
-    }
-}
-
-// Validators
-object Validators {
-    val validQuantity: (SalesRecord) -> Boolean = { it.quantity > 0 }
-    val validPrice: (SalesRecord) -> Boolean = { it.price > 0 }
-    val validCustomer: (SalesRecord) -> Boolean = { it.customer.isNotBlank() }
-
-    fun validateRecord(record: SalesRecord): Boolean =
-        listOf(validQuantity, validPrice, validCustomer).all { it(record) }
-}
-
-// Extensions
-fun SalesRecord.normalize() = copy(
-    customer = customer.trim(),
-    product = product.trim(),
-    category = category.trim(),
-    region = region.trim().uppercase()
-)
-
-fun List<SalesRecord>.validated() = filter(Validators::validateRecord)
-fun List<SalesRecord>.normalized() = map { it.normalize() }
-fun List<SalesRecord>.totalRevenue() = sumOf { it.revenue }
-fun List<SalesRecord>.averageOrderValue() =
-    if (isEmpty()) 0.0 else totalRevenue() / size
-
-infix fun List<SalesRecord>.inCategory(category: String) =
-    filter { it.category.equals(category, ignoreCase = true) }
-
-infix fun List<SalesRecord>.inRegion(region: String) =
-    filter { it.region.equals(region, ignoreCase = true) }
-
-// Analytics
-object Analytics {
-    fun categoryBreakdown(records: List<SalesRecord>) =
-        records.groupBy { it.category }
-            .mapValues { (_, sales) -> sales.totalRevenue() }
-
-    fun regionalBreakdown(records: List<SalesRecord>) =
-        records.groupBy { it.region }
-            .mapValues { (_, sales) -> sales.totalRevenue() }
-
-    fun topProducts(records: List<SalesRecord>, limit: Int = 5) =
-        records.groupBy { it.product }
-            .mapValues { (_, sales) -> sales.totalRevenue() }
-            .toList()
-            .sortedByDescending { it.second }
-            .take(limit)
-
-    fun topCustomers(records: List<SalesRecord>, limit: Int = 5) =
-        records.groupBy { it.customer }
-            .mapValues { (_, sales) -> sales.totalRevenue() }
-            .toList()
-            .sortedByDescending { it.second }
-            .take(limit)
-}
-
-// Report Generator
-object ReportGenerator {
-    fun generate(records: List<SalesRecord>): String = buildString {
-        appendLine("=" .repeat(60))
-        appendLine("SALES REPORT")
-        appendLine("=".repeat(60))
-        appendLine()
-
-        appendLine("📊 Overall Statistics")
-        appendLine("Total Orders: ${records.size}")
-        appendLine("Total Revenue: ${"$%.2f".format(records.totalRevenue())}")
-        appendLine("Average Order: ${"$%.2f".format(records.averageOrderValue())}")
-        appendLine()
-
-        appendLine("📦 Category Breakdown")
-        Analytics.categoryBreakdown(records)
-            .toList()
-            .sortedByDescending { it.second }
-            .forEach { (cat, rev) ->
-                appendLine("  $cat: ${"$%.2f".format(rev)}")
-            }
-        appendLine()
-
-        appendLine("🌍 Regional Breakdown")
-        Analytics.regionalBreakdown(records)
-            .toList()
-            .sortedByDescending { it.second }
-            .forEach { (reg, rev) ->
-                appendLine("  $reg: ${"$%.2f".format(rev)}")
-            }
-        appendLine()
-
-        appendLine("🏆 Top 5 Products")
-        Analytics.topProducts(records, 5)
-            .forEachIndexed { i, (prod, rev) ->
-                appendLine("  ${i + 1}. $prod: ${"$%.2f".format(rev)}")
-            }
-        appendLine()
-
-        appendLine("👥 Top 5 Customers")
-        Analytics.topCustomers(records, 5)
-            .forEachIndexed { i, (cust, rev) ->
-                appendLine("  ${i + 1}. $cust: ${"$%.2f".format(rev)}")
-            }
-    }
-}
-
-// Main Application
 fun main() {
-    val csvData = """
-OrderID,Date,Customer,Product,Category,Quantity,Price,Region
-1001,2024-01-15,Alice Johnson,Laptop,Electronics,1,1200.00,North
-1002,2024-01-16,Bob Smith,Mouse,Electronics,2,25.00,South
-1003,2024-01-17,Alice Johnson,Keyboard,Electronics,1,75.00,North
-1004,2024-01-18,Charlie Brown,Desk,Furniture,1,300.00,East
-1005,2024-01-19,Diana Prince,Chair,Furniture,2,150.00,West
-1006,2024-01-20,Bob Smith,Monitor,Electronics,1,400.00,South
-1007,2024-01-21,Alice Johnson,Lamp,Furniture,3,50.00,North
-1008,2024-01-22,Eve Davis,Laptop,Electronics,1,1200.00,East
-1009,2024-01-23,Frank Miller,Mouse,Electronics,5,25.00,West
-1010,2024-01-24,Charlie Brown,Desk,Furniture,1,300.00,East
-1011,2024-01-25,Alice Johnson,Monitor,Electronics,1,400.00,North
-1012,2024-01-26,Bob Smith,Keyboard,Electronics,2,75.00,South
-1013,2024-01-27,Diana Prince,Laptop,Electronics,1,1200.00,West
-1014,2024-01-28,Eve Davis,Chair,Furniture,2,150.00,East
-1015,2024-01-29,Frank Miller,Lamp,Furniture,1,50.00,West
-    """.trimIndent()
+    val greeting = object {
+        val message = "Hello"
+        fun greet() {
+            println("$message, World!")
+        }
+    }
 
-    // Process data through functional pipeline
-    val allRecords = CsvParser.parseCSV(csvData)
-        .validated()
-        .normalized()
+    greeting.greet()  // Hello, World!
+    println(greeting.message)  // Hello
+}
+```
 
-    println("Processed ${allRecords.size} records\n")
+### Implementing Interfaces
 
-    // Generate full report
-    println(ReportGenerator.generate(allRecords))
+Common use: One-time implementations of interfaces
 
-    // Demonstrate functional filtering
-    println("\n" + "=".repeat(60))
-    println("CUSTOM ANALYSIS EXAMPLES")
-    println("=".repeat(60))
+```kotlin
+interface ClickListener {
+    fun onClick()
+}
 
-    // Electronics in North region
-    val northElectronics = allRecords inCategory "Electronics" inRegion "NORTH"
-    println("\nElectronics in North Region:")
-    println("  Orders: ${northElectronics.size}")
-    println("  Revenue: ${"$%.2f".format(northElectronics.totalRevenue())}")
+fun setClickListener(listener: ClickListener) {
+    println("Setting click listener...")
+    listener.onClick()
+}
 
-    // Furniture analysis
-    val furniture = allRecords inCategory "Furniture"
-    println("\nFurniture Sales:")
-    println("  Orders: ${furniture.size}")
-    println("  Revenue: ${"$%.2f".format(furniture.totalRevenue())}")
-    println("  Average Order: ${"$%.2f".format(furniture.averageOrderValue())}")
+fun main() {
+    // Create anonymous object implementing ClickListener
+    setClickListener(object : ClickListener {
+        override fun onClick() {
+            println("Button clicked!")
+        }
+    })
+}
+```
 
-    // High-value orders
-    val highValue = allRecords.filter { it.revenue > 500 }
-    println("\nHigh-Value Orders (>$500):")
-    println("  Count: ${highValue.size}")
-    println("  Total: ${"$%.2f".format(highValue.totalRevenue())}")
+**Real-World Example: Event Handlers**
+
+```kotlin
+interface EventHandler {
+    fun onEvent(event: String)
+}
+
+class Button(val text: String) {
+    private var handler: EventHandler? = null
+
+    fun setOnClickHandler(handler: EventHandler) {
+        this.handler = handler
+    }
+
+    fun click() {
+        println("Button '$text' clicked")
+        handler?.onEvent("click")
+    }
+}
+
+fun main() {
+    val button = Button("Submit")
+
+    // Anonymous object as event handler
+    button.setOnClickHandler(object : EventHandler {
+        override fun onEvent(event: String) {
+            println("Handling $event event: Form submitted!")
+        }
+    })
+
+    button.click()
+}
+```
+
+**Output**:
+```
+Button 'Submit' clicked
+Handling click event: Form submitted!
+```
+
+### Accessing Outer Scope
+
+Object expressions can access variables from their surrounding scope:
+
+```kotlin
+fun countClicks() {
+    var clickCount = 0
+
+    val button = object {
+        fun click() {
+            clickCount++  // Access outer variable
+            println("Click count: $clickCount")
+        }
+    }
+
+    button.click()  // Click count: 1
+    button.click()  // Click count: 2
+    button.click()  // Click count: 3
+}
+
+fun main() {
+    countClicks()
 }
 ```
 
 ---
 
-## Extension Challenges
+## Object Declarations (Singletons)
 
-Take the project further with these challenges!
+**Object declaration** creates a singleton - a class with exactly one instance.
 
-### Challenge 1: Date-Based Analysis
-
-Add time-series analysis:
+### Basic Singleton
 
 ```kotlin
-// Parse dates and group by month
-fun List<SalesRecord>.byMonth(): Map<String, List<SalesRecord>> {
-    return this.groupBy { record ->
-        record.date.substring(0, 7)  // Extract YYYY-MM
+object DatabaseConnection {
+    init {
+        println("Database connection initialized")
+    }
+
+    var isConnected = false
+
+    fun connect() {
+        isConnected = true
+        println("Connected to database")
+    }
+
+    fun disconnect() {
+        isConnected = false
+        println("Disconnected from database")
+    }
+
+    fun query(sql: String): String {
+        return if (isConnected) {
+            "Result of: $sql"
+        } else {
+            "Error: Not connected"
+        }
     }
 }
 
-fun List<SalesRecord>.monthlyTrend(): List<Pair<String, Double>> {
-    return this.byMonth()
-        .mapValues { (_, records) -> records.totalRevenue() }
-        .toList()
-        .sortedBy { it.first }
+fun main() {
+    // No need to instantiate - DatabaseConnection is the instance
+    DatabaseConnection.connect()
+    println(DatabaseConnection.query("SELECT * FROM users"))
+    DatabaseConnection.disconnect()
 }
 ```
 
-### Challenge 2: Customer Segmentation
+**Output**:
+```
+Database connection initialized
+Connected to database
+Result of: SELECT * FROM users
+Disconnected from database
+```
 
-Classify customers by spending:
+**Key Points**:
+- Created on first access (lazy initialization)
+- Thread-safe by default
+- Cannot have constructors
+- Can implement interfaces and extend classes
+
+### Real-World Example: Application Config
 
 ```kotlin
-enum class CustomerTier { BRONZE, SILVER, GOLD, PLATINUM }
+object AppConfig {
+    const val APP_NAME = "MyAwesomeApp"
+    const val VERSION = "1.0.0"
 
-fun classifyCustomer(totalSpending: Double): CustomerTier = when {
-    totalSpending >= 2000 -> CustomerTier.PLATINUM
-    totalSpending >= 1000 -> CustomerTier.GOLD
-    totalSpending >= 500 -> CustomerTier.SILVER
-    else -> CustomerTier.BRONZE
+    var apiUrl = "https://api.example.com"
+    var timeout = 30
+    var debugMode = false
+
+    fun printConfig() {
+        println("=== $APP_NAME Configuration ===")
+        println("Version: $VERSION")
+        println("API URL: $apiUrl")
+        println("Timeout: ${timeout}s")
+        println("Debug Mode: $debugMode")
+    }
 }
 
-fun List<SalesRecord>.customerTiers(): Map<String, CustomerTier> {
-    return this.groupBy { it.customer }
-        .mapValues { (_, records) ->
-            classifyCustomer(records.totalRevenue())
+fun main() {
+    AppConfig.printConfig()
+
+    // Modify config
+    AppConfig.debugMode = true
+    AppConfig.timeout = 60
+
+    AppConfig.printConfig()
+}
+```
+
+### Singleton with Interface
+
+```kotlin
+interface Logger {
+    fun log(message: String)
+    fun error(message: String)
+}
+
+object ConsoleLogger : Logger {
+    override fun log(message: String) {
+        println("[LOG] $message")
+    }
+
+    override fun error(message: String) {
+        println("[ERROR] $message")
+    }
+}
+
+fun processData(logger: Logger) {
+    logger.log("Processing data...")
+    logger.error("An error occurred!")
+}
+
+fun main() {
+    processData(ConsoleLogger)
+}
+```
+
+---
+
+## Companion Objects
+
+**Companion objects** are object declarations inside a class, providing "static-like" members.
+
+### Basic Companion Object
+
+```kotlin
+class User(val name: String, val email: String) {
+    companion object {
+        const val DEFAULT_ROLE = "USER"
+        var userCount = 0
+
+        fun create(name: String, email: String): User {
+            userCount++
+            return User(name, email)
         }
+    }
+}
+
+fun main() {
+    println("Default role: ${User.DEFAULT_ROLE}")
+
+    val user1 = User.create("Alice", "alice@example.com")
+    val user2 = User.create("Bob", "bob@example.com")
+
+    println("Total users created: ${User.userCount}")
 }
 ```
 
-### Challenge 3: Product Recommendations
+**Output**:
+```
+Default role: USER
+Total users created: 2
+```
 
-Find frequently bought together items:
+### Factory Methods
+
+Companion objects are perfect for factory methods:
 
 ```kotlin
-fun List<SalesRecord>.productPairs(): Map<Pair<String, String>, Int> {
-    return this.groupBy { it.orderId }
-        .values
-        .flatMap { orderRecords ->
-            val products = orderRecords.map { it.product }
-            products.flatMapIndexed { i, p1 ->
-                products.drop(i + 1).map { p2 ->
-                    if (p1 < p2) p1 to p2 else p2 to p1
-                }
+class Person private constructor(val name: String, val age: Int) {
+    companion object {
+        fun fromFullInfo(name: String, age: Int): Person {
+            require(age >= 0) { "Age cannot be negative" }
+            return Person(name, age)
+        }
+
+        fun fromName(name: String): Person {
+            return Person(name, 0)
+        }
+
+        fun createAnonymous(): Person {
+            return Person("Anonymous", 0)
+        }
+    }
+
+    fun display() {
+        println("Name: $name, Age: $age")
+    }
+}
+
+fun main() {
+    val person1 = Person.fromFullInfo("Alice", 25)
+    val person2 = Person.fromName("Bob")
+    val person3 = Person.createAnonymous()
+
+    person1.display()  // Name: Alice, Age: 25
+    person2.display()  // Name: Bob, Age: 0
+    person3.display()  // Name: Anonymous, Age: 0
+}
+```
+
+### Named Companion Objects
+
+```kotlin
+class MathOperations {
+    companion object Calculator {
+        fun add(a: Int, b: Int) = a + b
+        fun subtract(a: Int, b: Int) = a - b
+        fun multiply(a: Int, b: Int) = a * b
+        fun divide(a: Int, b: Int) = a / b
+    }
+}
+
+fun main() {
+    // Can use class name
+    println(MathOperations.add(5, 3))  // 8
+
+    // Or companion object name
+    println(MathOperations.Calculator.multiply(4, 7))  // 28
+}
+```
+
+### Companion Object Implementing Interface
+
+```kotlin
+interface JsonSerializer {
+    fun toJson(obj: Any): String
+}
+
+class User(val name: String, val age: Int) {
+    companion object : JsonSerializer {
+        override fun toJson(obj: Any): String {
+            if (obj !is User) return "{}"
+            return """{"name": "${obj.name}", "age": ${obj.age}}"""
+        }
+    }
+}
+
+fun main() {
+    val user = User("Alice", 25)
+    val json = User.toJson(user)
+    println(json)  // {"name": "Alice", "age": 25}
+}
+```
+
+---
+
+## Constants: `const` vs `val`
+
+### `const` for Compile-Time Constants
+
+```kotlin
+object Constants {
+    const val MAX_USERS = 100  // ✅ Compile-time constant
+    const val API_KEY = "abc123"  // ✅ Compile-time constant
+
+    val createdAt = System.currentTimeMillis()  // ✅ Runtime value (not const)
+}
+
+class Config {
+    companion object {
+        const val TIMEOUT = 30  // ✅ Top-level or companion object
+        val instance = Config()  // ✅ Runtime value
+    }
+}
+```
+
+**Rules for `const`**:
+- Must be top-level, in object, or in companion object
+- Must be primitive type or String
+- Must be initialized with a compile-time constant
+- Cannot have custom getter
+
+---
+
+## Real-World Example: Database Manager
+
+```kotlin
+data class User(val id: Int, val name: String, val email: String)
+
+object DatabaseManager {
+    private val users = mutableMapOf<Int, User>()
+    private var nextId = 1
+    private var isInitialized = false
+
+    init {
+        println("Initializing Database Manager...")
+    }
+
+    fun initialize() {
+        if (isInitialized) {
+            println("Database already initialized")
+            return
+        }
+        println("Setting up database connection...")
+        isInitialized = true
+    }
+
+    fun insertUser(name: String, email: String): User {
+        require(isInitialized) { "Database not initialized" }
+        val user = User(nextId++, name, email)
+        users[user.id] = user
+        println("Inserted user: ${user.name}")
+        return user
+    }
+
+    fun getUserById(id: Int): User? {
+        require(isInitialized) { "Database not initialized" }
+        return users[id]
+    }
+
+    fun getAllUsers(): List<User> {
+        require(isInitialized) { "Database not initialized" }
+        return users.values.toList()
+    }
+
+    fun deleteUser(id: Int): Boolean {
+        require(isInitialized) { "Database not initialized" }
+        return users.remove(id) != null
+    }
+
+    fun getUserCount() = users.size
+}
+
+fun main() {
+    DatabaseManager.initialize()
+
+    DatabaseManager.insertUser("Alice", "alice@example.com")
+    DatabaseManager.insertUser("Bob", "bob@example.com")
+    DatabaseManager.insertUser("Carol", "carol@example.com")
+
+    println("\nAll users:")
+    DatabaseManager.getAllUsers().forEach { user ->
+        println("${user.id}: ${user.name} (${user.email})")
+    }
+
+    println("\nGet user by ID:")
+    val user = DatabaseManager.getUserById(2)
+    println(user)
+
+    println("\nDelete user 2:")
+    DatabaseManager.deleteUser(2)
+
+    println("\nRemaining users: ${DatabaseManager.getUserCount()}")
+    DatabaseManager.getAllUsers().forEach { user ->
+        println("${user.id}: ${user.name}")
+    }
+}
+```
+
+---
+
+## Exercise 1: Logging System
+
+**Goal**: Create a comprehensive logging system using objects.
+
+**Requirements**:
+1. Object `Logger` with different log levels (INFO, WARNING, ERROR)
+2. Methods: `info()`, `warning()`, `error()`
+3. Property to enable/disable logging
+4. Track log count for each level
+5. Method to print statistics
+
+---
+
+## Solution: Logging System
+
+```kotlin
+object Logger {
+    private var enabled = true
+    private var infoCount = 0
+    private var warningCount = 0
+    private var errorCount = 0
+
+    fun enable() {
+        enabled = true
+        println("[LOGGER] Logging enabled")
+    }
+
+    fun disable() {
+        enabled = false
+        println("[LOGGER] Logging disabled")
+    }
+
+    fun info(message: String) {
+        if (!enabled) return
+        infoCount++
+        println("[INFO] $message")
+    }
+
+    fun warning(message: String) {
+        if (!enabled) return
+        warningCount++
+        println("[WARNING] $message")
+    }
+
+    fun error(message: String) {
+        if (!enabled) return
+        errorCount++
+        println("[ERROR] $message")
+    }
+
+    fun printStatistics() {
+        println("\n=== Logging Statistics ===")
+        println("Info messages: $infoCount")
+        println("Warning messages: $warningCount")
+        println("Error messages: $errorCount")
+        println("Total messages: ${infoCount + warningCount + errorCount}")
+        println("==========================\n")
+    }
+
+    fun reset() {
+        infoCount = 0
+        warningCount = 0
+        errorCount = 0
+        println("[LOGGER] Statistics reset")
+    }
+}
+
+fun main() {
+    Logger.info("Application started")
+    Logger.info("Loading configuration")
+    Logger.warning("Configuration file not found, using defaults")
+    Logger.info("Connecting to database")
+    Logger.error("Failed to connect to database")
+    Logger.info("Retrying connection")
+    Logger.info("Connected successfully")
+
+    Logger.printStatistics()
+
+    Logger.disable()
+    Logger.info("This won't be logged")
+
+    Logger.enable()
+    Logger.info("This will be logged")
+
+    Logger.printStatistics()
+}
+```
+
+---
+
+## Exercise 2: Factory Pattern with Companion Objects
+
+**Goal**: Create different types of database connections using factory methods.
+
+**Requirements**:
+1. Abstract class `DatabaseConnection` with method `connect()`
+2. Subclasses: `MySqlConnection`, `PostgreSqlConnection`, `MongoConnection`
+3. Companion object with factory methods to create each type
+4. Method to validate connection parameters
+
+---
+
+## Solution: Database Factory
+
+```kotlin
+abstract class DatabaseConnection(
+    protected val host: String,
+    protected val port: Int,
+    protected val database: String
+) {
+    abstract fun connect(): Boolean
+    abstract fun getConnectionString(): String
+
+    companion object Factory {
+        const val DEFAULT_MYSQL_PORT = 3306
+        const val DEFAULT_POSTGRES_PORT = 5432
+        const val DEFAULT_MONGO_PORT = 27017
+
+        fun createMySql(host: String, database: String, port: Int = DEFAULT_MYSQL_PORT): MySqlConnection {
+            return MySqlConnection(host, port, database)
+        }
+
+        fun createPostgreSql(host: String, database: String, port: Int = DEFAULT_POSTGRES_PORT): PostgreSqlConnection {
+            return PostgreSqlConnection(host, port, database)
+        }
+
+        fun createMongo(host: String, database: String, port: Int = DEFAULT_MONGO_PORT): MongoConnection {
+            return MongoConnection(host, port, database)
+        }
+
+        fun createFromType(type: String, host: String, database: String): DatabaseConnection {
+            return when (type.lowercase()) {
+                "mysql" -> createMySql(host, database)
+                "postgresql", "postgres" -> createPostgreSql(host, database)
+                "mongodb", "mongo" -> createMongo(host, database)
+                else -> throw IllegalArgumentException("Unknown database type: $type")
             }
         }
-        .groupingBy { it }
-        .eachCount()
-}
-```
-
-### Challenge 4: Export to Different Formats
-
-Add JSON/CSV export:
-
-```kotlin
-fun List<SalesRecord>.toJson(): String {
-    return this.joinToString(",\n  ", "[\n  ", "\n]") { record ->
-        """
-        {
-          "orderId": ${record.orderId},
-          "customer": "${record.customer}",
-          "revenue": ${record.revenue}
-        }
-        """.trimIndent()
     }
 }
 
-fun Map<String, Double>.toCsv(): String {
-    return this.toList()
-        .joinToString("\n", "Category,Revenue\n") { (key, value) ->
-            "$key,${"%.2f".format(value)}"
+class MySqlConnection(host: String, port: Int, database: String) : DatabaseConnection(host, port, database) {
+    override fun connect(): Boolean {
+        println("Connecting to MySQL...")
+        println(getConnectionString())
+        return true
+    }
+
+    override fun getConnectionString(): String {
+        return "jdbc:mysql://$host:$port/$database"
+    }
+}
+
+class PostgreSqlConnection(host: String, port: Int, database: String) : DatabaseConnection(host, port, database) {
+    override fun connect(): Boolean {
+        println("Connecting to PostgreSQL...")
+        println(getConnectionString())
+        return true
+    }
+
+    override fun getConnectionString(): String {
+        return "jdbc:postgresql://$host:$port/$database"
+    }
+}
+
+class MongoConnection(host: String, port: Int, database: String) : DatabaseConnection(host, port, database) {
+    override fun connect(): Boolean {
+        println("Connecting to MongoDB...")
+        println(getConnectionString())
+        return true
+    }
+
+    override fun getConnectionString(): String {
+        return "mongodb://$host:$port/$database"
+    }
+}
+
+fun main() {
+    println("=== Creating connections using factory methods ===\n")
+
+    val mysql = DatabaseConnection.createMySql("localhost", "myapp")
+    mysql.connect()
+
+    println()
+
+    val postgres = DatabaseConnection.createPostgreSql("localhost", "myapp")
+    postgres.connect()
+
+    println()
+
+    val mongo = DatabaseConnection.createMongo("localhost", "myapp")
+    mongo.connect()
+
+    println("\n=== Creating from type string ===\n")
+
+    val db = DatabaseConnection.createFromType("mysql", "prod-server", "users_db")
+    db.connect()
+}
+```
+
+---
+
+## Exercise 3: Singleton Cache System
+
+**Goal**: Build a thread-safe cache system using object declaration.
+
+**Requirements**:
+1. Object `CacheManager` to store key-value pairs
+2. Methods: `put()`, `get()`, `remove()`, `clear()`
+3. Method to check if key exists
+4. Method to get all keys
+5. Track cache size and hits/misses
+
+---
+
+## Solution: Cache System
+
+```kotlin
+object CacheManager {
+    private val cache = mutableMapOf<String, Any>()
+    private var hits = 0
+    private var misses = 0
+
+    fun put(key: String, value: Any) {
+        cache[key] = value
+        println("✅ Cached: $key")
+    }
+
+    fun get(key: String): Any? {
+        return if (cache.containsKey(key)) {
+            hits++
+            cache[key]
+        } else {
+            misses++
+            null
         }
+    }
+
+    inline fun <reified T> getAs(key: String): T? {
+        val value = get(key)
+        return value as? T
+    }
+
+    fun remove(key: String): Boolean {
+        val removed = cache.remove(key) != null
+        if (removed) {
+            println("🗑️  Removed: $key")
+        }
+        return removed
+    }
+
+    fun clear() {
+        val count = cache.size
+        cache.clear()
+        println("🧹 Cleared $count items from cache")
+    }
+
+    fun contains(key: String): Boolean = cache.containsKey(key)
+
+    fun getAllKeys(): Set<String> = cache.keys.toSet()
+
+    fun size(): Int = cache.size
+
+    fun getStatistics() {
+        val totalRequests = hits + misses
+        val hitRate = if (totalRequests > 0) (hits.toDouble() / totalRequests * 100) else 0.0
+
+        println("\n=== Cache Statistics ===")
+        println("Size: ${cache.size} items")
+        println("Hits: $hits")
+        println("Misses: $misses")
+        println("Hit Rate: ${"%.2f".format(hitRate)}%")
+        println("=======================\n")
+    }
+
+    fun displayContents() {
+        println("\n=== Cache Contents ===")
+        if (cache.isEmpty()) {
+            println("(empty)")
+        } else {
+            cache.forEach { (key, value) ->
+                println("$key = $value")
+            }
+        }
+        println("======================\n")
+    }
+}
+
+data class User(val id: Int, val name: String)
+
+fun main() {
+    // Add items to cache
+    CacheManager.put("user:1", User(1, "Alice"))
+    CacheManager.put("user:2", User(2, "Bob"))
+    CacheManager.put("config:timeout", 30)
+    CacheManager.put("config:maxUsers", 100)
+
+    CacheManager.displayContents()
+
+    // Retrieve items
+    println("=== Retrieving items ===")
+    val user1 = CacheManager.getAs<User>("user:1")
+    println("Retrieved: $user1")
+
+    val timeout = CacheManager.getAs<Int>("config:timeout")
+    println("Timeout: $timeout")
+
+    val notFound = CacheManager.get("user:999")
+    println("Not found: $notFound")
+
+    CacheManager.getStatistics()
+
+    // Check existence
+    println("Contains 'user:1': ${CacheManager.contains("user:1")}")
+    println("Contains 'user:999': ${CacheManager.contains("user:999")}")
+
+    // Get all keys
+    println("\nAll keys: ${CacheManager.getAllKeys()}")
+
+    // Remove item
+    CacheManager.remove("user:2")
+
+    CacheManager.displayContents()
+
+    // Clear cache
+    CacheManager.clear()
+
+    CacheManager.displayContents()
+    CacheManager.getStatistics()
 }
 ```
-
-### Challenge 5: Sequence Optimization
-
-Use sequences for large datasets:
-
-```kotlin
-fun processLargeDataset(csvData: String): List<SalesRecord> {
-    return csvData.lineSequence()  // Sequence instead of lines()
-        .drop(1)
-        .filter { it.isNotBlank() }
-        .mapNotNull { CsvParser.parseLine(it) }
-        .filter(Validators::validateRecord)
-        .map { it.normalize() }
-        .toList()
-}
-```
-
----
-
-## Testing Your Pipeline
-
-Create test functions to verify your implementation:
-
-```kotlin
-fun testPipeline() {
-    val testData = """
-OrderID,Date,Customer,Product,Category,Quantity,Price,Region
-1,2024-01-01,Test User,Test Product,Test,1,100.00,North
-2,2024-01-02,Test User,Test Product,Test,2,50.00,South
-    """.trimIndent()
-
-    val records = CsvParser.parseCSV(testData).validated().normalized()
-
-    // Test parsing
-    assert(records.size == 2) { "Should parse 2 records" }
-
-    // Test revenue calculation
-    val total = records.totalRevenue()
-    assert(total == 200.0) { "Total revenue should be 200" }
-
-    // Test filtering
-    val north = records inRegion "NORTH"
-    assert(north.size == 1) { "Should find 1 North region record" }
-
-    println("✅ All tests passed!")
-}
-```
-
----
-
-## What You've Accomplished
-
-**Functional Programming Techniques Used**:
-- ✅ Higher-order functions (map, filter, groupBy)
-- ✅ Function composition and pipelines
-- ✅ Extension functions for fluent APIs
-- ✅ Scope functions (apply, let, also)
-- ✅ Infix functions for readability
-- ✅ Sequences for performance
-- ✅ Functional error handling
-- ✅ Type-safe transformations
-- ✅ Immutable data structures
-- ✅ Declarative data processing
-
-**Real-World Skills**:
-- CSV parsing and data import
-- Data validation and cleaning
-- Statistical analysis
-- Report generation
-- Modular, reusable code design
-- Performance optimization
 
 ---
 
 ## Checkpoint Quiz
 
 ### Question 1
-Why use sequences instead of lists for large datasets?
+What is an object declaration in Kotlin?
 
-A) Sequences are faster for all operations
-B) Sequences use lazy evaluation, processing elements only as needed
-C) Sequences use less memory for small datasets
-D) Sequences can't be used with collection operations
+A) A way to create multiple instances
+B) A singleton pattern with exactly one instance
+C) An abstract class
+D) A data class
 
 ### Question 2
-What's the benefit of extension functions in the pipeline?
+What is a companion object?
 
-A) They make code run faster
-B) They create fluent, chainable APIs that read naturally
-C) They're required for functional programming
-D) They reduce memory usage
+A) A friend class
+B) An object that provides static-like members for a class
+C) A duplicate object
+D) An object expression
 
 ### Question 3
-Why use `mapNotNull` instead of `map`?
+When is an object declaration initialized?
 
-A) It's faster
-B) It filters out null values automatically while mapping
-C) It handles exceptions better
-D) There's no difference
+A) At compile time
+B) When the program starts
+C) On first access (lazy initialization)
+D) Never
 
 ### Question 4
-What does the `infix` keyword enable in `inCategory`?
+Can companion objects implement interfaces?
 
-A) Faster execution
-B) Calling the function without dot notation: `records inCategory "Electronics"`
-C) Making the function private
-D) Type safety
+A) No, never
+B) Yes, but only one interface
+C) Yes, multiple interfaces
+D) Only abstract classes
 
 ### Question 5
-Why separate validation, transformation, and analysis into different objects/functions?
+What's the difference between `const val` and `val` in an object?
 
-A) It's required by Kotlin
-B) Separation of concerns: easier to test, reuse, and maintain
-C) It makes code slower but safer
-D) It uses less memory
+A) No difference
+B) `const val` is a compile-time constant; `val` is computed at runtime
+C) `const val` is faster
+D) `val` is immutable; `const val` is not
 
 ---
 
 ## Quiz Answers
 
-**Question 1: B) Sequences use lazy evaluation, processing elements only as needed**
+**Question 1: B) A singleton pattern with exactly one instance**
+
+Object declarations create singletons - classes with exactly one instance that's created lazily.
 
 ```kotlin
-// List: processes ALL elements at each step
-val list = (1..1_000_000).toList()
-    .map { it * 2 }        // Creates 1M element list
-    .filter { it > 100 }   // Processes all 1M
-    .take(10)
+object DatabaseConnection {
+    fun connect() { }
+}
 
-// Sequence: processes only what's needed
-val sequence = (1..1_000_000).asSequence()
-    .map { it * 2 }        // Lazy
-    .filter { it > 100 }   // Lazy
-    .take(10)              // Stops after 10 matches
-    .toList()
+// No need to instantiate
+DatabaseConnection.connect()
 ```
-
-Sequences excel with large data and partial results.
 
 ---
 
-**Question 2: B) They create fluent, chainable APIs that read naturally**
+**Question 2: B) An object that provides static-like members for a class**
+
+Companion objects give you "static" functionality in Kotlin.
 
 ```kotlin
-// Without extensions
-val result = normalize(validate(parse(data)))
+class User {
+    companion object {
+        fun create() = User()  // "Static" factory method
+    }
+}
 
-// With extensions
-val result = data
-    .parse()
-    .validate()
-    .normalize()
+val user = User.create()
 ```
-
-Reads left-to-right, naturally chains operations.
 
 ---
 
-**Question 3: B) It filters out null values automatically while mapping**
+**Question 3: C) On first access (lazy initialization)**
+
+Objects are created the first time they're accessed, not when the program starts.
 
 ```kotlin
-// With map: need separate filter
-val numbers = input.map { it.toIntOrNull() }.filterNotNull()
+object Lazy {
+    init {
+        println("Initialized!")  // Prints on first access only
+    }
+}
 
-// With mapNotNull: one operation
-val numbers = input.mapNotNull { it.toIntOrNull() }
+// ... later ...
+Lazy.toString()  // "Initialized!" prints here
 ```
-
-More concise and expresses intent clearly.
 
 ---
 
-**Question 4: B) Calling the function without dot notation: `records inCategory "Electronics"`**
+**Question 4: C) Yes, multiple interfaces**
+
+Companion objects can implement multiple interfaces, just like regular objects.
 
 ```kotlin
-// Regular function
-records.inCategory("Electronics")
+interface A { fun a() }
+interface B { fun b() }
 
-// Infix function
-records inCategory "Electronics"
+class Example {
+    companion object : A, B {
+        override fun a() { }
+        override fun b() { }
+    }
+}
 ```
-
-Reads more naturally, like English.
 
 ---
 
-**Question 5: B) Separation of concerns: easier to test, reuse, and maintain**
+**Question 5: B) `const val` is a compile-time constant; `val` is computed at runtime**
+
+`const val` must be known at compile time; `val` can be computed at runtime.
 
 ```kotlin
-// Separated: easy to test each part
-val parsed = CsvParser.parseCSV(data)
-val validated = Validators.validate(parsed)
-val analyzed = Analytics.analyze(validated)
-
-// Each component can be:
-// - Tested independently
-// - Reused in different contexts
-// - Modified without affecting others
-// - Understood in isolation
+object Config {
+    const val MAX_SIZE = 100  // ✅ Compile-time constant
+    val timestamp = System.currentTimeMillis()  // ✅ Runtime value
+    // const val time = System.currentTimeMillis()  // ❌ Error!
+}
 ```
 
-Modular design is a core programming principle.
+---
+
+## What You've Learned
+
+✅ Object expressions for anonymous objects
+✅ Object declarations for singletons
+✅ Companion objects for static-like members
+✅ Factory methods with companion objects
+✅ Constants with `const val`
+✅ When to use objects vs classes
 
 ---
 
-## Final Thoughts
+## Next Steps
 
-**You've Built a Complete Functional Application!**
+In **Lesson 2.7: Part 2 Capstone - Library Management System**, you'll:
+- Build a complete OOP project
+- Apply all concepts from Part 2
+- Create classes, inheritance, interfaces
+- Use data classes and objects
+- Implement a real-world system
 
-This capstone project demonstrates that functional programming isn't just academic—it's practical and powerful for real-world applications.
-
-**Key Lessons**:
-1. **Composition**: Small functions → Complex operations
-2. **Immutability**: Safer, easier to reason about
-3. **Declarative**: Expresses *what*, not *how*
-4. **Reusability**: Functions as building blocks
-5. **Testability**: Pure functions are easy to test
-
-**Next Steps**:
-- Add features from the extension challenges
-- Apply FP principles to your own projects
-- Explore Arrow library for advanced FP in Kotlin
-- Practice composing functions daily
+Get ready for the capstone project!
 
 ---
 
-## Additional Resources
+**Congratulations on completing Lesson 2.6!** 🎉
 
-**Libraries for Functional Kotlin**:
-- **Arrow**: Functional programming library (types, patterns)
-- **Kotlinx.coroutines**: Asynchronous functional patterns
-- **Exposed**: Functional SQL DSL
-
-**Further Reading**:
-- "Functional Programming in Kotlin" by Marco Vermeulen
-- "Kotlin in Action" by Dmitry Jemerov
-- Arrow documentation: arrow-kt.io
-
-**Practice Projects**:
-- Log analyzer with functional pipelines
-- JSON/XML transformer
-- Stream processing system
-- Configuration validator
-
----
-
-**Congratulations on completing Part 3: Functional Programming!** 🎉
-
-You've mastered:
-- Functional programming fundamentals
-- Lambda expressions and higher-order functions
-- Collection operations and sequences
-- Scope functions
-- Function composition and currying
-- Building real-world functional applications
-
-These skills will make you a better programmer in any language. Functional thinking transcends Kotlin—it's a way of approaching problems that leads to elegant, maintainable solutions.
-
-Keep practicing, keep building, and enjoy the functional journey ahead!
+You now understand all of Kotlin's object-related features. Ready for the capstone project!

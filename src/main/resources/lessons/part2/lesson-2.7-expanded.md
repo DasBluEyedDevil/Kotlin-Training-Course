@@ -1,925 +1,1065 @@
-# Lesson 2.7: Part 2 Capstone - Library Management System
+# Lesson 2.7: Maps and Part 2 Capstone Project
 
-**Estimated Time**: 3-4 hours
-
----
-
-## Project Overview
-
-Congratulations on completing all the lessons in Part 2! You've learned the fundamentals of Object-Oriented Programming in Kotlin:
-
-- ✅ Classes, objects, properties, and methods
-- ✅ Constructors and initialization
-- ✅ Inheritance and polymorphism
-- ✅ Interfaces and abstract classes
-- ✅ Data classes and sealed classes
-- ✅ Object declarations and companion objects
-
-Now it's time to put it all together in a **comprehensive capstone project**: a **Library Management System**.
-
-This project will challenge you to apply all OOP concepts in a real-world scenario where you manage books, members, loans, and library operations.
+**Estimated Time**: 70 minutes
+**Difficulty**: Beginner
+**Prerequisites**: Lesson 2.6 (Lists)
 
 ---
 
-## The Project: LibraryHub
+## Topic Introduction
 
-**LibraryHub** is a complete library management system that allows:
-- Managing different types of books (physical and digital)
-- Registering library members
-- Borrowing and returning books
-- Reserving books that are currently unavailable
-- Searching and filtering books
-- Tracking loan history
-- Managing late fees
+You've mastered lists—ordered collections accessed by numeric indices. But what if you need to look up data by something more meaningful than a number? What if you need to:
 
----
+- Find a phone number by a person's name
+- Look up a product price by its name
+- Get a user's email by their username
+- Translate a word from English to Spanish
 
-## Requirements
+You *could* use two parallel lists (one for keys, one for values), but that's clunky and error-prone. **Maps** solve this elegantly by storing **key-value pairs**—like a real-world dictionary where you look up a word (key) to find its definition (value).
 
-### 1. Book Management
+In this lesson, you'll learn:
+- What maps are and when to use them
+- Creating immutable and mutable maps
+- Accessing, adding, and removing entries
+- Iterating through maps
+- Common map operations
+- **Part 2 Capstone Project**: Build a complete contact management system!
 
-**Abstract Class: `Book`**
-- Properties: `isbn`, `title`, `author`, `publishYear`, `status`
-- Abstract method: `getDisplayInfo()`
-- Method: `isAvailable()`
-
-**Classes**:
-- `PhysicalBook` extends `Book`
-  - Additional properties: `shelfLocation`, `condition` (New, Good, Fair, Poor)
-  - Implements `getDisplayInfo()`
-
-- `DigitalBook` extends `Book`
-  - Additional properties: `fileSize` (MB), `format` (PDF, EPUB, MOBI)
-  - Method: `download()`
-  - Implements `getDisplayInfo()`
-
-**Book Status** (Sealed Class):
-- `Available`
-- `Borrowed(memberId, dueDate)`
-- `Reserved(memberId)`
-- `Maintenance`
-
-### 2. Member Management
-
-**Data Class: `Member`**
-- Properties: `memberId`, `name`, `email`, `membershipType`, `joinDate`
-- Method: `canBorrow()` - checks if member can borrow more books
-
-**Membership Types** (Enum):
-- `BASIC` - Can borrow 3 books
-- `PREMIUM` - Can borrow 5 books
-- `STUDENT` - Can borrow 4 books with discounted fees
-
-### 3. Loan System
-
-**Data Class: `Loan`**
-- Properties: `loanId`, `book`, `member`, `borrowDate`, `dueDate`, `returnDate`, `lateFee`
-- Method: `isOverdue()` - checks if loan is past due date
-- Method: `calculateLateFee()` - calculates fee based on days overdue
-
-**Interface: `Borrowable`**
-- Methods: `borrow(member)`, `returnBook()`
-
-**Interface: `Reservable`**
-- Methods: `reserve(member)`, `cancelReservation()`
-
-### 4. Library Manager
-
-**Object: `Library`**
-- Manages all books, members, and loans
-- Methods:
-  - `addBook(book)`
-  - `removeBook(isbn)`
-  - `registerMember(member)`
-  - `borrowBook(isbn, memberId)`
-  - `returnBook(isbn)`
-  - `reserveBook(isbn, memberId)`
-  - `searchBooks(query)` - search by title or author
-  - `getOverdueLoans()`
-  - `getMemberHistory(memberId)`
-  - `printStatistics()`
+This is the final lesson of Part 2, so we'll finish strong with a comprehensive project that combines everything you've learned!
 
 ---
 
-## Step-by-Step Implementation
+## The Concept: Key-Value Pairs
 
-### Phase 1: Book Status and Types (30 minutes)
+### Real-World Map Analogy
 
-Let's start by defining our book status and types:
+Think of a map like a **phone book** or **dictionary**:
+
+```
+Phone Book:
+┌──────────────────────────┐
+│ "Alice"  → "555-1234"    │
+│ "Bob"    → "555-5678"    │
+│ "Charlie"→ "555-9999"    │
+└──────────────────────────┘
+         ↑           ↑
+       KEY        VALUE
+```
+
+**Properties:**
+- **Keys are unique**: Can't have two "Alice" entries
+- **Keys map to values**: Each key has exactly one value
+- **Fast lookup**: Find value by key instantly
+- **Unordered**: Entries aren't in a specific order (usually)
+
+### List vs Map Comparison
+
+**List (Index → Value):**
+```kotlin
+val colors = listOf("Red", "Green", "Blue")
+println(colors[0])  // "Red"
+println(colors[1])  // "Green"
+```
+
+**Map (Key → Value):**
+```kotlin
+val colorCodes = mapOf(
+    "Red" to "#FF0000",
+    "Green" to "#00FF00",
+    "Blue" to "#0000FF"
+)
+println(colorCodes["Red"])  // "#FF0000"
+```
+
+**When to use maps:**
+- ✅ Looking up by meaningful keys (name, ID, word)
+- ✅ Need fast key-based access
+- ✅ Associating related data (country → capital)
+
+**When to use lists:**
+- ✅ Ordered sequence of items
+- ✅ Accessing by position
+- ✅ Simple collection of values
+
+---
+
+## Creating Maps
+
+### Immutable Maps (Read-Only)
+
+Created with `mapOf()`:
 
 ```kotlin
-// BookStatus.kt
-sealed class BookStatus {
-    object Available : BookStatus()
-    data class Borrowed(val memberId: String, val dueDate: String) : BookStatus()
-    data class Reserved(val memberId: String) : BookStatus()
-    object Maintenance : BookStatus()
+fun main() {
+    val capitals = mapOf(
+        "USA" to "Washington D.C.",
+        "France" to "Paris",
+        "Japan" to "Tokyo",
+        "Brazil" to "Brasília"
+    )
 
-    fun getDescription(): String = when (this) {
-        is Available -> "Available"
-        is Borrowed -> "Borrowed by $memberId, due $dueDate"
-        is Reserved -> "Reserved by $memberId"
-        is Maintenance -> "Under maintenance"
-    }
-}
-
-// BookCondition.kt
-enum class BookCondition {
-    NEW, GOOD, FAIR, POOR
-}
-
-// FileFormat.kt
-enum class FileFormat(val extension: String) {
-    PDF("pdf"),
-    EPUB("epub"),
-    MOBI("mobi")
-}
-
-// MembershipType.kt
-enum class MembershipType(val maxBooks: Int, val lateFeePerDay: Double) {
-    BASIC(3, 1.0),
-    PREMIUM(5, 0.5),
-    STUDENT(4, 0.75)
+    println(capitals)
+    println("Size: ${capitals.size}")
 }
 ```
 
-### Phase 2: Book Classes (45 minutes)
+**Output:**
+```
+{USA=Washington D.C., France=Paris, Japan=Tokyo, Brazil=Brasília}
+Size: 4
+```
+
+**The `to` keyword** creates a Pair: `"USA" to "Washington D.C."` → `Pair("USA", "Washington D.C.")`
+
+### Mutable Maps (Can Change)
+
+Created with `mutableMapOf()`:
 
 ```kotlin
-// Book.kt
-abstract class Book(
-    val isbn: String,
-    val title: String,
-    val author: String,
-    val publishYear: Int
-) {
-    var status: BookStatus = BookStatus.Available
+fun main() {
+    val scores = mutableMapOf(
+        "Alice" to 95,
+        "Bob" to 87
+    )
 
-    abstract fun getDisplayInfo(): String
+    println("Initial: $scores")
 
-    fun isAvailable(): Boolean = status is BookStatus.Available
+    // Add new entry
+    scores["Charlie"] = 92
+    println("After add: $scores")
 
-    fun markAsBorrowed(memberId: String, dueDate: String) {
-        status = BookStatus.Borrowed(memberId, dueDate)
-    }
+    // Update existing
+    scores["Alice"] = 98
+    println("After update: $scores")
 
-    fun markAsReturned() {
-        status = BookStatus.Available
-    }
-
-    fun reserve(memberId: String) {
-        if (status is BookStatus.Borrowed) {
-            status = BookStatus.Reserved(memberId)
-        }
-    }
-
-    override fun toString(): String = getDisplayInfo()
-}
-
-// PhysicalBook.kt
-class PhysicalBook(
-    isbn: String,
-    title: String,
-    author: String,
-    publishYear: Int,
-    val shelfLocation: String,
-    var condition: BookCondition = BookCondition.GOOD
-) : Book(isbn, title, author, publishYear) {
-
-    override fun getDisplayInfo(): String {
-        return """
-            📚 Physical Book
-            ISBN: $isbn
-            Title: $title
-            Author: $author
-            Year: $publishYear
-            Location: $shelfLocation
-            Condition: $condition
-            Status: ${status.getDescription()}
-        """.trimIndent()
-    }
-}
-
-// DigitalBook.kt
-class DigitalBook(
-    isbn: String,
-    title: String,
-    author: String,
-    publishYear: Int,
-    val fileSize: Double,
-    val format: FileFormat
-) : Book(isbn, title, author, publishYear) {
-
-    override fun getDisplayInfo(): String {
-        return """
-            💾 Digital Book
-            ISBN: $isbn
-            Title: $title
-            Author: $author
-            Year: $publishYear
-            File Size: ${fileSize}MB
-            Format: ${format.extension}
-            Status: ${status.getDescription()}
-        """.trimIndent()
-    }
-
-    fun download() {
-        println("📥 Downloading $title (${fileSize}MB, ${format.extension})...")
-        println("✅ Download complete!")
-    }
+    // Remove entry
+    scores.remove("Bob")
+    println("After remove: $scores")
 }
 ```
 
-### Phase 3: Member and Loan (30 minutes)
+**Output:**
+```
+Initial: {Alice=95, Bob=87}
+After add: {Alice=95, Bob=87, Charlie=92}
+After update: {Alice=98, Bob=87, Charlie=92}
+After remove: {Alice=98, Charlie=92}
+```
+
+### Empty Maps
 
 ```kotlin
-// Member.kt
-data class Member(
-    val memberId: String,
-    val name: String,
-    val email: String,
-    val membershipType: MembershipType,
-    val joinDate: String
-) {
-    private var currentBorrowedCount = 0
+// Empty immutable
+val empty = mapOf<String, Int>()
 
-    fun canBorrow(): Boolean {
-        return currentBorrowedCount < membershipType.maxBooks
-    }
+// Empty mutable
+val emptyMutable = mutableMapOf<String, String>()
 
-    fun incrementBorrowCount() {
-        currentBorrowedCount++
-    }
+// Or use emptyMap()
+val alsoEmpty = emptyMap<Int, String>()
+```
 
-    fun decrementBorrowCount() {
-        if (currentBorrowedCount > 0) currentBorrowedCount--
-    }
+### Maps with Different Types
 
-    fun getBorrowedCount() = currentBorrowedCount
+```kotlin
+// String keys, Int values
+val ages = mapOf("Alice" to 25, "Bob" to 30)
 
-    fun display() {
-        println("""
-            👤 Member: $name
-            ID: $memberId
-            Email: $email
-            Membership: $membershipType
-            Books Borrowed: $currentBorrowedCount/${membershipType.maxBooks}
-            Joined: $joinDate
-        """.trimIndent())
-    }
+// Int keys, String values
+val weekDays = mapOf(
+    1 to "Monday",
+    2 to "Tuesday",
+    3 to "Wednesday"
+)
+
+// String keys, Any values (mixed)
+val mixed = mapOf(
+    "name" to "Alice",
+    "age" to 25,
+    "active" to true
+)
+```
+
+---
+
+## Accessing Map Values
+
+### Basic Access
+
+```kotlin
+fun main() {
+    val prices = mapOf(
+        "Coffee" to 4.99,
+        "Tea" to 3.99,
+        "Sandwich" to 7.99
+    )
+
+    // Direct access with [] (returns null if not found)
+    println(prices["Coffee"])      // 4.99
+    println(prices["Pizza"])       // null
+
+    // Safe access with get()
+    println(prices.get("Tea"))     // 3.99
+
+    // With default value
+    println(prices.getOrDefault("Pizza", 0.0))  // 0.0
 }
+```
 
-// Loan.kt
-import java.time.LocalDate
-import java.time.temporal.ChronoUnit
+### Safe Access Patterns
 
-data class Loan(
-    val loanId: String,
-    val book: Book,
-    val member: Member,
-    val borrowDate: LocalDate,
-    val dueDate: LocalDate,
-    var returnDate: LocalDate? = null
-) {
-    fun isOverdue(): Boolean {
-        val checkDate = returnDate ?: LocalDate.now()
-        return checkDate.isAfter(dueDate)
-    }
+```kotlin
+fun main() {
+    val contacts = mapOf(
+        "Alice" to "alice@email.com",
+        "Bob" to "bob@email.com"
+    )
 
-    fun calculateLateFee(): Double {
-        if (!isOverdue()) return 0.0
+    // Nullable return
+    val aliceEmail: String? = contacts["Alice"]
+    println(aliceEmail)  // alice@email.com
 
-        val checkDate = returnDate ?: LocalDate.now()
-        val daysOverdue = ChronoUnit.DAYS.between(dueDate, checkDate)
-        return daysOverdue * member.membershipType.lateFeePerDay
-    }
+    // With default
+    val charlieEmail = contacts.getOrElse("Charlie") { "unknown@email.com" }
+    println(charlieEmail)  // unknown@email.com
 
-    fun getDaysUntilDue(): Long {
-        return ChronoUnit.DAYS.between(LocalDate.now(), dueDate)
-    }
-
-    fun display() {
-        val status = if (returnDate != null) "Returned" else "Active"
-        val fee = if (isOverdue()) " | Late Fee: $${String.format("%.2f", calculateLateFee())}" else ""
-
-        println("""
-            📋 Loan $loanId [$status]
-            Book: ${book.title}
-            Member: ${member.name}
-            Borrowed: $borrowDate
-            Due: $dueDate
-            Returned: ${returnDate ?: "Not yet"}$fee
-        """.trimIndent())
+    // Check before accessing
+    if ("Alice" in contacts) {
+        println("Alice's email: ${contacts["Alice"]}")
     }
 }
 ```
 
-### Phase 4: Library Manager (60 minutes)
+---
+
+## Modifying Mutable Maps
+
+### Adding and Updating
 
 ```kotlin
-// Library.kt
-import java.time.LocalDate
+fun main() {
+    val inventory = mutableMapOf(
+        "Apples" to 50,
+        "Bananas" to 30
+    )
 
-object Library {
-    private val books = mutableMapOf<String, Book>()
-    private val members = mutableMapOf<String, Member>()
-    private val loans = mutableListOf<Loan>()
-    private var nextLoanId = 1
+    // Add new entry
+    inventory["Oranges"] = 40
+    println(inventory)
 
-    init {
-        println("🏛️  LibraryHub System Initialized")
+    // Update existing (same syntax)
+    inventory["Apples"] = 55
+    println(inventory)
+
+    // Add/update with put()
+    inventory.put("Grapes", 25)
+    println(inventory)
+
+    // Add multiple entries
+    inventory.putAll(mapOf("Mangoes" to 15, "Pears" to 20))
+    println(inventory)
+}
+```
+
+**Output:**
+```
+{Apples=50, Bananas=30, Oranges=40}
+{Apples=55, Bananas=30, Oranges=40}
+{Apples=55, Bananas=30, Oranges=40, Grapes=25}
+{Apples=55, Bananas=30, Oranges=40, Grapes=25, Mangoes=15, Pears=20}
+```
+
+### Removing Entries
+
+```kotlin
+fun main() {
+    val users = mutableMapOf(
+        "alice" to "password123",
+        "bob" to "secret456",
+        "charlie" to "pass789"
+    )
+
+    // Remove by key
+    users.remove("bob")
+    println(users)
+
+    // Remove and return value
+    val removed = users.remove("alice")
+    println("Removed: $removed")
+    println(users)
+
+    // Clear all
+    users.clear()
+    println("After clear: $users")
+}
+```
+
+**Output:**
+```
+{alice=password123, charlie=pass789}
+Removed: password123
+{charlie=pass789}
+After clear: {}
+```
+
+---
+
+## Iterating Through Maps
+
+### Iterate Over Entries
+
+```kotlin
+fun main() {
+    val grades = mapOf(
+        "Alice" to 95,
+        "Bob" to 87,
+        "Charlie" to 92
+    )
+
+    // Iterate over entries
+    for (entry in grades) {
+        println("${entry.key}: ${entry.value}")
     }
 
-    // Book Management
-    fun addBook(book: Book) {
-        if (books.containsKey(book.isbn)) {
-            println("❌ Book with ISBN ${book.isbn} already exists")
-            return
-        }
-        books[book.isbn] = book
-        println("✅ Added: ${book.title}")
+    // Or with destructuring
+    for ((name, score) in grades) {
+        println("$name scored $score")
+    }
+}
+```
+
+**Output:**
+```
+Alice: 95
+Bob: 87
+Charlie: 92
+Alice scored 95
+Bob scored 87
+Charlie scored 92
+```
+
+### Iterate Over Keys or Values Only
+
+```kotlin
+fun main() {
+    val capitals = mapOf(
+        "USA" to "Washington D.C.",
+        "France" to "Paris",
+        "Japan" to "Tokyo"
+    )
+
+    // Just keys
+    println("Countries:")
+    for (country in capitals.keys) {
+        println("- $country")
     }
 
-    fun removeBook(isbn: String): Boolean {
-        val book = books.remove(isbn)
-        return if (book != null) {
-            println("🗑️  Removed: ${book.title}")
-            true
-        } else {
-            println("❌ Book not found: $isbn")
-            false
-        }
+    // Just values
+    println("\nCapitals:")
+    for (capital in capitals.values) {
+        println("- $capital")
     }
+}
+```
 
-    fun getBook(isbn: String): Book? = books[isbn]
+**Output:**
+```
+Countries:
+- USA
+- France
+- Japan
 
-    // Member Management
-    fun registerMember(member: Member) {
-        if (members.containsKey(member.memberId)) {
-            println("❌ Member with ID ${member.memberId} already exists")
-            return
+Capitals:
+- Washington D.C.
+- Paris
+- Tokyo
+```
+
+---
+
+## Common Map Operations
+
+### Checking Contents
+
+```kotlin
+fun main() {
+    val menu = mapOf(
+        "Burger" to 9.99,
+        "Pizza" to 12.99,
+        "Salad" to 7.99
+    )
+
+    // Check if key exists
+    println("Has Burger? ${"Burger" in menu}")  // true
+    println("Has Tacos? ${menu.containsKey("Tacos")}")  // false
+
+    // Check if value exists
+    println("Has price 9.99? ${menu.containsValue(9.99)}")  // true
+
+    // Check if empty
+    println("Is empty? ${menu.isEmpty()}")  // false
+
+    // Get size
+    println("Menu items: ${menu.size}")  // 3
+}
+```
+
+### Filtering Maps
+
+```kotlin
+fun main() {
+    val products = mapOf(
+        "Laptop" to 999.99,
+        "Mouse" to 29.99,
+        "Keyboard" to 79.99,
+        "Monitor" to 299.99,
+        "Cable" to 9.99
+    )
+
+    // Filter by value
+    val expensive = products.filter { it.value > 100 }
+    println("Expensive items: $expensive")
+
+    // Filter by key
+    val mProducts = products.filter { it.key.startsWith("M") }
+    println("M products: $mProducts")
+
+    // Filter and transform
+    val discounted = products
+        .filter { it.value > 50 }
+        .mapValues { it.value * 0.9 }  // 10% discount
+    println("Discounted: $discounted")
+}
+```
+
+**Output:**
+```
+Expensive items: {Laptop=999.99, Monitor=299.99}
+M products: {Mouse=29.99, Monitor=299.99}
+Discounted: {Laptop=899.991, Keyboard=71.991, Monitor=269.991}
+```
+
+### Map Transformations
+
+```kotlin
+fun main() {
+    val numbers = mapOf("one" to 1, "two" to 2, "three" to 3)
+
+    // Transform values only
+    val doubled = numbers.mapValues { it.value * 2 }
+    println(doubled)  // {one=2, two=4, three=6}
+
+    // Transform keys only
+    val upperKeys = numbers.mapKeys { it.key.uppercase() }
+    println(upperKeys)  // {ONE=1, TWO=2, THREE=3}
+
+    // Convert to list of pairs
+    val pairs = numbers.toList()
+    println(pairs)  // [(one, 1), (two, 2), (three, 3)]
+}
+```
+
+---
+
+## Practical Examples
+
+### Example 1: Grade Book
+
+```kotlin
+fun main() {
+    val gradeBook = mutableMapOf<String, Int>()
+
+    // Add students and grades
+    gradeBook["Alice"] = 95
+    gradeBook["Bob"] = 87
+    gradeBook["Charlie"] = 92
+    gradeBook["Diana"] = 78
+    gradeBook["Eve"] = 88
+
+    println("=== Grade Book ===")
+    for ((student, grade) in gradeBook) {
+        val letter = when (grade) {
+            in 90..100 -> "A"
+            in 80..89 -> "B"
+            in 70..79 -> "C"
+            else -> "F"
         }
-        members[member.memberId] = member
-        println("✅ Registered: ${member.name}")
-    }
-
-    fun getMember(memberId: String): Member? = members[memberId]
-
-    // Borrowing System
-    fun borrowBook(isbn: String, memberId: String): Boolean {
-        val book = books[isbn]
-        val member = members[memberId]
-
-        if (book == null) {
-            println("❌ Book not found: $isbn")
-            return false
-        }
-
-        if (member == null) {
-            println("❌ Member not found: $memberId")
-            return false
-        }
-
-        if (!book.isAvailable()) {
-            println("❌ Book is not available: ${book.title}")
-            return false
-        }
-
-        if (!member.canBorrow()) {
-            println("❌ ${member.name} has reached the borrowing limit")
-            return false
-        }
-
-        val borrowDate = LocalDate.now()
-        val dueDate = borrowDate.plusWeeks(2)  // 2-week loan period
-
-        book.markAsBorrowed(memberId, dueDate.toString())
-        member.incrementBorrowCount()
-
-        val loan = Loan(
-            loanId = "LOAN-${String.format("%04d", nextLoanId++)}",
-            book = book,
-            member = member,
-            borrowDate = borrowDate,
-            dueDate = dueDate
-        )
-        loans.add(loan)
-
-        println("✅ ${member.name} borrowed '${book.title}'")
-        println("   Due date: $dueDate")
-        return true
-    }
-
-    fun returnBook(isbn: String): Boolean {
-        val book = books[isbn]
-
-        if (book == null) {
-            println("❌ Book not found: $isbn")
-            return false
-        }
-
-        val activeLoan = loans.find { it.book.isbn == isbn && it.returnDate == null }
-
-        if (activeLoan == null) {
-            println("❌ No active loan found for: ${book.title}")
-            return false
-        }
-
-        activeLoan.returnDate = LocalDate.now()
-        book.markAsReturned()
-        activeLoan.member.decrementBorrowCount()
-
-        println("✅ ${activeLoan.member.name} returned '${book.title}'")
-
-        if (activeLoan.isOverdue()) {
-            val fee = activeLoan.calculateLateFee()
-            println("⚠️  Book was overdue! Late fee: $${String.format("%.2f", fee)}")
-        }
-
-        return true
-    }
-
-    // Search and Filter
-    fun searchBooks(query: String): List<Book> {
-        val lowerQuery = query.lowercase()
-        return books.values.filter {
-            it.title.lowercase().contains(lowerQuery) ||
-            it.author.lowercase().contains(lowerQuery)
-        }
-    }
-
-    fun getAvailableBooks(): List<Book> {
-        return books.values.filter { it.isAvailable() }
-    }
-
-    fun getBorrowedBooks(): List<Book> {
-        return books.values.filter { !it.isAvailable() }
-    }
-
-    // Loan Management
-    fun getOverdueLoans(): List<Loan> {
-        return loans.filter { it.returnDate == null && it.isOverdue() }
-    }
-
-    fun getMemberHistory(memberId: String): List<Loan> {
-        return loans.filter { it.member.memberId == memberId }
-    }
-
-    fun getActiveLoans(): List<Loan> {
-        return loans.filter { it.returnDate == null }
+        println("$student: $grade ($letter)")
     }
 
     // Statistics
-    fun printStatistics() {
-        println("\n" + "=".repeat(50))
-        println("📊 LibraryHub Statistics")
-        println("=".repeat(50))
-        println("Total Books: ${books.size}")
-        println("  - Available: ${getAvailableBooks().size}")
-        println("  - Borrowed: ${getBorrowedBooks().size}")
-        println("  - Physical: ${books.values.count { it is PhysicalBook }}")
-        println("  - Digital: ${books.values.count { it is DigitalBook }}")
-        println()
-        println("Total Members: ${members.size}")
-        members.values.groupBy { it.membershipType }.forEach { (type, memberList) ->
-            println("  - $type: ${memberList.size}")
-        }
-        println()
-        println("Total Loans: ${loans.size}")
-        println("  - Active: ${getActiveLoans().size}")
-        println("  - Overdue: ${getOverdueLoans().size}")
-        println("  - Completed: ${loans.count { it.returnDate != null }}")
-        println("=".repeat(50) + "\n")
-    }
+    val average = gradeBook.values.average()
+    val highest = gradeBook.maxByOrNull { it.value }
+    val lowest = gradeBook.minByOrNull { it.value }
 
-    fun displayAllBooks() {
-        println("\n📚 All Books")
-        println("=".repeat(50))
-        if (books.isEmpty()) {
-            println("No books in library")
-        } else {
-            books.values.forEachIndexed { index, book ->
-                println("\n${index + 1}. ${book.title}")
-                println("   Author: ${book.author}")
-                println("   ISBN: ${book.isbn}")
-                println("   Status: ${book.status.getDescription()}")
-            }
-        }
-        println("=".repeat(50) + "\n")
-    }
-
-    fun displayAllMembers() {
-        println("\n👥 All Members")
-        println("=".repeat(50))
-        if (members.isEmpty()) {
-            println("No registered members")
-        } else {
-            members.values.forEachIndexed { index, member ->
-                println("\n${index + 1}. ${member.name}")
-                println("   ID: ${member.memberId}")
-                println("   Type: ${member.membershipType}")
-                println("   Books: ${member.getBorrowedCount()}/${member.membershipType.maxBooks}")
-            }
-        }
-        println("=".repeat(50) + "\n")
-    }
-
-    fun displayOverdueLoans() {
-        val overdueLoans = getOverdueLoans()
-        println("\n⚠️  Overdue Loans")
-        println("=".repeat(50))
-        if (overdueLoans.isEmpty()) {
-            println("No overdue loans")
-        } else {
-            overdueLoans.forEach { loan ->
-                println("\n${loan.member.name} - ${loan.book.title}")
-                println("Due: ${loan.dueDate}")
-                println("Late Fee: $${String.format("%.2f", loan.calculateLateFee())}")
-            }
-        }
-        println("=".repeat(50) + "\n")
-    }
+    println("\n=== Statistics ===")
+    println("Class average: %.1f".format(average))
+    println("Highest: ${highest?.key} with ${highest?.value}")
+    println("Lowest: ${lowest?.key} with ${lowest?.value}")
 }
 ```
 
-### Phase 5: Main Application (30 minutes)
+**Output:**
+```
+=== Grade Book ===
+Alice: 95 (A)
+Bob: 87 (B)
+Charlie: 92 (A)
+Diana: 78 (C)
+Eve: 88 (B)
+
+=== Statistics ===
+Class average: 88.0
+Highest: Alice with 95
+Lowest: Diana with 78
+```
+
+### Example 2: Inventory System
 
 ```kotlin
-// Main.kt
-import java.time.LocalDate
+fun main() {
+    val inventory = mutableMapOf(
+        "Laptop" to 15,
+        "Mouse" to 50,
+        "Keyboard" to 30
+    )
+
+    println("=== Store Inventory ===")
+    for ((item, quantity) in inventory) {
+        val status = if (quantity < 20) "Low stock" else "In stock"
+        println("$item: $quantity units ($status)")
+    }
+
+    // Restock low items
+    println("\n=== Restocking Low Items ===")
+    for ((item, quantity) in inventory) {
+        if (quantity < 20) {
+            val restock = 30
+            inventory[item] = quantity + restock
+            println("Restocked $item: $quantity → ${inventory[item]}")
+        }
+    }
+
+    println("\n=== Updated Inventory ===")
+    println(inventory)
+}
+```
+
+**Output:**
+```
+=== Store Inventory ===
+Laptop: 15 units (Low stock)
+Mouse: 50 units (In stock)
+Keyboard: 30 units (In stock)
+
+=== Restocking Low Items ===
+Restocked Laptop: 15 → 45
+
+=== Updated Inventory ===
+{Laptop=45, Mouse=50, Keyboard=30}
+```
+
+---
+
+## Part 2 Capstone Project: Contact Management System
+
+Now it's time to put everything together! You'll build a complete contact management system using all the concepts from Part 2.
+
+### Project Requirements
+
+Build a console application that manages contacts with these features:
+
+1. **Add Contact**: Store name, phone, and email
+2. **View All Contacts**: Display all contacts
+3. **Search Contact**: Find by name
+4. **Update Contact**: Modify phone or email
+5. **Delete Contact**: Remove a contact
+6. **Statistics**: Show total contacts, contacts with/without email
+7. **Menu System**: User-friendly interface with loops
+
+**Concepts used:**
+- ✅ If statements (validation)
+- ✅ When expressions (menu choices)
+- ✅ For loops (displaying contacts)
+- ✅ While/do-while loops (menu loop)
+- ✅ Lists (managing multiple fields)
+- ✅ Maps (storing contacts)
+
+### Capstone Solution
+
+<details>
+<summary>Click to see complete solution</summary>
+
+```kotlin
+data class Contact(
+    var phone: String,
+    var email: String
+)
 
 fun main() {
-    println("╔════════════════════════════════════════╗")
-    println("║     Welcome to LibraryHub System      ║")
-    println("╚════════════════════════════════════════╝\n")
+    val contacts = mutableMapOf<String, Contact>()
+    var choice: String
 
-    // Initialize library with books
-    println("📚 Adding books to library...")
-    Library.addBook(PhysicalBook(
-        isbn = "978-0-13-468599-1",
-        title = "Effective Java",
-        author = "Joshua Bloch",
-        publishYear = 2018,
-        shelfLocation = "A1-15",
-        condition = BookCondition.GOOD
-    ))
+    println("╔═══════════════════════════════════╗")
+    println("║  CONTACT MANAGEMENT SYSTEM v1.0   ║")
+    println("╚═══════════════════════════════════╝")
 
-    Library.addBook(PhysicalBook(
-        isbn = "978-0-13-597764-5",
-        title = "Clean Code",
-        author = "Robert C. Martin",
-        publishYear = 2008,
-        shelfLocation = "A1-20",
-        condition = BookCondition.FAIR
-    ))
+    do {
+        println("\n=== MAIN MENU ===")
+        println("1. Add Contact")
+        println("2. View All Contacts")
+        println("3. Search Contact")
+        println("4. Update Contact")
+        println("5. Delete Contact")
+        println("6. Statistics")
+        println("7. Exit")
+        print("\nEnter choice (1-7): ")
 
-    Library.addBook(DigitalBook(
-        isbn = "978-1-61729-655-2",
-        title = "Kotlin in Action",
-        author = "Dmitry Jemerov",
-        publishYear = 2017,
-        fileSize = 15.5,
-        format = FileFormat.PDF
-    ))
+        choice = readln()
 
-    Library.addBook(DigitalBook(
-        isbn = "978-1-78899-367-8",
-        title = "Programming Kotlin",
-        author = "Venkat Subramaniam",
-        publishYear = 2019,
-        fileSize = 12.3,
-        format = FileFormat.EPUB
-    ))
+        when (choice) {
+            "1" -> addContact(contacts)
+            "2" -> viewAllContacts(contacts)
+            "3" -> searchContact(contacts)
+            "4" -> updateContact(contacts)
+            "5" -> deleteContact(contacts)
+            "6" -> showStatistics(contacts)
+            "7" -> println("\n👋 Goodbye! Thanks for using Contact Manager!")
+            else -> println("❌ Invalid choice. Please try again.")
+        }
+    } while (choice != "7")
+}
 
-    Library.addBook(PhysicalBook(
-        isbn = "978-0-13-490733-2",
-        title = "Design Patterns",
-        author = "Gang of Four",
-        publishYear = 1994,
-        shelfLocation = "B2-10",
-        condition = BookCondition.GOOD
-    ))
+fun addContact(contacts: MutableMap<String, Contact>) {
+    println("\n=== ADD NEW CONTACT ===")
 
-    // Register members
-    println("\n👥 Registering members...")
-    Library.registerMember(Member(
-        memberId = "M001",
-        name = "Alice Johnson",
-        email = "alice@example.com",
-        membershipType = MembershipType.PREMIUM,
-        joinDate = LocalDate.now().minusMonths(6).toString()
-    ))
+    print("Enter name: ")
+    val name = readln()
 
-    Library.registerMember(Member(
-        memberId = "M002",
-        name = "Bob Smith",
-        email = "bob@example.com",
-        membershipType = MembershipType.BASIC,
-        joinDate = LocalDate.now().minusMonths(3).toString()
-    ))
-
-    Library.registerMember(Member(
-        memberId = "M003",
-        name = "Carol Davis",
-        email = "carol@example.com",
-        membershipType = MembershipType.STUDENT,
-        joinDate = LocalDate.now().minusWeeks(2).toString()
-    ))
-
-    // Display initial state
-    Library.printStatistics()
-    Library.displayAllBooks()
-    Library.displayAllMembers()
-
-    // Simulate borrowing
-    println("\n" + "=".repeat(50))
-    println("📖 Borrowing Operations")
-    println("=".repeat(50))
-
-    Library.borrowBook("978-0-13-468599-1", "M001")  // Alice borrows Effective Java
-    Library.borrowBook("978-1-61729-655-2", "M001")  // Alice borrows Kotlin in Action
-    Library.borrowBook("978-0-13-597764-5", "M002")  // Bob borrows Clean Code
-    Library.borrowBook("978-1-78899-367-8", "M003")  // Carol borrows Programming Kotlin
-
-    // Try to borrow unavailable book
-    println()
-    Library.borrowBook("978-0-13-468599-1", "M002")  // Should fail - already borrowed
-
-    // Display updated state
-    Library.printStatistics()
-
-    // Search functionality
-    println("\n" + "=".repeat(50))
-    println("🔍 Search Results for 'Kotlin'")
-    println("=".repeat(50))
-    val kotlinBooks = Library.searchBooks("Kotlin")
-    kotlinBooks.forEach { book ->
-        println("\n${book.title} by ${book.author}")
-        println("Status: ${book.status.getDescription()}")
+    if (name.isBlank()) {
+        println("❌ Name cannot be empty!")
+        return
     }
 
-    // Return books
-    println("\n" + "=".repeat(50))
-    println("📥 Return Operations")
-    println("=".repeat(50))
+    if (name in contacts) {
+        println("❌ Contact '$name' already exists!")
+        return
+    }
 
-    Library.returnBook("978-0-13-468599-1")  // Alice returns Effective Java
-    Library.returnBook("978-1-78899-367-8")  // Carol returns Programming Kotlin
+    print("Enter phone: ")
+    val phone = readln()
 
-    // Display active loans
-    println("\n📋 Active Loans:")
-    Library.getActiveLoans().forEach { it.display() }
+    print("Enter email (optional): ")
+    val email = readln()
 
-    // Final statistics
-    Library.printStatistics()
+    contacts[name] = Contact(phone, email)
+    println("✅ Contact '$name' added successfully!")
+}
 
-    // Member history
-    println("\n" + "=".repeat(50))
-    println("📜 Alice's Borrowing History")
-    println("=".repeat(50))
-    val aliceHistory = Library.getMemberHistory("M001")
-    aliceHistory.forEach { it.display() }
+fun viewAllContacts(contacts: Map<String, Contact>) {
+    if (contacts.isEmpty()) {
+        println("\n📭 No contacts found.")
+        return
+    }
 
-    println("\n╔════════════════════════════════════════╗")
-    println("║   Thank you for using LibraryHub!     ║")
-    println("╚════════════════════════════════════════╝")
+    println("\n=== ALL CONTACTS (${contacts.size}) ===")
+    var index = 1
+
+    for ((name, contact) in contacts) {
+        println("\n[$index] $name")
+        println("    📞 Phone: ${contact.phone}")
+        if (contact.email.isNotBlank()) {
+            println("    📧 Email: ${contact.email}")
+        } else {
+            println("    📧 Email: (not provided)")
+        }
+        index++
+    }
+}
+
+fun searchContact(contacts: Map<String, Contact>) {
+    println("\n=== SEARCH CONTACT ===")
+    print("Enter name to search: ")
+    val name = readln()
+
+    val contact = contacts[name]
+
+    if (contact != null) {
+        println("\n✅ Contact found:")
+        println("Name: $name")
+        println("Phone: ${contact.phone}")
+        println("Email: ${if (contact.email.isBlank()) "(not provided)" else contact.email}")
+    } else {
+        println("❌ Contact '$name' not found.")
+
+        // Suggest similar names
+        val similar = contacts.keys.filter { it.contains(name, ignoreCase = true) }
+        if (similar.isNotEmpty()) {
+            println("\nDid you mean:")
+            for (suggestion in similar) {
+                println("  - $suggestion")
+            }
+        }
+    }
+}
+
+fun updateContact(contacts: MutableMap<String, Contact>) {
+    println("\n=== UPDATE CONTACT ===")
+    print("Enter name: ")
+    val name = readln()
+
+    val contact = contacts[name]
+
+    if (contact == null) {
+        println("❌ Contact '$name' not found.")
+        return
+    }
+
+    println("\nCurrent details:")
+    println("Phone: ${contact.phone}")
+    println("Email: ${contact.email}")
+
+    print("\nUpdate phone? (y/n): ")
+    if (readln().lowercase() == "y") {
+        print("Enter new phone: ")
+        contact.phone = readln()
+    }
+
+    print("Update email? (y/n): ")
+    if (readln().lowercase() == "y") {
+        print("Enter new email: ")
+        contact.email = readln()
+    }
+
+    println("✅ Contact '$name' updated successfully!")
+}
+
+fun deleteContact(contacts: MutableMap<String, Contact>) {
+    println("\n=== DELETE CONTACT ===")
+    print("Enter name: ")
+    val name = readln()
+
+    if (name !in contacts) {
+        println("❌ Contact '$name' not found.")
+        return
+    }
+
+    print("Are you sure you want to delete '$name'? (y/n): ")
+    if (readln().lowercase() == "y") {
+        contacts.remove(name)
+        println("✅ Contact '$name' deleted successfully!")
+    } else {
+        println("❌ Deletion cancelled.")
+    }
+}
+
+fun showStatistics(contacts: Map<String, Contact>) {
+    println("\n=== STATISTICS ===")
+
+    val total = contacts.size
+    val withEmail = contacts.values.count { it.email.isNotBlank() }
+    val withoutEmail = total - withEmail
+
+    println("Total contacts: $total")
+    println("Contacts with email: $withEmail")
+    println("Contacts without email: $withoutEmail")
+
+    if (total > 0) {
+        val percentage = (withEmail.toDouble() / total * 100)
+        println("Email coverage: %.1f%%".format(percentage))
+
+        // Most common area code (first 3 digits of phone)
+        val areaCodes = contacts.values
+            .map { it.phone.take(3) }
+            .groupingBy { it }
+            .eachCount()
+
+        if (areaCodes.isNotEmpty()) {
+            val mostCommon = areaCodes.maxByOrNull { it.value }
+            println("Most common area code: ${mostCommon?.key} (${mostCommon?.value} contacts)")
+        }
+    }
 }
 ```
 
----
-
-## Complete Solution
-
-The complete solution integrates all the pieces above. Here's what you should have:
-
-**File Structure**:
+**Sample Run:**
 ```
-LibraryHub/
-├── BookStatus.kt
-├── BookCondition.kt
-├── FileFormat.kt
-├── MembershipType.kt
-├── Book.kt
-├── PhysicalBook.kt
-├── DigitalBook.kt
-├── Member.kt
-├── Loan.kt
-├── Library.kt
-└── Main.kt
+╔═══════════════════════════════════╗
+║  CONTACT MANAGEMENT SYSTEM v1.0   ║
+╚═══════════════════════════════════╝
+
+=== MAIN MENU ===
+1. Add Contact
+2. View All Contacts
+3. Search Contact
+4. Update Contact
+5. Delete Contact
+6. Statistics
+7. Exit
+
+Enter choice (1-7): 1
+
+=== ADD NEW CONTACT ===
+Enter name: Alice
+Enter phone: 555-1234
+Enter email (optional): alice@email.com
+✅ Contact 'Alice' added successfully!
+
+=== MAIN MENU ===
+1. Add Contact
+2. View All Contacts
+3. Search Contact
+4. Update Contact
+5. Delete Contact
+6. Statistics
+7. Exit
+
+Enter choice (1-7): 2
+
+=== ALL CONTACTS (1) ===
+
+[1] Alice
+    📞 Phone: 555-1234
+    📧 Email: alice@email.com
+
+=== MAIN MENU ===
+...
 ```
 
+**Key features:**
+- ✅ Data class for structured contact info
+- ✅ Input validation
+- ✅ Error handling
+- ✅ User-friendly messages with emojis
+- ✅ Confirmation for destructive actions
+- ✅ Smart search with suggestions
+- ✅ Comprehensive statistics
+- ✅ Clean code organization with functions
+</details>
+
+### Challenge Extensions
+
+Want to go further? Try adding:
+
+1. **Export/Import**: Save contacts to a file
+2. **Sorting**: View contacts alphabetically
+3. **Groups**: Categorize contacts (family, work, friends)
+4. **Favorites**: Mark important contacts
+5. **Birthday tracking**: Store and remind birthdays
+6. **Multiple phones**: Support home, work, mobile
+
 ---
 
-## Testing Your Solution
+## Common Pitfalls and Best Practices
 
-Run the main function and verify:
+### Pitfall 1: Modifying While Iterating
 
-1. ✅ Books are added successfully
-2. ✅ Members are registered
-3. ✅ Borrowing works correctly
-4. ✅ Can't borrow unavailable books
-5. ✅ Can't exceed borrowing limits
-6. ✅ Return functionality works
-7. ✅ Search finds correct books
-8. ✅ Statistics are accurate
-9. ✅ Member history is tracked
-
----
-
-## Extension Challenges
-
-Once you have the basic system working, try these enhancements:
-
-### Challenge 1: Reservation System (+⭐)
-
-Add ability to reserve books that are currently borrowed:
-
+❌ **Dangerous:**
 ```kotlin
-fun reserveBook(isbn: String, memberId: String): Boolean {
-    // Implement reservation logic
-    // Book should automatically be available to reserver when returned
+val map = mutableMapOf("a" to 1, "b" to 2, "c" to 3)
+for ((key, value) in map) {
+    if (value < 3) {
+        map.remove(key)  // Can cause ConcurrentModificationException!
+    }
 }
 ```
 
-### Challenge 2: Fine Payment System (+⭐⭐)
+✅ **Safe:**
+```kotlin
+val map = mutableMapOf("a" to 1, "b" to 2, "c" to 3)
+val toRemove = map.filter { it.value < 3 }.keys
+toRemove.forEach { map.remove(it) }
+```
 
-Add payment tracking:
+### Pitfall 2: Null Values from Missing Keys
+
+❌ **Can crash:**
+```kotlin
+val ages = mapOf("Alice" to 25)
+val age: Int = ages["Bob"]  // Error: Type mismatch (Int? can't be Int)
+```
+
+✅ **Safe:**
+```kotlin
+val ages = mapOf("Alice" to 25)
+val age = ages["Bob"] ?: 0  // Use default value
+// Or
+val age = ages.getOrDefault("Bob", 0)
+```
+
+### Best Practice 1: Use Appropriate Map Type
 
 ```kotlin
-data class Payment(
-    val paymentId: String,
-    val member: Member,
-    val amount: Double,
-    val paymentDate: LocalDate,
-    val description: String
+// Immutable for fixed data
+val monthDays = mapOf(
+    "January" to 31,
+    "February" to 28
+    // ...
 )
 
-// Add to Library object
-fun recordPayment(payment: Payment)
-fun getMemberBalance(memberId: String): Double
+// Mutable for changing data
+val cart = mutableMapOf<String, Int>()
 ```
 
-### Challenge 3: Book Categories (+⭐)
-
-Add categories/genres to books:
+### Best Practice 2: Descriptive Key Names
 
 ```kotlin
-enum class BookCategory {
-    FICTION, NON_FICTION, SCIENCE, TECHNOLOGY,
-    BIOGRAPHY, HISTORY, CHILDREN, REFERENCE
+// ❌ Unclear
+val m = mapOf(1 to "A", 2 to "B")
+
+// ✅ Clear
+val gradesByScore = mapOf(90 to "A", 80 to "B")
+```
+
+### Best Practice 3: Check Before Access
+
+```kotlin
+// ✅ Safe pattern
+if ("Alice" in contacts) {
+    val contact = contacts["Alice"]!!
+    // Use contact
+} else {
+    println("Contact not found")
+}
+```
+
+---
+
+## Quick Quiz
+
+**Question 1:** What's the output?
+```kotlin
+val map = mapOf("a" to 1, "b" to 2)
+println(map["c"])
+```
+
+<details>
+<summary>Answer</summary>
+
+**Output:** `null`
+
+**Explanation:** The key "c" doesn't exist, so accessing it returns null.
+</details>
+
+---
+
+**Question 2:** How do you add to a mutable map?
+```kotlin
+val map = mutableMapOf("x" to 10)
+// Add "y" with value 20
+```
+
+<details>
+<summary>Answer</summary>
+
+```kotlin
+map["y"] = 20
+// Or
+map.put("y", 20)
+```
+</details>
+
+---
+
+**Question 3:** What's wrong here?
+```kotlin
+val map = mapOf("a" to 1)
+map["b"] = 2
+```
+
+<details>
+<summary>Answer</summary>
+
+**Error:** `mapOf()` creates an **immutable** map. Can't add to it.
+
+**Fix:**
+```kotlin
+val map = mutableMapOf("a" to 1)
+map["b"] = 2  // Now it works!
+```
+</details>
+
+---
+
+**Question 4:** How do you iterate through keys and values?
+
+<details>
+<summary>Answer</summary>
+
+```kotlin
+val map = mapOf("a" to 1, "b" to 2)
+
+// With destructuring (recommended)
+for ((key, value) in map) {
+    println("$key -> $value")
 }
 
-// Add category property to Book
-// Implement filtering by category
+// Or with entry
+for (entry in map) {
+    println("${entry.key} -> ${entry.value}")
+}
 ```
-
-### Challenge 4: Review System (+⭐⭐)
-
-Allow members to review books:
-
-```kotlin
-data class Review(
-    val member: Member,
-    val book: Book,
-    val rating: Int,  // 1-5 stars
-    val comment: String,
-    val reviewDate: LocalDate
-)
-
-// Add reviews to Library object
-// Calculate average rating per book
-```
-
-### Challenge 5: Save/Load System (+⭐⭐⭐)
-
-Persist data to files:
-
-```kotlin
-fun saveToFile(filename: String)
-fun loadFromFile(filename: String)
-
-// Use JSON or serialization
-// Save all books, members, loans
-```
+</details>
 
 ---
 
-## Evaluation Checklist
+## Part 2 Summary
 
-Before considering your project complete, ensure:
+🎉 **Congratulations!** You've completed Part 2: Controlling the Flow!
 
-- [ ] All classes are properly defined with correct properties
-- [ ] Inheritance hierarchy is implemented (Book → PhysicalBook/DigitalBook)
-- [ ] Sealed classes are used for BookStatus
-- [ ] Enums are defined for BookCondition, FileFormat, MembershipType
-- [ ] Data classes are used where appropriate (Member, Loan)
-- [ ] Object declaration is used for Library singleton
-- [ ] All interfaces are implemented correctly
-- [ ] Borrowing logic validates availability and member limits
-- [ ] Return logic updates all states correctly
-- [ ] Search functionality works
-- [ ] Statistics are accurate
-- [ ] Late fee calculation is correct
-- [ ] Code is well-organized and readable
-- [ ] No duplicate code (DRY principle)
-- [ ] Meaningful variable and function names
+**You've mastered:**
 
----
+**Decision Making:**
+- ✅ If/else statements for binary decisions
+- ✅ Logical operators (&&, ||, !)
+- ✅ When expressions for multi-way decisions
 
-## Learning Outcomes
+**Loops:**
+- ✅ For loops for counted iteration
+- ✅ While loops for condition-based repetition
+- ✅ Do-while for "at least once" loops
+- ✅ Break and continue for flow control
 
-By completing this capstone project, you have:
+**Collections:**
+- ✅ Lists for ordered data
+- ✅ Maps for key-value associations
+- ✅ Mutable vs immutable collections
+- ✅ Collection operations (map, filter, etc.)
 
-✅ **Applied OOP principles** in a real-world scenario
-✅ **Designed a class hierarchy** with inheritance and polymorphism
-✅ **Used interfaces** to define contracts
-✅ **Leveraged sealed classes** for type-safe state management
-✅ **Created data classes** for domain models
-✅ **Implemented a singleton** for centralized management
-✅ **Managed relationships** between objects
-✅ **Handled business logic** with validation
-✅ **Built a complete system** from requirements to implementation
+**You can now:**
+- 🎯 Make complex decisions in your programs
+- 🔄 Repeat tasks efficiently
+- 📦 Store and manage collections of data
+- 🏗️ Build complete, interactive applications
 
 ---
 
 ## What's Next?
 
-Congratulations on completing Part 2: Object-Oriented Programming! 🎉
-
-**In Part 3: Functional Programming**, you'll learn:
+In **Part 3: Functional Programming in Kotlin**, you'll level up with:
 - Lambda expressions and higher-order functions
-- Collection operations (map, filter, reduce)
-- Function types and function composition
-- Scope functions (let, apply, run, also, with)
+- Advanced collection operations
 - Sequences for lazy evaluation
+- Scope functions (let, apply, with, run, also)
+- Function composition and chaining
 
-**In Part 4: Advanced Kotlin**, you'll learn:
-- Generics and variance
-- Delegation pattern
-- DSL creation
-- Coroutines basics
-- Extension functions
+**Preview:**
+```kotlin
+val numbers = listOf(1, 2, 3, 4, 5)
 
----
+numbers
+    .filter { it % 2 == 0 }
+    .map { it * it }
+    .forEach { println(it) }
 
-## Tips for Success
+val result = listOf("apple", "banana", "cherry")
+    .filter { it.length > 5 }
+    .map { it.uppercase() }
+    .joinToString(", ")
+```
 
-### Design Principles Applied
-
-**1. Single Responsibility Principle**
-- Each class has one clear purpose
-- `Book` manages book data, `Library` manages operations
-
-**2. Open/Closed Principle**
-- `Book` is open for extension (PhysicalBook, DigitalBook)
-- Closed for modification (base behavior is stable)
-
-**3. Liskov Substitution Principle**
-- `PhysicalBook` and `DigitalBook` can be used anywhere `Book` is expected
-
-**4. Interface Segregation**
-- Small, focused interfaces (Borrowable, Reservable)
-
-**5. Dependency Inversion**
-- Code depends on abstractions (Book, not specific types)
+Get ready to write more expressive, concise, and powerful Kotlin code!
 
 ---
 
-## Reflection Questions
-
-After completing the project, consider:
-
-1. Why did we use an abstract class for `Book` instead of an interface?
-2. When would you use a data class vs a regular class?
-3. Why is `Library` an object instead of a regular class?
-4. How does sealed classes make the status system safer?
-5. What are the benefits of using enums for fixed sets of values?
-
----
-
-## Resources
-
-**Kotlin Documentation**:
-- [Classes and Objects](https://kotlinlang.org/docs/classes.html)
-- [Inheritance](https://kotlinlang.org/docs/inheritance.html)
-- [Data Classes](https://kotlinlang.org/docs/data-classes.html)
-- [Sealed Classes](https://kotlinlang.org/docs/sealed-classes.html)
-- [Object Declarations](https://kotlinlang.org/docs/object-declarations.html)
-
-**Design Patterns**:
-- [Singleton Pattern](https://refactoring.guru/design-patterns/singleton)
-- [Factory Pattern](https://refactoring.guru/design-patterns/factory-method)
-
----
-
-**🎉 Congratulations on completing Part 2: Object-Oriented Programming! 🎉**
-
-You've built a complete, real-world application using OOP principles. This is a major milestone in your Kotlin journey!
-
-Your Library Management System demonstrates:
-- Strong understanding of OOP concepts
-- Ability to model real-world domains
-- Clean code organization
-- Practical problem-solving skills
-
-Take a moment to celebrate this achievement, then get ready for Part 3: Functional Programming! 🚀
+**🏆 Outstanding work completing Part 2! You're becoming a Kotlin developer!** 🎉

@@ -1,913 +1,1038 @@
-# Lesson 2.5: Data Classes and Sealed Classes
+# Lesson 2.5: While Loops and Do-While - Condition-Based Repetition
 
-**Estimated Time**: 65 minutes
+**Estimated Time**: 55 minutes
+**Difficulty**: Beginner
+**Prerequisites**: Lesson 2.4 (For loops)
 
 ---
 
 ## Topic Introduction
 
-Kotlin provides special class types that solve common programming patterns elegantly. You've learned about regular classes, abstract classes, and interfaces. Now let's explore two powerful Kotlin features:
+You've mastered for loops, which are perfect when you know exactly how many times to repeat something. But programming often requires a different kind of repetition—repeating until a condition is met, not a fixed number of times.
 
-**Data Classes**: Classes designed to hold data with automatic implementations of `equals()`, `hashCode()`, `toString()`, and `copy()`.
+Think about real-life scenarios:
+- Keep entering your password **until** it's correct
+- Keep rolling dice **until** you get a six
+- Keep asking for menu input **until** the user chooses "quit"
+- Download data **while** there's more to download
 
-**Sealed Classes**: Classes with a restricted hierarchy where all subclasses are known at compile-time, perfect for representing state or result types.
+These situations don't have a predetermined number of iterations—they continue based on a **condition**. That's where `while` and `do-while` loops shine!
 
-These features make Kotlin code more concise, safer, and more expressive than traditional OOP languages.
+In this lesson, you'll learn:
+- The difference between while and do-while loops
+- When to use each type of loop
+- How to control loops with break and continue
+- Avoiding infinite loops
+- Common patterns and best practices
 
----
-
-## The Concept
-
-### Why Special Class Types?
-
-**Problem with Regular Classes**:
-
-```kotlin
-class User(val name: String, val age: Int)
-
-val user1 = User("Alice", 25)
-val user2 = User("Alice", 25)
-
-println(user1 == user2)  // false (different instances!)
-println(user1)           // User@4a574795 (not helpful!)
-```
-
-**Solution with Data Classes**:
-
-```kotlin
-data class User(val name: String, val age: Int)
-
-val user1 = User("Alice", 25)
-val user2 = User("Alice", 25)
-
-println(user1 == user2)  // true (compares data!)
-println(user1)           // User(name=Alice, age=25) (readable!)
-```
+By the end, you'll know how to choose the right loop for any situation!
 
 ---
 
-## Data Classes
+## The Concept: Condition-Based Repetition
 
-### Creating Data Classes
+### Real-World While Loops
 
-Use the `data` keyword before `class`:
+You use condition-based repetition constantly:
 
-```kotlin
-data class Person(val name: String, val age: Int, val email: String)
+**Making coffee:**
+```
+WHILE coffee isn't full:
+    Add water to pot
+    Check if full
 ```
 
-**What Kotlin generates automatically**:
-1. **`equals()`** - Compares data, not references
-2. **`hashCode()`** - Consistent with `equals()`
-3. **`toString()`** - Readable string representation
-4. **`copy()`** - Creates copies with modified properties
-5. **`componentN()`** - Destructuring declarations
-
-### Requirements for Data Classes
-
-1. Primary constructor must have at least one parameter
-2. All primary constructor parameters must be `val` or `var`
-3. Cannot be `abstract`, `open`, `sealed`, or `inner`
-4. May extend other classes or implement interfaces
-
-### Auto-Generated Functions
-
-**1. `toString()`** - Readable representation
-
-```kotlin
-data class User(val name: String, val age: Int)
-
-val user = User("Alice", 25)
-println(user)  // User(name=Alice, age=25)
+**Waiting in line:**
+```
+WHILE people are ahead of me:
+    Wait
+    Check if my turn
 ```
 
-**2. `equals()` and `hashCode()`** - Structural equality
-
-```kotlin
-data class Point(val x: Int, val y: Int)
-
-val p1 = Point(10, 20)
-val p2 = Point(10, 20)
-val p3 = Point(30, 40)
-
-println(p1 == p2)  // true (same data)
-println(p1 == p3)  // false (different data)
-
-// HashCode consistency
-println(p1.hashCode() == p2.hashCode())  // true
+**Learning to ride a bike:**
+```
+WHILE I keep falling:
+    Get back on bike
+    Try again
+    Improve balance
 ```
 
-**3. `copy()`** - Create modified copies
+The key difference from for loops: **You don't know beforehand how many times you'll repeat**. You repeat until a condition changes.
+
+### For vs While: The Fundamental Difference
+
+**Use FOR when:**
+- You know the number of iterations upfront
+- You're iterating through a collection
+- You're counting within a specific range
 
 ```kotlin
-data class User(val name: String, val age: Int, val email: String)
-
-val user = User("Alice", 25, "alice@example.com")
-
-// Create a copy with modified age
-val olderUser = user.copy(age = 26)
-
-println(user)       // User(name=Alice, age=25, email=alice@example.com)
-println(olderUser)  // User(name=Alice, age=26, email=alice@example.com)
-
-// Copy with multiple changes
-val differentUser = user.copy(name = "Bob", age = 30)
-println(differentUser)  // User(name=Bob, age=30, email=alice@example.com)
+// I know I want to print 1 to 10
+for (i in 1..10) {
+    println(i)
+}
 ```
 
-**Why `copy()` matters**:
-- Immutability: Don't modify original, create new versions
-- Thread safety: Immutable data is inherently thread-safe
-- Functional programming: Transform data without side effects
-
----
-
-## Destructuring Declarations
-
-Data classes support **destructuring** - extracting multiple values at once:
+**Use WHILE when:**
+- You repeat until a condition changes
+- The number of iterations is unknown
+- You're waiting for user input or external event
 
 ```kotlin
-data class User(val name: String, val age: Int, val email: String)
-
-val user = User("Alice", 25, "alice@example.com")
-
-// Destructure into separate variables
-val (name, age, email) = user
-
-println(name)   // Alice
-println(age)    // 25
-println(email)  // alice@example.com
-```
-
-**How it works**: Kotlin generates `component1()`, `component2()`, etc. functions:
-
-```kotlin
-val name = user.component1()  // Same as destructuring
-val age = user.component2()
-val email = user.component3()
-```
-
-**Partial Destructuring**:
-
-```kotlin
-val (name, age) = user  // Only extract first two
-val (_, _, email) = user  // Skip first two with underscore
-```
-
-**Destructuring in Loops**:
-
-```kotlin
-data class Person(val name: String, val age: Int)
-
-val people = listOf(
-    Person("Alice", 25),
-    Person("Bob", 30),
-    Person("Carol", 22)
-)
-
-for ((name, age) in people) {
-    println("$name is $age years old")
+// I don't know when user will enter "quit"
+var input = ""
+while (input != "quit") {
+    input = readln()
 }
 ```
 
 ---
 
-## Real-World Data Class Examples
+## The While Loop
 
-### Example 1: API Response
+### Basic While Loop Syntax
 
 ```kotlin
-data class ApiResponse<T>(
-    val success: Boolean,
-    val data: T?,
-    val message: String,
-    val timestamp: Long = System.currentTimeMillis()
-)
-
-data class User(val id: Int, val username: String, val email: String)
-
-fun fetchUser(id: Int): ApiResponse<User> {
-    return if (id > 0) {
-        val user = User(id, "alice", "alice@example.com")
-        ApiResponse(success = true, data = user, message = "User found")
-    } else {
-        ApiResponse(success = false, data = null, message = "Invalid user ID")
-    }
+while (condition) {
+    // Code to repeat
+    // Must eventually make condition false!
 }
+```
 
+**How it works:**
+1. Check the condition
+2. If true, execute the body
+3. Return to step 1
+4. If false, skip the body and continue
+
+### Your First While Loop
+
+```kotlin
 fun main() {
-    val response = fetchUser(1)
-    println(response)
+    var count = 1
 
-    if (response.success) {
-        val user = response.data
-        println("User: ${user?.username}")
+    while (count <= 5) {
+        println("Count: $count")
+        count++
     }
+
+    println("Done!")
 }
 ```
 
-### Example 2: Coordinates and Geometry
+**Output:**
+```
+Count: 1
+Count: 2
+Count: 3
+Count: 4
+Count: 5
+Done!
+```
+
+**Flow:**
+```
+count = 1
+Check: 1 <= 5? TRUE → Print "Count: 1" → count = 2
+Check: 2 <= 5? TRUE → Print "Count: 2" → count = 3
+Check: 3 <= 5? TRUE → Print "Count: 3" → count = 4
+Check: 4 <= 5? TRUE → Print "Count: 4" → count = 5
+Check: 5 <= 5? TRUE → Print "Count: 5" → count = 6
+Check: 6 <= 5? FALSE → Exit loop
+Print "Done!"
+```
+
+### Practical Example: Password Validator
 
 ```kotlin
-data class Point(val x: Double, val y: Double) {
-    fun distanceTo(other: Point): Double {
-        val dx = x - other.x
-        val dy = y - other.y
-        return kotlin.math.sqrt(dx * dx + dy * dy)
-    }
-}
-
-data class Rectangle(val topLeft: Point, val bottomRight: Point) {
-    val width: Double
-        get() = bottomRight.x - topLeft.x
-
-    val height: Double
-        get() = bottomRight.y - topLeft.y
-
-    val area: Double
-        get() = width * height
-}
-
 fun main() {
-    val p1 = Point(0.0, 0.0)
-    val p2 = Point(3.0, 4.0)
+    val correctPassword = "kotlin123"
+    var attempts = 0
+    val maxAttempts = 3
 
-    println("Distance: ${p1.distanceTo(p2)}")  // 5.0
+    while (attempts < maxAttempts) {
+        print("Enter password: ")
+        val input = readln()
 
-    val rect = Rectangle(Point(0.0, 10.0), Point(5.0, 0.0))
-    println("Area: ${rect.area}")  // 50.0
-}
-```
-
----
-
-## Sealed Classes
-
-**Sealed classes** represent restricted class hierarchies where all subclasses are known at compile-time.
-
-### Why Sealed Classes?
-
-**Problem**: Modeling states or results with regular classes
-
-```kotlin
-open class Result
-class Success(val data: String) : Result()
-class Error(val message: String) : Result()
-
-fun handleResult(result: Result) {
-    when (result) {
-        is Success -> println("Success: ${result.data}")
-        is Error -> println("Error: ${result.message}")
-        // What if we add a new subclass? Compiler won't warn us!
-    }
-}
-```
-
-**Solution**: Sealed classes
-
-```kotlin
-sealed class Result {
-    data class Success(val data: String) : Result()
-    data class Error(val message: String) : Result()
-    object Loading : Result()
-}
-
-fun handleResult(result: Result) {
-    when (result) {
-        is Result.Success -> println("Success: ${result.data}")
-        is Result.Error -> println("Error: ${result.message}")
-        Result.Loading -> println("Loading...")
-        // ✅ Compiler ensures all cases are covered!
-    }
-}
-```
-
-### Defining Sealed Classes
-
-```kotlin
-sealed class NetworkResult {
-    data class Success(val data: String) : NetworkResult()
-    data class Error(val code: Int, val message: String) : NetworkResult()
-    object Loading : NetworkResult()
-    object Idle : NetworkResult()
-}
-```
-
-**Key Points**:
-- Subclasses must be defined in the same file (or as nested classes)
-- Cannot be instantiated directly
-- Perfect for `when` expressions (exhaustive checking)
-
----
-
-## Sealed Classes for State Management
-
-```kotlin
-sealed class UiState {
-    object Loading : UiState()
-    data class Success(val items: List<String>) : UiState()
-    data class Error(val message: String) : UiState()
-    object Empty : UiState()
-}
-
-class ViewModel {
-    private var state: UiState = UiState.Loading
-
-    fun loadData() {
-        state = UiState.Loading
-        displayState()
-
-        // Simulate loading
-        Thread.sleep(1000)
-
-        val items = listOf("Item 1", "Item 2", "Item 3")
-        state = if (items.isNotEmpty()) {
-            UiState.Success(items)
+        if (input == correctPassword) {
+            println("Access granted!")
+            break  // Exit loop early
         } else {
-            UiState.Empty
-        }
-        displayState()
-    }
-
-    fun displayState() {
-        when (state) {
-            is UiState.Loading -> println("⏳ Loading...")
-            is UiState.Success -> {
-                val items = (state as UiState.Success).items
-                println("✅ Loaded ${items.size} items: $items")
+            attempts++
+            val remaining = maxAttempts - attempts
+            if (remaining > 0) {
+                println("Incorrect. $remaining attempts remaining.")
             }
-            is UiState.Error -> {
-                val message = (state as UiState.Error).message
-                println("❌ Error: $message")
+        }
+    }
+
+    if (attempts >= maxAttempts) {
+        println("Account locked. Too many failed attempts.")
+    }
+}
+```
+
+**Sample Run:**
+```
+Enter password: hello
+Incorrect. 2 attempts remaining.
+Enter password: world
+Incorrect. 1 attempts remaining.
+Enter password: kotlin123
+Access granted!
+```
+
+---
+
+## The Do-While Loop
+
+### The Critical Difference
+
+**While loop:** Check condition FIRST, then execute (may not execute at all)
+
+**Do-while loop:** Execute FIRST, then check condition (executes at least once)
+
+### Do-While Syntax
+
+```kotlin
+do {
+    // Code to execute
+    // Runs at least once!
+} while (condition)
+```
+
+### Comparison Example
+
+```kotlin
+// While loop - may not execute
+var x = 10
+while (x < 5) {
+    println("This never prints")
+    x++
+}
+
+// Do-while loop - executes once
+var y = 10
+do {
+    println("This prints once: $y")
+    y++
+} while (y < 5)
+```
+
+**Output:**
+```
+This prints once: 10
+```
+
+### When to Use Do-While
+
+Perfect for situations where you **must** execute the code at least once:
+
+**Menu systems:**
+```kotlin
+fun main() {
+    var choice: String
+
+    do {
+        println("\n=== Main Menu ===")
+        println("1. New Game")
+        println("2. Load Game")
+        println("3. Settings")
+        println("4. Exit")
+        print("Enter choice: ")
+
+        choice = readln()
+
+        when (choice) {
+            "1" -> println("Starting new game...")
+            "2" -> println("Loading game...")
+            "3" -> println("Opening settings...")
+            "4" -> println("Goodbye!")
+            else -> println("Invalid choice. Try again.")
+        }
+    } while (choice != "4")
+}
+```
+
+**Sample Run:**
+```
+=== Main Menu ===
+1. New Game
+2. Load Game
+3. Settings
+4. Exit
+Enter choice: 1
+Starting new game...
+
+=== Main Menu ===
+1. New Game
+2. Load Game
+3. Settings
+4. Exit
+Enter choice: 5
+Invalid choice. Try again.
+
+=== Main Menu ===
+1. New Game
+2. Load Game
+3. Settings
+4. Exit
+Enter choice: 4
+Goodbye!
+```
+
+### Input Validation Example
+
+```kotlin
+fun main() {
+    var age: Int
+
+    do {
+        print("Enter your age (1-120): ")
+        val input = readln()
+        age = input.toIntOrNull() ?: -1
+
+        if (age !in 1..120) {
+            println("Invalid age. Please try again.")
+        }
+    } while (age !in 1..120)
+
+    println("Age recorded: $age")
+}
+```
+
+**Sample Run:**
+```
+Enter your age (1-120): 150
+Invalid age. Please try again.
+Enter your age (1-120): abc
+Invalid age. Please try again.
+Enter your age (1-120): 25
+Age recorded: 25
+```
+
+---
+
+## Break and Continue
+
+### The break Statement
+
+**Purpose:** Exit the loop immediately, even if the condition is still true.
+
+```kotlin
+fun main() {
+    var number = 1
+
+    while (number <= 10) {
+        if (number == 6) {
+            break  // Stop the loop completely
+        }
+        println(number)
+        number++
+    }
+
+    println("Loop ended at $number")
+}
+```
+
+**Output:**
+```
+1
+2
+3
+4
+5
+Loop ended at 6
+```
+
+**Practical example: Search**
+```kotlin
+fun main() {
+    val numbers = listOf(5, 12, 8, 3, 15, 7, 9)
+    val target = 15
+    var index = 0
+    var found = false
+
+    while (index < numbers.size) {
+        if (numbers[index] == target) {
+            println("Found $target at index $index")
+            found = true
+            break  // No need to continue searching
+        }
+        index++
+    }
+
+    if (!found) {
+        println("$target not found")
+    }
+}
+```
+
+**Output:**
+```
+Found 15 at index 4
+```
+
+### The continue Statement
+
+**Purpose:** Skip the rest of the current iteration and move to the next one.
+
+```kotlin
+fun main() {
+    var number = 0
+
+    while (number < 10) {
+        number++
+
+        if (number % 2 == 0) {
+            continue  // Skip even numbers
+        }
+
+        println(number)
+    }
+}
+```
+
+**Output:**
+```
+1
+3
+5
+7
+9
+```
+
+**How it works:**
+- When `number` is even, `continue` is executed
+- Skip `println(number)`
+- Jump back to the condition check
+- Continue with next iteration
+
+### Break vs Continue Comparison
+
+```kotlin
+fun main() {
+    println("=== Break Example ===")
+    for (i in 1..10) {
+        if (i == 5) break
+        print("$i ")
+    }
+    println("\n")
+
+    println("=== Continue Example ===")
+    for (i in 1..10) {
+        if (i == 5) continue
+        print("$i ")
+    }
+}
+```
+
+**Output:**
+```
+=== Break Example ===
+1 2 3 4
+
+=== Continue Example ===
+1 2 3 4 6 7 8 9 10
+```
+
+---
+
+## Infinite Loops and Guards
+
+### What is an Infinite Loop?
+
+An infinite loop is a loop that never ends because its condition never becomes false:
+
+```kotlin
+// ⚠️ DANGER: Infinite loop!
+while (true) {
+    println("This runs forever!")
+}
+```
+
+**This will:**
+- Run indefinitely
+- Freeze your program
+- Consume CPU and memory
+- Require force-stopping
+
+### Intentional Infinite Loops
+
+Sometimes infinite loops are **intentional** and controlled with `break`:
+
+```kotlin
+fun main() {
+    while (true) {
+        print("Enter 'quit' to exit: ")
+        val input = readln()
+
+        if (input == "quit") {
+            break  // This is our exit
+        }
+
+        println("You entered: $input")
+    }
+
+    println("Program ended")
+}
+```
+
+This is safe because we have a guaranteed exit condition.
+
+### Common Infinite Loop Mistakes
+
+❌ **Mistake 1: Forgetting to update the condition**
+```kotlin
+var count = 0
+while (count < 5) {
+    println(count)
+    // Oops! Forgot count++
+}
+```
+
+❌ **Mistake 2: Wrong update direction**
+```kotlin
+var count = 10
+while (count > 0) {
+    println(count)
+    count++  // Oops! Should be count--
+}
+```
+
+❌ **Mistake 3: Condition that can't change**
+```kotlin
+val x = 5
+while (x < 10) {  // x is val, can't change!
+    println(x)
+}
+```
+
+### Infinite Loop Guards
+
+Always ask yourself:
+1. **Does my condition eventually become false?**
+2. **Do I update the variables in the condition?**
+3. **Is there a guaranteed exit (break)?**
+
+✅ **Safe pattern:**
+```kotlin
+var attempts = 0
+val maxAttempts = 1000  // Safety limit
+
+while (condition && attempts < maxAttempts) {
+    // Loop body
+    attempts++
+}
+
+if (attempts >= maxAttempts) {
+    println("Warning: Loop limit reached")
+}
+```
+
+---
+
+## Hands-On Exercises
+
+### Exercise 1: Number Guessing Game
+
+**Challenge:** Create a number guessing game where:
+1. Computer picks a random number 1-100
+2. User keeps guessing until correct
+3. Provide "higher" or "lower" hints
+4. Count the number of guesses
+
+<details>
+<summary>Click to see solution</summary>
+
+```kotlin
+fun main() {
+    val secretNumber = (1..100).random()
+    var guess: Int
+    var attempts = 0
+
+    println("I'm thinking of a number between 1 and 100.")
+
+    do {
+        print("Your guess: ")
+        guess = readln().toIntOrNull() ?: 0
+        attempts++
+
+        when {
+            guess < secretNumber -> println("Higher!")
+            guess > secretNumber -> println("Lower!")
+            else -> {
+                println("Correct! You got it in $attempts attempts!")
             }
-            UiState.Empty -> println("📭 No items found")
         }
-    }
+    } while (guess != secretNumber)
 }
+```
 
+**Sample Run:**
+```
+I'm thinking of a number between 1 and 100.
+Your guess: 50
+Higher!
+Your guess: 75
+Lower!
+Your guess: 63
+Higher!
+Your guess: 69
+Correct! You got it in 4 attempts!
+```
+
+**Key concepts:**
+- Do-while ensures at least one guess
+- Using random numbers
+- Tracking attempts with a counter
+</details>
+
+---
+
+### Exercise 2: Sum Until Zero
+
+**Challenge:** Keep asking user for numbers and sum them. Stop when user enters 0.
+
+<details>
+<summary>Click to see solution</summary>
+
+```kotlin
 fun main() {
-    val viewModel = ViewModel()
-    viewModel.loadData()
+    var sum = 0
+    var number: Int
+
+    println("Enter numbers to sum (0 to stop):")
+
+    do {
+        print("Enter number: ")
+        number = readln().toIntOrNull() ?: 0
+
+        if (number != 0) {
+            sum += number
+            println("Current sum: $sum")
+        }
+    } while (number != 0)
+
+    println("\nFinal sum: $sum")
 }
 ```
 
+**Sample Run:**
+```
+Enter numbers to sum (0 to stop):
+Enter number: 10
+Current sum: 10
+Enter number: 20
+Current sum: 30
+Enter number: -5
+Current sum: 25
+Enter number: 0
+
+Final sum: 25
+```
+</details>
+
 ---
 
-## Enum Classes
+### Exercise 3: Fibonacci Sequence
 
-**Enum classes** define a fixed set of constants.
+**Challenge:** Print Fibonacci numbers while they're less than 1000.
+
+Fibonacci: Each number is the sum of the previous two (1, 1, 2, 3, 5, 8, 13...)
+
+<details>
+<summary>Click to see solution</summary>
 
 ```kotlin
-enum class Direction {
-    NORTH, SOUTH, EAST, WEST
-}
-
-enum class Priority(val level: Int) {
-    LOW(1),
-    MEDIUM(2),
-    HIGH(3),
-    CRITICAL(4);
-
-    fun isUrgent() = level >= 3
-}
-
 fun main() {
-    val direction = Direction.NORTH
-    println(direction)  // NORTH
+    var a = 1
+    var b = 1
 
-    val priority = Priority.HIGH
-    println("Level: ${priority.level}")  // Level: 3
-    println("Urgent: ${priority.isUrgent()}")  // Urgent: true
+    println("Fibonacci numbers less than 1000:")
+    print("$a $b ")
 
-    // Iterate over all values
-    Priority.values().forEach { p ->
-        println("${p.name}: Level ${p.level}")
+    while (true) {
+        val next = a + b
+
+        if (next >= 1000) {
+            break
+        }
+
+        print("$next ")
+
+        a = b
+        b = next
     }
 
-    // String to enum
-    val p = Priority.valueOf("MEDIUM")
-    println(p.level)  // 2
+    println("\n\nStopped at $b (next would be ${a + b})")
 }
 ```
 
-**Enum vs Sealed Class**:
+**Output:**
+```
+Fibonacci numbers less than 1000:
+1 1 2 3 5 8 13 21 34 55 89 144 233 377 610 987
 
-| Feature | Enum | Sealed Class |
-|---------|------|--------------|
-| Fixed set of instances | ✅ Yes (all at compile-time) | ✅ Yes (types known at compile-time) |
-| Can have different data | ❌ No (same structure) | ✅ Yes (different properties) |
-| Can inherit | ❌ No | ✅ Yes |
-| When to use | Finite set of constants | Type hierarchies with different data |
+Stopped at 987 (next would be 1597)
+```
+
+**Key concepts:**
+- While(true) with break for complex conditions
+- Updating multiple variables
+- Fibonacci algorithm
+</details>
 
 ---
 
-## Value Classes (Inline Classes)
+### Exercise 4: Print Even Numbers
 
-**Value classes** provide type safety without runtime overhead.
+**Challenge:** Print even numbers from 1 to 20 using a while loop and continue.
+
+<details>
+<summary>Click to see solution</summary>
 
 ```kotlin
-@JvmInline
-value class UserId(val value: Int)
-
-@JvmInline
-value class Email(val value: String) {
-    init {
-        require(value.contains("@")) { "Invalid email" }
-    }
-}
-
-fun sendEmail(email: Email) {
-    println("Sending email to ${email.value}")
-}
-
 fun main() {
-    val userId = UserId(123)
-    val email = Email("alice@example.com")
+    var number = 0
 
-    // sendEmail(UserId(456))  // ❌ Type mismatch!
-    sendEmail(email)  // ✅ Correct type
+    println("Even numbers from 1 to 20:")
 
-    // At runtime, email is just a String (no wrapper object)
+    while (number < 20) {
+        number++
+
+        if (number % 2 != 0) {
+            continue  // Skip odd numbers
+        }
+
+        print("$number ")
+    }
 }
 ```
 
-**Benefits**:
-- Type safety: Can't accidentally pass wrong type
-- Zero runtime overhead: Unwrapped at runtime
-- Validation in init block
+**Output:**
+```
+Even numbers from 1 to 20:
+2 4 6 8 10 12 14 16 18 20
+```
 
----
-
-## Exercise 1: Product Catalog System
-
-**Goal**: Create a product catalog using data classes.
-
-**Requirements**:
-1. Data class `Product` with: `id`, `name`, `price`, `category`, `inStock`
-2. Data class `Order` with: `orderId`, `products: List<Product>`, `total`
-3. Function to calculate total from products
-4. Function to create a modified order with discount
-5. Test with sample products and orders
-
----
-
-## Solution: Product Catalog
-
+**Alternative without continue:**
 ```kotlin
-data class Product(
-    val id: Int,
-    val name: String,
-    val price: Double,
-    val category: String,
-    val inStock: Boolean = true
-)
-
-data class Order(
-    val orderId: String,
-    val products: List<Product>,
-    val discount: Double = 0.0
-) {
-    val subtotal: Double
-        get() = products.sumOf { it.price }
-
-    val total: Double
-        get() = subtotal - discount
-
-    fun applyDiscount(discountAmount: Double): Order {
-        return copy(discount = discountAmount)
-    }
-
-    fun displayOrder() {
-        println("\n=== Order $orderId ===")
-        products.forEach { product ->
-            println("${product.name} - $${product.price}")
-        }
-        println("---")
-        println("Subtotal: $$subtotal")
-        if (discount > 0) {
-            println("Discount: -$$discount")
-        }
-        println("Total: $$total")
-        println("===================\n")
-    }
-}
-
 fun main() {
-    val products = listOf(
-        Product(1, "Laptop", 999.99, "Electronics"),
-        Product(2, "Mouse", 29.99, "Electronics"),
-        Product(3, "Keyboard", 79.99, "Electronics"),
-        Product(4, "Monitor", 299.99, "Electronics"),
-        Product(5, "Desk Lamp", 39.99, "Furniture", inStock = false)
-    )
+    var number = 0
 
-    // Filter in-stock products
-    val availableProducts = products.filter { it.inStock }
+    println("Even numbers from 1 to 20:")
 
-    // Create order
-    val order = Order(
-        orderId = "ORD-2025-001",
-        products = listOf(
-            products[0],  // Laptop
-            products[1],  // Mouse
-            products[2]   // Keyboard
-        )
-    )
+    while (number < 20) {
+        number++
 
-    order.displayOrder()
-
-    // Apply discount
-    val discountedOrder = order.applyDiscount(50.0)
-    discountedOrder.displayOrder()
-
-    // Destructuring
-    val (orderId, items, discount) = discountedOrder
-    println("Order ID: $orderId")
-    println("Number of items: ${items.size}")
-    println("Discount: $$discount")
-}
-```
-
----
-
-## Exercise 2: API Result with Sealed Classes
-
-**Goal**: Model API responses using sealed classes.
-
-**Requirements**:
-1. Sealed class `ApiResult<T>` with subclasses: `Success`, `Error`, `Loading`
-2. Function `fetchData()` that returns different results
-3. Function `handleResult()` that processes each case
-4. Test with different scenarios
-
----
-
-## Solution: API Result
-
-```kotlin
-sealed class ApiResult<out T> {
-    data class Success<T>(val data: T) : ApiResult<T>()
-    data class Error(val code: Int, val message: String) : ApiResult<Nothing>()
-    object Loading : ApiResult<Nothing>()
-}
-
-data class User(val id: Int, val name: String, val email: String)
-
-fun fetchUser(userId: Int): ApiResult<User> {
-    return when {
-        userId <= 0 -> ApiResult.Error(400, "Invalid user ID")
-        userId == 999 -> ApiResult.Loading
-        else -> ApiResult.Success(User(userId, "User $userId", "user$userId@example.com"))
-    }
-}
-
-fun <T> handleResult(result: ApiResult<T>, onSuccess: (T) -> Unit) {
-    when (result) {
-        is ApiResult.Success -> {
-            println("✅ Success!")
-            onSuccess(result.data)
-        }
-        is ApiResult.Error -> {
-            println("❌ Error ${result.code}: ${result.message}")
-        }
-        ApiResult.Loading -> {
-            println("⏳ Loading...")
+        if (number % 2 == 0) {
+            print("$number ")
         }
     }
 }
+```
+</details>
 
-fun main() {
-    println("=== Fetch User 1 ===")
-    val result1 = fetchUser(1)
-    handleResult(result1) { user ->
-        println("User: ${user.name} (${user.email})")
-    }
+---
 
-    println("\n=== Fetch Invalid User ===")
-    val result2 = fetchUser(-1)
-    handleResult(result2) { user ->
-        println("User: ${user.name}")
-    }
+## Common Pitfalls and Best Practices
 
-    println("\n=== Fetch Loading State ===")
-    val result3 = fetchUser(999)
-    handleResult(result3) { user ->
-        println("User: ${user.name}")
-    }
+### Pitfall 1: Infinite Loops from Typos
 
-    // Using when expression directly
-    println("\n=== Direct when expression ===")
-    val message = when (val result = fetchUser(5)) {
-        is ApiResult.Success -> "Loaded: ${result.data.name}"
-        is ApiResult.Error -> "Failed: ${result.message}"
-        ApiResult.Loading -> "Please wait..."
-    }
-    println(message)
+❌ **Dangerous typo:**
+```kotlin
+var i = 0
+while (i < 10) {
+    println(i)
+    // Typo: incrementing j instead of i
+    j++  // i never changes!
 }
 ```
 
----
+✅ **Safe:**
+```kotlin
+var i = 0
+while (i < 10) {
+    println(i)
+    i++  // Correct variable
+}
+```
 
-## Exercise 3: Task Management with Sealed Classes
+### Pitfall 2: Off-by-One Errors
 
-**Goal**: Build a task management system using sealed classes for task states.
+❌ **Subtle bug:**
+```kotlin
+var count = 1
+while (count < 10) {  // Stops at 9, not 10
+    println(count)
+    count++
+}
+```
 
-**Requirements**:
-1. Sealed class `TaskState` with: `Todo`, `InProgress`, `Completed`, `Cancelled`
-2. Data class `Task` with: `id`, `title`, `description`, `state`
-3. Functions to transition between states
-4. Track state change history
+✅ **Correct:**
+```kotlin
+var count = 1
+while (count <= 10) {  // Includes 10
+    println(count)
+    count++
+}
+```
 
----
+### Pitfall 3: Not Validating Input
 
-## Solution: Task Management
+❌ **Crash risk:**
+```kotlin
+while (true) {
+    val age = readln().toInt()  // Crashes on "abc"
+    if (age > 0) break
+}
+```
+
+✅ **Safe:**
+```kotlin
+while (true) {
+    val age = readln().toIntOrNull()
+    if (age != null && age > 0) break
+    println("Invalid input. Try again.")
+}
+```
+
+### Best Practice 1: Always Have an Exit
+
+Every loop should have a clear, guaranteed exit condition:
 
 ```kotlin
-sealed class TaskState {
-    object Todo : TaskState() {
-        override fun toString() = "TODO"
-    }
-
-    data class InProgress(val assignee: String, val startedAt: Long = System.currentTimeMillis()) : TaskState() {
-        override fun toString() = "IN_PROGRESS (Assignee: $assignee)"
-    }
-
-    data class Completed(val completedBy: String, val completedAt: Long = System.currentTimeMillis()) : TaskState() {
-        override fun toString() = "COMPLETED (By: $completedBy)"
-    }
-
-    data class Cancelled(val reason: String) : TaskState() {
-        override fun toString() = "CANCELLED (Reason: $reason)"
-    }
+// Good: Clear exit condition
+var attempts = 0
+while (attempts < maxAttempts) {
+    // Do something
+    attempts++
 }
 
-data class Task(
-    val id: Int,
-    val title: String,
-    val description: String,
-    val state: TaskState = TaskState.Todo,
-    val history: List<TaskState> = listOf(TaskState.Todo)
-) {
-    fun startWork(assignee: String): Task {
-        require(state is TaskState.Todo) { "Task must be in TODO state to start" }
-        val newState = TaskState.InProgress(assignee)
-        return copy(state = newState, history = history + newState)
-    }
-
-    fun complete(completedBy: String): Task {
-        require(state is TaskState.InProgress) { "Task must be in progress to complete" }
-        val newState = TaskState.Completed(completedBy)
-        return copy(state = newState, history = history + newState)
-    }
-
-    fun cancel(reason: String): Task {
-        require(state !is TaskState.Completed) { "Cannot cancel completed task" }
-        val newState = TaskState.Cancelled(reason)
-        return copy(state = newState, history = history + newState)
-    }
-
-    fun displayTask() {
-        println("\n=== Task #$id ===")
-        println("Title: $title")
-        println("Description: $description")
-        println("Current State: $state")
-        println("\nState History:")
-        history.forEachIndexed { index, state ->
-            println("  ${index + 1}. $state")
-        }
-        println("================\n")
-    }
-
-    fun getStatusEmoji(): String = when (state) {
-        is TaskState.Todo -> "📝"
-        is TaskState.InProgress -> "🔄"
-        is TaskState.Completed -> "✅"
-        is TaskState.Cancelled -> "❌"
-    }
-}
-
-class TaskManager {
-    private val tasks = mutableMapOf<Int, Task>()
-    private var nextId = 1
-
-    fun createTask(title: String, description: String): Task {
-        val task = Task(nextId++, title, description)
-        tasks[task.id] = task
-        println("Created task: ${task.getStatusEmoji()} ${task.title}")
-        return task
-    }
-
-    fun updateTask(task: Task) {
-        tasks[task.id] = task
-        println("Updated task: ${task.getStatusEmoji()} ${task.title} -> ${task.state}")
-    }
-
-    fun listTasks() {
-        println("\n=== All Tasks ===")
-        tasks.values.forEach { task ->
-            println("${task.getStatusEmoji()} #${task.id}: ${task.title} [${task.state}]")
-        }
-        println("=================\n")
-    }
-}
-
-fun main() {
-    val manager = TaskManager()
-
-    // Create tasks
-    var task1 = manager.createTask("Implement login", "Add JWT authentication")
-    var task2 = manager.createTask("Fix bug #123", "Null pointer exception in profile")
-    var task3 = manager.createTask("Write tests", "Unit tests for payment module")
-
-    manager.listTasks()
-
-    // Start working on tasks
-    task1 = task1.startWork("Alice")
-    manager.updateTask(task1)
-
-    task2 = task2.startWork("Bob")
-    manager.updateTask(task2)
-
-    manager.listTasks()
-
-    // Complete a task
-    task1 = task1.complete("Alice")
-    manager.updateTask(task1)
-
-    // Cancel a task
-    task3 = task3.cancel("Requirements changed")
-    manager.updateTask(task3)
-
-    manager.listTasks()
-
-    // Display full history
-    task1.displayTask()
+// Good: Break statement
+while (true) {
+    val input = readln()
+    if (input == "quit") break
 }
 ```
 
----
-
-## Checkpoint Quiz
-
-### Question 1
-What does the `data` keyword do?
-
-A) Makes the class immutable
-B) Automatically generates `equals()`, `hashCode()`, `toString()`, and `copy()`
-C) Makes the class faster
-D) Allows inheritance
-
-### Question 2
-What is destructuring in data classes?
-
-A) Deleting the class
-B) Extracting multiple properties into separate variables at once
-C) Breaking inheritance
-D) Splitting the class into multiple files
-
-### Question 3
-What is the main advantage of sealed classes?
-
-A) They're faster
-B) They provide exhaustive `when` expression checking
-C) They use less memory
-D) They can have multiple constructors
-
-### Question 4
-When should you use a data class?
-
-A) When you need inheritance
-B) When you primarily need to hold data
-C) When you need abstract methods
-D) When you need multiple constructors
-
-### Question 5
-What's the difference between enum and sealed classes?
-
-A) Enums are faster
-B) Sealed classes can have subclasses with different properties; enums cannot
-C) Enums can inherit; sealed classes cannot
-D) There is no difference
-
----
-
-## Quiz Answers
-
-**Question 1: B) Automatically generates `equals()`, `hashCode()`, `toString()`, and `copy()`**
-
-Data classes save you from writing boilerplate code.
+### Best Practice 2: Initialize Before Loop
 
 ```kotlin
-data class User(val name: String, val age: Int)
+// ✅ Good
+var count = 0
+while (count < 10) {
+    println(count)
+    count++
+}
 
-// Automatically generates:
-// - equals() for structural equality
-// - hashCode() consistent with equals()
-// - toString() for readable output
-// - copy() for creating modified copies
-// - componentN() for destructuring
+// ❌ Bad - count not initialized
+while (count < 10) {  // Error: Unresolved reference
+    println(count)
+    count++
+}
 ```
 
----
-
-**Question 2: B) Extracting multiple properties into separate variables at once**
-
-Destructuring uses the `componentN()` functions generated by data classes.
+### Best Practice 3: Choose the Right Loop
 
 ```kotlin
-data class Point(val x: Int, val y: Int)
+// Use while when condition-based
+var keepGoing = true
+while (keepGoing) {
+    val choice = readln()
+    if (choice == "quit") keepGoing = false
+}
 
-val point = Point(10, 20)
-val (x, y) = point  // Destructuring
+// Use for when count-based
+for (i in 1..10) {
+    println(i)
+}
 
-println(x)  // 10
-println(y)  // 20
+// Use do-while when must execute once
+do {
+    showMenu()
+    choice = readln()
+} while (choice != "exit")
 ```
 
 ---
 
-**Question 3: B) They provide exhaustive `when` expression checking**
+## Quick Quiz
 
-The compiler ensures you handle all subclasses of a sealed class.
-
+**Question 1:** What's the output?
 ```kotlin
-sealed class Result {
-    object Success : Result()
-    object Error : Result()
-}
-
-fun handle(result: Result) = when (result) {
-    Result.Success -> "OK"
-    Result.Error -> "Failed"
-    // ✅ Compiler ensures all cases covered!
+var x = 5
+while (x > 0) {
+    print("$x ")
+    x--
 }
 ```
 
+<details>
+<summary>Answer</summary>
+
+**Output:** `5 4 3 2 1`
+
+**Explanation:** Starts at 5, prints and decrements until x reaches 0 (loop stops when x is not > 0).
+</details>
+
 ---
 
-**Question 4: B) When you primarily need to hold data**
-
-Data classes are perfect for DTOs, API models, configuration, etc.
-
+**Question 2:** How many times does this execute?
 ```kotlin
-// ✅ Good use of data class
-data class User(val id: Int, val name: String, val email: String)
-
-// ❌ Bad use (lots of behavior, not primarily data)
-data class DatabaseConnection(val url: String) {
-    fun connect() { }
-    fun query(sql: String) { }
-    fun disconnect() { }
+var x = 10
+while (x < 5) {
+    println(x)
+    x++
 }
 ```
 
+<details>
+<summary>Answer</summary>
+
+**Answer:** 0 times
+
+**Explanation:** The condition `10 < 5` is false from the start, so the loop body never executes.
+</details>
+
 ---
 
-**Question 5: B) Sealed classes can have subclasses with different properties; enums cannot**
-
-Enums are for fixed constants with the same structure. Sealed classes are for type hierarchies with varying data.
-
+**Question 3:** What's the difference between these?
 ```kotlin
-// Enum: All instances have same structure
-enum class Color(val hex: String) {
-    RED("#FF0000"),
-    GREEN("#00FF00")
+// A
+while (condition) {
+    doSomething()
 }
 
-// Sealed: Subclasses have different properties
-sealed class Result {
-    data class Success(val data: String) : Result()
-    data class Error(val code: Int, val message: String) : Result()
+// B
+do {
+    doSomething()
+} while (condition)
+```
+
+<details>
+<summary>Answer</summary>
+
+**Answer:**
+- **A (while):** Checks condition FIRST. Might not execute at all.
+- **B (do-while):** Executes FIRST, then checks. Always executes at least once.
+
+**Example:**
+```kotlin
+var x = 10
+
+while (x < 5) {
+    println("A")  // Never prints
+}
+
+do {
+    println("B")  // Prints once
+} while (x < 5)
+```
+Output: `B`
+</details>
+
+---
+
+**Question 4:** What does break do?
+
+<details>
+<summary>Answer</summary>
+
+**Answer:** `break` immediately exits the loop, regardless of the condition.
+
+**Example:**
+```kotlin
+while (true) {
+    val input = readln()
+    if (input == "quit") {
+        break  // Exit the infinite loop
+    }
+    println("You said: $input")
+}
+```
+</details>
+
+---
+
+## Summary
+
+Congratulations! You've mastered condition-based loops. Let's recap:
+
+**Key Concepts:**
+- **While loops** repeat based on conditions, not counts
+- **Do-while loops** execute at least once before checking
+- **Break** exits the loop immediately
+- **Continue** skips to the next iteration
+- **Infinite loops** can be intentional with proper guards
+
+**Loop Decision Guide:**
+```kotlin
+// Known iterations → for loop
+for (i in 1..10) { }
+
+// Unknown iterations, check first → while
+while (condition) { }
+
+// Unknown iterations, must run once → do-while
+do { } while (condition)
+```
+
+**Control Flow:**
+```kotlin
+break     // Exit loop entirely
+continue  // Skip to next iteration
+```
+
+**Best Practices:**
+- Always ensure loops can exit
+- Validate user input
+- Initialize variables before loops
+- Use meaningful variable names
+- Guard against infinite loops
+
+**Common Patterns:**
+```kotlin
+// Input validation
+do {
+    // Get input
+} while (invalid)
+
+// Menu systems
+while (choice != "quit") {
+    // Show menu
+}
+
+// Search until found
+while (!found && index < size) {
+    // Search logic
 }
 ```
 
 ---
 
-## What You've Learned
+## What's Next?
 
-✅ Data classes and their auto-generated functions
-✅ The `copy()` function for immutable updates
-✅ Destructuring declarations
-✅ Sealed classes for restricted hierarchies
-✅ Enum classes for fixed constants
-✅ Value classes for type-safe primitives
-✅ When to use each special class type
+You now have complete control over program flow—decisions and loops! But how do you store and work with multiple pieces of related data? What if you need to manage a shopping cart with many items, or a class roster with dozens of students?
 
----
+In **Lesson 2.6: Lists - Storing Multiple Items**, you'll learn:
+- Creating and using lists
+- Mutable vs immutable lists
+- Adding, removing, and accessing elements
+- Powerful list operations: filter, map, and more
+- Real-world list applications
 
-## Next Steps
+**Preview:**
+```kotlin
+val fruits = listOf("Apple", "Banana", "Cherry")
+val numbers = mutableListOf(1, 2, 3)
+numbers.add(4)
 
-In **Lesson 2.6: Object Declarations and Companion Objects**, you'll learn:
-- Object expressions for anonymous objects
-- Object declarations for singletons
-- Companion objects for static-like members
-- Factory methods and constants
-- When to use objects vs classes
-
-You're almost done with Part 2!
+val doubled = numbers.map { it * 2 }
+val evens = numbers.filter { it % 2 == 0 }
+```
 
 ---
 
-**Congratulations on completing Lesson 2.5!** 🎉
-
-Data classes and sealed classes are Kotlin superpowers that make your code more concise and safer!
+**Outstanding work! You've completed Lesson 2.5. Lists await you next!** 🎉

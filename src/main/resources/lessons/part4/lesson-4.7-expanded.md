@@ -1,970 +1,995 @@
-# Lesson 4.7: Part 4 Capstone - Task Scheduler with Coroutines
+# Lesson 4.1: Generics and Type Parameters
 
-**Estimated Time**: 4-5 hours
+**Estimated Time**: 70 minutes
 **Difficulty**: Advanced
-**Prerequisites**: All Part 4 lessons
+**Prerequisites**: Parts 1-3 (Kotlin fundamentals, OOP, Functional Programming)
 
 ---
 
-## Project Overview
+## Topic Introduction
 
-Congratulations on completing all the lessons in Part 4! You've learned the most advanced features of Kotlin:
+Welcome to Part 4: Advanced Kotlin Features! You've mastered the fundamentals, object-oriented programming, and functional programming. Now it's time to explore the powerful features that make Kotlin a truly modern language.
 
-- ✅ Generics and type parameters
-- ✅ Coroutines fundamentals
-- ✅ Advanced coroutines (Flows, Channels, StateFlow)
-- ✅ Delegation and lazy initialization
-- ✅ Annotations and reflection
-- ✅ DSLs and type-safe builders
+Generics are one of the most important features in Kotlin. They allow you to write flexible, reusable code that works with different types while maintaining type safety. Without generics, you'd need to write the same code multiple times for different types or lose type safety by using `Any`.
 
-Now it's time to put it all together in a **comprehensive capstone project**: a **Task Scheduler with Coroutines**.
+In this lesson, you'll learn:
+- Generic classes and functions
+- Type parameters and constraints
+- Variance: `in`, `out`, and invariant types
+- Reified type parameters
+- Star projections
+- Generic constraints with `where`
 
-This project will challenge you to apply all advanced concepts in a real-world scenario where you build a sophisticated task scheduling system with async execution, monitoring, and configuration.
-
----
-
-## The Project: TaskFlow
-
-**TaskFlow** is a complete task scheduling and execution system that allows:
-- Generic task definitions with type-safe results
-- Coroutine-based async execution
-- Task dependencies and workflows
-- Progress monitoring with StateFlow
-- Custom property delegates for task configuration
-- Reflection-based task discovery and execution
-- DSL for task and workflow configuration
-- Scheduled and recurring tasks
+By the end, you'll write type-safe, reusable code that works with any type!
 
 ---
 
-## Requirements
+## The Concept: Why Generics Matter
 
-### 1. Generic Task System
+### The Problem Without Generics
 
-**Generic Task Interface**:
-- Type parameter for result type
-- Async execution with suspend functions
-- Task metadata (name, priority, retries)
-- Result handling (Success, Failure, Cancelled)
-
-**Task Types**:
-- `SimpleTask<T>` - single operation
-- `WorkflowTask<T>` - composite of multiple tasks
-- `ScheduledTask<T>` - runs at specific times
-- `RecurringTask<T>` - runs periodically
-
-### 2. Coroutine-Based Execution
-
-**Task Executor**:
-- Concurrent task execution
-- Dispatcher management
-- Cancellation support
-- Retry logic with exponential backoff
-- Timeout handling
-
-**Progress Monitoring**:
-- StateFlow for task status
-- SharedFlow for events
-- Real-time progress updates
-
-### 3. Custom Delegates
-
-**Task Properties**:
-- Lazy resource initialization
-- Observable task state
-- Validated configuration
-- Cached results
-
-### 4. Reflection-Based Discovery
-
-**Task Registry**:
-- Discover tasks annotated with `@Task`
-- Auto-register tasks
-- Inspect task metadata
-- Dynamic task instantiation
-
-### 5. Configuration DSL
-
-**Type-Safe Builder**:
-- Task definition DSL
-- Workflow composition
-- Scheduler configuration
-- Execution policies
-
----
-
-## Phase 1: Core Task System (60 minutes)
-
-Let's start by building the core task system with generics.
-
-### Task Result Types
+Imagine you need to create a box that can hold different types of items:
 
 ```kotlin
-sealed class TaskResult<out T> {
-    data class Success<T>(val value: T) : TaskResult<T>()
-    data class Failure(val error: Throwable) : TaskResult<Nothing>()
-    object Cancelled : TaskResult<Nothing>()
+// ❌ Without generics - need separate classes
+class IntBox(val value: Int)
+class StringBox(val value: String)
+class PersonBox(val value: Person)
 
-    fun <R> map(transform: (T) -> R): TaskResult<R> = when (this) {
-        is Success -> Success(transform(value))
-        is Failure -> this
-        is Cancelled -> this
+// ❌ Or lose type safety
+class AnyBox(val value: Any)
+val box = AnyBox("Hello")
+val str: String = box.value as String  // Unsafe cast!
+```
+
+### The Solution: Generics
+
+```kotlin
+// ✅ With generics - one class, full type safety
+class Box<T>(val value: T)
+
+val intBox = Box(42)           // Box<Int>
+val stringBox = Box("Hello")   // Box<String>
+val personBox = Box(Person())  // Box<Person>
+
+val str: String = stringBox.value  // Type-safe!
+```
+
+Generics let you write code once and use it with many types, while the compiler ensures everything is type-safe.
+
+---
+
+## Generic Classes
+
+### Basic Generic Class
+
+A generic class has type parameters in angle brackets:
+
+```kotlin
+class Container<T>(val item: T) {
+    fun get(): T = item
+
+    fun describe() {
+        println("Container holds: $item")
+    }
+}
+
+fun main() {
+    val numberContainer = Container(42)
+    println(numberContainer.get())  // 42
+
+    val stringContainer = Container("Kotlin")
+    println(stringContainer.get())  // Kotlin
+
+    // Type inference works!
+    val listContainer = Container(listOf(1, 2, 3))
+    println(listContainer.get())  // [1, 2, 3]
+}
+```
+
+### Multiple Type Parameters
+
+Classes can have multiple type parameters:
+
+```kotlin
+class Pair<A, B>(val first: A, val second: B) {
+    fun display() {
+        println("First: $first, Second: $second")
+    }
+
+    fun swap(): Pair<B, A> = Pair(second, first)
+}
+
+fun main() {
+    val pair = Pair("Alice", 25)  // Pair<String, Int>
+    pair.display()  // First: Alice, Second: 25
+
+    val swapped = pair.swap()  // Pair<Int, String>
+    swapped.display()  // First: 25, Second: Alice
+}
+```
+
+### Generic Collections
+
+Kotlin's standard collections are generic:
+
+```kotlin
+fun main() {
+    // List<T>
+    val numbers: List<Int> = listOf(1, 2, 3)
+    val words: List<String> = listOf("a", "b", "c")
+
+    // Map<K, V>
+    val ages: Map<String, Int> = mapOf(
+        "Alice" to 25,
+        "Bob" to 30
+    )
+
+    // Set<T>
+    val uniqueNumbers: Set<Int> = setOf(1, 2, 2, 3)  // [1, 2, 3]
+}
+```
+
+---
+
+## Generic Functions
+
+Functions can also be generic:
+
+### Basic Generic Function
+
+```kotlin
+fun <T> printItem(item: T) {
+    println("Item: $item")
+}
+
+fun <T> identity(value: T): T = value
+
+fun main() {
+    printItem(42)          // T = Int
+    printItem("Hello")     // T = String
+    printItem(listOf(1,2)) // T = List<Int>
+
+    val num = identity(100)     // Int
+    val str = identity("Kotlin") // String
+}
+```
+
+### Generic Function with Type Inference
+
+```kotlin
+fun <T> createList(vararg items: T): List<T> {
+    return items.toList()
+}
+
+fun main() {
+    val numbers = createList(1, 2, 3, 4, 5)
+    val words = createList("apple", "banana", "cherry")
+
+    println(numbers)  // [1, 2, 3, 4, 5]
+    println(words)    // [apple, banana, cherry]
+}
+```
+
+### Generic Extension Functions
+
+```kotlin
+fun <T> T.toSingletonList(): List<T> {
+    return listOf(this)
+}
+
+fun <T> List<T>.secondOrNull(): T? {
+    return if (size >= 2) this[1] else null
+}
+
+fun main() {
+    println(42.toSingletonList())  // [42]
+    println("Hello".toSingletonList())  // [Hello]
+
+    println(listOf(1, 2, 3).secondOrNull())  // 2
+    println(listOf("a").secondOrNull())       // null
+}
+```
+
+---
+
+## Type Constraints
+
+Type constraints restrict which types can be used with generics:
+
+### Upper Bound Constraints
+
+Use `:` to specify an upper bound:
+
+```kotlin
+// T must be a Number or its subtype
+fun <T : Number> sum(a: T, b: T): Double {
+    return a.toDouble() + b.toDouble()
+}
+
+fun main() {
+    println(sum(10, 20))      // 30.0
+    println(sum(5.5, 2.3))    // 7.8
+    // println(sum("a", "b")) // ❌ Error: String is not a Number
+}
+```
+
+### Comparable Constraint
+
+```kotlin
+fun <T : Comparable<T>> max(a: T, b: T): T {
+    return if (a > b) a else b
+}
+
+fun main() {
+    println(max(10, 20))           // 20
+    println(max("apple", "banana")) // banana
+    println(max(5.5, 2.3))         // 5.5
+}
+```
+
+### Multiple Constraints with `where`
+
+When you need multiple constraints, use `where`:
+
+```kotlin
+interface Drawable {
+    fun draw()
+}
+
+class Shape(val name: String) : Drawable, Comparable<Shape> {
+    override fun draw() {
+        println("Drawing $name")
+    }
+
+    override fun compareTo(other: Shape): Int {
+        return name.compareTo(other.name)
+    }
+}
+
+fun <T> displayAndCompare(a: T, b: T) where T : Drawable, T : Comparable<T> {
+    a.draw()
+    b.draw()
+    println("${if (a > b) "First" else "Second"} is greater")
+}
+
+fun main() {
+    val circle = Shape("Circle")
+    val square = Shape("Square")
+    displayAndCompare(circle, square)
+    // Drawing Circle
+    // Drawing Square
+    // Second is greater
+}
+```
+
+---
+
+## Variance: In, Out, and Invariant
+
+Variance controls how generic types relate to each other based on their type parameters.
+
+### The Problem: Invariance
+
+By default, generic types are **invariant**:
+
+```kotlin
+open class Animal
+class Dog : Animal()
+class Cat : Animal()
+
+class Box<T>(var item: T)
+
+fun main() {
+    val dogBox: Box<Dog> = Box(Dog())
+    // val animalBox: Box<Animal> = dogBox  // ❌ Error!
+    // Even though Dog is a subtype of Animal,
+    // Box<Dog> is NOT a subtype of Box<Animal>
+}
+```
+
+### Covariance: `out` Keyword
+
+Use `out` when a type is only produced (output), never consumed:
+
+```kotlin
+class Producer<out T>(private val item: T) {
+    fun produce(): T = item  // ✅ Only returns T
+    // fun consume(item: T) {} // ❌ Can't accept T as parameter
+}
+
+fun main() {
+    val dogProducer: Producer<Dog> = Producer(Dog())
+    val animalProducer: Producer<Animal> = dogProducer  // ✅ Works!
+
+    val animal: Animal = animalProducer.produce()
+}
+```
+
+**Rule**: If a generic class only returns `T` (never accepts it), mark it `out T`.
+
+### Contravariance: `in` Keyword
+
+Use `in` when a type is only consumed (input), never produced:
+
+```kotlin
+interface Consumer<in T> {
+    fun consume(item: T)     // ✅ Only accepts T
+    // fun produce(): T {}   // ❌ Can't return T
+}
+
+class AnimalConsumer : Consumer<Animal> {
+    override fun consume(item: Animal) {
+        println("Consuming animal")
+    }
+}
+
+fun main() {
+    val animalConsumer: Consumer<Animal> = AnimalConsumer()
+    val dogConsumer: Consumer<Dog> = animalConsumer  // ✅ Works!
+
+    dogConsumer.consume(Dog())
+}
+```
+
+**Rule**: If a generic class only accepts `T` (never returns it), mark it `in T`.
+
+### Real-World Example: List vs MutableList
+
+```kotlin
+fun main() {
+    // List<T> is covariant (out T)
+    val dogs: List<Dog> = listOf(Dog(), Dog())
+    val animals: List<Animal> = dogs  // ✅ Works!
+
+    // MutableList<T> is invariant (can't be covariant or contravariant)
+    val mutableDogs: MutableList<Dog> = mutableListOf(Dog())
+    // val mutableAnimals: MutableList<Animal> = mutableDogs  // ❌ Error!
+    // Why? Because MutableList both produces and consumes
+}
+```
+
+### Variance Summary
+
+| Variance | Keyword | Usage | Example |
+|----------|---------|-------|---------|
+| **Covariant** | `out T` | Type is only produced | `List<out T>`, `Producer<out T>` |
+| **Contravariant** | `in T` | Type is only consumed | `Comparable<in T>`, `Consumer<in T>` |
+| **Invariant** | `T` | Type is both produced and consumed | `MutableList<T>`, `Box<T>` |
+
+---
+
+## Use-Site Variance: Type Projections
+
+You can specify variance at the use site instead of the declaration site:
+
+```kotlin
+class Box<T>(var item: T)
+
+fun copyFrom(from: Box<out Animal>, to: Box<Animal>) {
+    to.item = from.item  // ✅ Can read from 'from'
+}
+
+fun copyTo(from: Box<Animal>, to: Box<in Animal>) {
+    to.item = from.item  // ✅ Can write to 'to'
+}
+
+fun main() {
+    val dogBox = Box(Dog())
+    val animalBox = Box<Animal>(Cat())
+
+    copyFrom(dogBox, animalBox)  // ✅ Works with out projection
+}
+```
+
+---
+
+## Star Projections
+
+Star projection `*` is used when you don't know or care about the type argument:
+
+```kotlin
+fun printList(list: List<*>) {
+    for (item in list) {
+        println(item)  // item is Any?
+    }
+}
+
+fun main() {
+    printList(listOf(1, 2, 3))
+    printList(listOf("a", "b", "c"))
+
+    // Star projection on mutable types
+    val anyList: MutableList<*> = mutableListOf(1, 2, 3)
+    // anyList.add(4)  // ❌ Error: can't add to MutableList<*>
+    val item = anyList[0]  // ✅ Can read (as Any?)
+}
+```
+
+**Rules for `List<*>`**:
+- Equivalent to `List<out Any?>`
+- You can read items (as `Any?`)
+- For `MutableList<*>`: can't add items, can only read
+
+---
+
+## Reified Type Parameters
+
+Normally, type information is erased at runtime. `reified` preserves it:
+
+### The Problem: Type Erasure
+
+```kotlin
+fun <T> isInstance(value: Any): Boolean {
+    // return value is T  // ❌ Error: Cannot check for instance of erased type
+    return false
+}
+```
+
+### The Solution: Reified
+
+```kotlin
+inline fun <reified T> isInstance(value: Any): Boolean {
+    return value is T  // ✅ Works!
+}
+
+fun main() {
+    println(isInstance<String>("Hello"))  // true
+    println(isInstance<String>(42))       // false
+    println(isInstance<Int>(42))          // true
+}
+```
+
+### Reified with Class Checking
+
+```kotlin
+inline fun <reified T> createList(size: Int, creator: (Int) -> T): List<T> {
+    return List(size) { creator(it) }
+}
+
+inline fun <reified T> printType(value: T) {
+    println("Type: ${T::class.simpleName}, Value: $value")
+}
+
+fun main() {
+    val numbers = createList(3) { it * 2 }
+    println(numbers)  // [0, 2, 4]
+
+    printType("Hello")  // Type: String, Value: Hello
+    printType(42)       // Type: Int, Value: 42
+}
+```
+
+### Reified with JSON Parsing (Practical Example)
+
+```kotlin
+import kotlin.reflect.KClass
+
+// Simulated JSON parser
+inline fun <reified T : Any> parseJson(json: String): T {
+    println("Parsing JSON to ${T::class.simpleName}")
+    // In real code, you'd use a JSON library
+    return when (T::class) {
+        String::class -> json as T
+        Int::class -> json.toInt() as T
+        else -> throw IllegalArgumentException("Unsupported type")
+    }
+}
+
+fun main() {
+    val str = parseJson<String>("\"Hello\"")
+    val num = parseJson<Int>("42")
+
+    println("String: $str")  // String: "Hello"
+    println("Int: $num")     // Int: 42
+}
+```
+
+**Requirements for `reified`**:
+- Function must be `inline`
+- Can use `is`, `as`, `::class` with type parameter
+- Cannot be used in non-inline functions
+
+---
+
+## Generic Constraints with Where
+
+Complex constraints often need the `where` clause:
+
+```kotlin
+interface Closeable {
+    fun close()
+}
+
+interface Readable {
+    fun read(): String
+}
+
+class DataFile : Closeable, Readable {
+    override fun close() {
+        println("Closing file")
+    }
+
+    override fun read(): String {
+        return "File contents"
+    }
+}
+
+fun <T> processResource(resource: T) where T : Closeable, T : Readable {
+    val data = resource.read()
+    println("Data: $data")
+    resource.close()
+}
+
+fun main() {
+    val file = DataFile()
+    processResource(file)
+    // Data: File contents
+    // Closing file
+}
+```
+
+### Multiple Constraints Example
+
+```kotlin
+fun <T> findMax(items: List<T>) where T : Comparable<T>, T : Number {
+    val max = items.maxOrNull()
+    max?.let {
+        println("Max value: $it, Double value: ${it.toDouble()}")
+    }
+}
+
+fun main() {
+    findMax(listOf(1, 5, 3, 9, 2))
+    // Max value: 9, Double value: 9.0
+
+    findMax(listOf(1.5, 2.8, 0.9))
+    // Max value: 2.8, Double value: 2.8
+}
+```
+
+---
+
+## Practical Examples
+
+### Generic Repository Pattern
+
+```kotlin
+interface Entity {
+    val id: Long
+}
+
+data class User(override val id: Long, val name: String) : Entity
+data class Product(override val id: Long, val name: String, val price: Double) : Entity
+
+class Repository<T : Entity> {
+    private val items = mutableListOf<T>()
+
+    fun add(item: T) {
+        items.add(item)
+    }
+
+    fun findById(id: Long): T? {
+        return items.find { it.id == id }
+    }
+
+    fun getAll(): List<T> {
+        return items.toList()
+    }
+
+    fun remove(id: Long): Boolean {
+        return items.removeIf { it.id == id }
+    }
+}
+
+fun main() {
+    val userRepo = Repository<User>()
+    userRepo.add(User(1, "Alice"))
+    userRepo.add(User(2, "Bob"))
+
+    println(userRepo.findById(1))  // User(id=1, name=Alice)
+    println(userRepo.getAll())     // [User(id=1, name=Alice), User(id=2, name=Bob)]
+
+    val productRepo = Repository<Product>()
+    productRepo.add(Product(1, "Laptop", 999.99))
+    productRepo.add(Product(2, "Mouse", 29.99))
+
+    println(productRepo.getAll())
+}
+```
+
+### Generic Result Type
+
+```kotlin
+sealed class Result<out T> {
+    data class Success<T>(val data: T) : Result<T>()
+    data class Error(val message: String) : Result<Nothing>()
+    object Loading : Result<Nothing>()
+
+    fun <R> map(transform: (T) -> R): Result<R> = when (this) {
+        is Success -> Success(transform(data))
+        is Error -> this
+        is Loading -> this
     }
 
     fun getOrNull(): T? = when (this) {
-        is Success -> value
+        is Success -> data
         else -> null
     }
+}
 
-    fun getOrThrow(): T = when (this) {
-        is Success -> value
-        is Failure -> throw error
-        is Cancelled -> throw CancellationException("Task was cancelled")
+fun fetchUser(id: Int): Result<String> {
+    return if (id > 0) {
+        Result.Success("User $id")
+    } else {
+        Result.Error("Invalid user ID")
     }
 }
 
-class CancellationException(message: String) : Exception(message)
-```
+fun main() {
+    val result1 = fetchUser(42)
+    println(result1.getOrNull())  // User 42
 
-### Task Metadata
+    val result2 = fetchUser(-1)
+    println(result2.getOrNull())  // null
 
-```kotlin
-data class TaskMetadata(
-    val name: String,
-    val description: String = "",
-    val priority: TaskPriority = TaskPriority.NORMAL,
-    val retries: Int = 0,
-    val timeout: Long = 0  // milliseconds, 0 = no timeout
-)
-
-enum class TaskPriority {
-    LOW, NORMAL, HIGH, CRITICAL
-}
-
-enum class TaskStatus {
-    PENDING, RUNNING, COMPLETED, FAILED, CANCELLED
-}
-```
-
-### Base Task Interface
-
-```kotlin
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
-
-interface Task<T> {
-    val metadata: TaskMetadata
-    val status: StateFlow<TaskStatus>
-
-    suspend fun execute(): TaskResult<T>
-
-    fun cancel()
-}
-```
-
-### Simple Task Implementation
-
-```kotlin
-abstract class SimpleTask<T>(override val metadata: TaskMetadata) : Task<T> {
-    private val _status = MutableStateFlow(TaskStatus.PENDING)
-    override val status: StateFlow<TaskStatus> = _status
-
-    private var job: Job? = null
-
-    protected abstract suspend fun run(): T
-
-    override suspend fun execute(): TaskResult<T> {
-        return coroutineScope {
-            job = launch {
-                _status.value = TaskStatus.RUNNING
-
-                try {
-                    val result = if (metadata.timeout > 0) {
-                        withTimeout(metadata.timeout) { run() }
-                    } else {
-                        run()
-                    }
-
-                    _status.value = TaskStatus.COMPLETED
-                    TaskResult.Success(result)
-                } catch (e: CancellationException) {
-                    _status.value = TaskStatus.CANCELLED
-                    TaskResult.Cancelled
-                } catch (e: Exception) {
-                    _status.value = TaskStatus.FAILED
-                    TaskResult.Failure(e)
-                }
-            }
-
-            when (val result = job?.await()) {
-                is TaskResult.Success -> result as TaskResult.Success<T>
-                is TaskResult.Failure -> result
-                is TaskResult.Cancelled -> TaskResult.Cancelled
-                else -> TaskResult.Failure(Exception("Unknown error"))
-            }
-        }
-    }
-
-    override fun cancel() {
-        job?.cancel()
-        _status.value = TaskStatus.CANCELLED
-    }
-}
-```
-
-Wait, let me fix this implementation:
-
-```kotlin
-abstract class SimpleTask<T>(override val metadata: TaskMetadata) : Task<T> {
-    private val _status = MutableStateFlow(TaskStatus.PENDING)
-    override val status: StateFlow<TaskStatus> = _status
-
-    private var job: Job? = null
-
-    protected abstract suspend fun run(): T
-
-    override suspend fun execute(): TaskResult<T> {
-        _status.value = TaskStatus.RUNNING
-
-        return try {
-            val result = if (metadata.timeout > 0) {
-                withTimeout(metadata.timeout) { run() }
-            } else {
-                run()
-            }
-
-            _status.value = TaskStatus.COMPLETED
-            TaskResult.Success(result)
-        } catch (e: CancellationException) {
-            _status.value = TaskStatus.CANCELLED
-            TaskResult.Cancelled
-        } catch (e: Exception) {
-            _status.value = TaskStatus.FAILED
-            TaskResult.Failure(e)
-        }
-    }
-
-    override fun cancel() {
-        job?.cancel()
-        _status.value = TaskStatus.CANCELLED
-    }
+    val mapped = result1.map { it.uppercase() }
+    println(mapped.getOrNull())  // USER 42
 }
 ```
 
 ---
 
-## Phase 2: Task Executor with Coroutines (60 minutes)
+## Exercises
 
-### Task Executor
+### Exercise 1: Generic Stack (Medium)
 
-```kotlin
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+Create a generic `Stack<T>` class with push, pop, and peek operations.
 
-class TaskExecutor(
-    private val dispatcher: CoroutineDispatcher = Dispatchers.Default,
-    private val maxConcurrentTasks: Int = 4
-) {
-    private val scope = CoroutineScope(dispatcher + SupervisorJob())
-    private val _events = MutableSharedFlow<TaskEvent>()
-    val events: SharedFlow<TaskEvent> = _events
+**Requirements**:
+- `push(item: T)` - add item to top
+- `pop(): T?` - remove and return top item
+- `peek(): T?` - return top item without removing
+- `isEmpty(): Boolean` - check if stack is empty
+- `size: Int` - number of items in stack
 
-    private val activeTasks = MutableStateFlow(0)
-
-    suspend fun <T> execute(task: Task<T>): TaskResult<T> {
-        return withContext(dispatcher) {
-            // Wait if max concurrent tasks reached
-            while (activeTasks.value >= maxConcurrentTasks) {
-                delay(100)
-            }
-
-            activeTasks.value++
-            _events.emit(TaskEvent.Started(task.metadata.name))
-
-            try {
-                val result = executeWithRetry(task)
-
-                when (result) {
-                    is TaskResult.Success -> _events.emit(TaskEvent.Completed(task.metadata.name))
-                    is TaskResult.Failure -> _events.emit(TaskEvent.Failed(task.metadata.name, result.error))
-                    is TaskResult.Cancelled -> _events.emit(TaskEvent.Cancelled(task.metadata.name))
-                }
-
-                result
-            } finally {
-                activeTasks.value--
-            }
-        }
-    }
-
-    private suspend fun <T> executeWithRetry(task: Task<T>): TaskResult<T> {
-        var lastError: Throwable? = null
-        var attempt = 0
-        val maxAttempts = task.metadata.retries + 1
-
-        while (attempt < maxAttempts) {
-            val result = task.execute()
-
-            when (result) {
-                is TaskResult.Success -> return result
-                is TaskResult.Cancelled -> return result
-                is TaskResult.Failure -> {
-                    lastError = result.error
-                    attempt++
-
-                    if (attempt < maxAttempts) {
-                        val delayMs = (100 * (1 shl attempt)).toLong()
-                        _events.emit(TaskEvent.Retrying(task.metadata.name, attempt, delayMs))
-                        delay(delayMs)
-                    }
-                }
-            }
-        }
-
-        return TaskResult.Failure(lastError ?: Exception("Unknown error"))
-    }
-
-    fun shutdown() {
-        scope.cancel()
-    }
-}
-
-sealed class TaskEvent {
-    data class Started(val taskName: String) : TaskEvent()
-    data class Completed(val taskName: String) : TaskEvent()
-    data class Failed(val taskName: String, val error: Throwable) : TaskEvent()
-    data class Cancelled(val taskName: String) : TaskEvent()
-    data class Retrying(val taskName: String, val attempt: Int, val delayMs: Long) : TaskEvent()
-}
-```
-
----
-
-## Phase 3: Delegation Patterns (45 minutes)
-
-### Lazy Task Resource
+**Solution**:
 
 ```kotlin
-import kotlin.properties.ReadOnlyProperty
-import kotlin.reflect.KProperty
+class Stack<T> {
+    private val items = mutableListOf<T>()
 
-class LazyTaskResource<T>(private val initializer: suspend () -> T) : ReadOnlyProperty<Any?, T> {
-    private var value: T? = null
-    private val lock = Any()
-
-    override fun getValue(thisRef: Any?, property: KProperty<*>): T {
-        synchronized(lock) {
-            if (value == null) {
-                // In real scenario, would need coroutine scope
-                value = runBlocking { initializer() }
-            }
-            return value!!
-        }
-    }
-}
-
-fun <T> lazyTask(initializer: suspend () -> T) = LazyTaskResource(initializer)
-```
-
-### Observable Task State
-
-```kotlin
-import kotlin.properties.ObservableProperty
-import kotlin.reflect.KProperty
-
-class ObservableTaskState<T>(
-    initialValue: T,
-    private val onChange: (old: T, new: T) -> Unit
-) : ObservableProperty<T>(initialValue) {
-    override fun afterChange(property: KProperty<*>, oldValue: T, newValue: T) {
-        onChange(oldValue, newValue)
-    }
-}
-
-fun <T> observableState(initialValue: T, onChange: (T, T) -> Unit) =
-    ObservableTaskState(initialValue, onChange)
-```
-
-### Validated Configuration
-
-```kotlin
-class ValidatedProperty<T>(
-    private var value: T,
-    private val validator: (T) -> Boolean,
-    private val errorMessage: (T) -> String
-) {
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): T {
-        return value
+    fun push(item: T) {
+        items.add(item)
     }
 
-    operator fun setValue(thisRef: Any?, property: KProperty<*>, newValue: T) {
-        if (!validator(newValue)) {
-            throw IllegalArgumentException(errorMessage(newValue))
-        }
-        value = newValue
-    }
-}
-
-fun <T> validated(
-    initialValue: T,
-    validator: (T) -> Boolean,
-    errorMessage: (T) -> String = { "Invalid value: $it" }
-) = ValidatedProperty(initialValue, validator, errorMessage)
-```
-
----
-
-## Phase 4: Annotations and Reflection (45 minutes)
-
-### Task Annotations
-
-```kotlin
-@Target(AnnotationTarget.CLASS)
-@Retention(AnnotationRetention.RUNTIME)
-annotation class RegisteredTask(
-    val name: String,
-    val priority: TaskPriority = TaskPriority.NORMAL,
-    val retries: Int = 0
-)
-
-@Target(AnnotationTarget.PROPERTY)
-@Retention(AnnotationRetention.RUNTIME)
-annotation class TaskConfig
-
-@Target(AnnotationTarget.FUNCTION)
-@Retention(AnnotationRetention.RUNTIME)
-annotation class TaskAction
-```
-
-### Task Registry with Reflection
-
-```kotlin
-import kotlin.reflect.KClass
-import kotlin.reflect.full.*
-
-object TaskRegistry {
-    private val tasks = mutableMapOf<String, KClass<out Task<*>>>()
-
-    fun register(taskClass: KClass<out Task<*>>) {
-        val annotation = taskClass.annotations.filterIsInstance<RegisteredTask>().firstOrNull()
-            ?: throw IllegalArgumentException("Task must be annotated with @RegisteredTask")
-
-        tasks[annotation.name] = taskClass
-    }
-
-    fun <T> create(name: String): Task<T>? {
-        val taskClass = tasks[name] ?: return null
-
-        // Find primary constructor
-        val constructor = taskClass.constructors.firstOrNull() ?: return null
-
-        // Create metadata from annotation
-        val annotation = taskClass.annotations.filterIsInstance<RegisteredTask>().first()
-        val metadata = TaskMetadata(
-            name = annotation.name,
-            priority = annotation.priority,
-            retries = annotation.retries
-        )
-
-        // Call constructor with metadata
-        val instance = if (constructor.parameters.isEmpty()) {
-            constructor.call()
+    fun pop(): T? {
+        return if (items.isNotEmpty()) {
+            items.removeAt(items.size - 1)
         } else {
-            constructor.call(metadata)
+            null
+        }
+    }
+
+    fun peek(): T? {
+        return items.lastOrNull()
+    }
+
+    fun isEmpty(): Boolean {
+        return items.isEmpty()
+    }
+
+    val size: Int
+        get() = items.size
+
+    override fun toString(): String {
+        return items.toString()
+    }
+}
+
+fun main() {
+    val stack = Stack<Int>()
+    stack.push(1)
+    stack.push(2)
+    stack.push(3)
+
+    println("Stack: $stack")        // Stack: [1, 2, 3]
+    println("Size: ${stack.size}")  // Size: 3
+    println("Peek: ${stack.peek()}") // Peek: 3
+    println("Pop: ${stack.pop()}")   // Pop: 3
+    println("Pop: ${stack.pop()}")   // Pop: 2
+    println("Size: ${stack.size}")   // Size: 1
+
+    val stringStack = Stack<String>()
+    stringStack.push("Hello")
+    stringStack.push("World")
+    println(stringStack.pop())  // World
+    println(stringStack.pop())  // Hello
+    println(stringStack.pop())  // null
+}
+```
+
+### Exercise 2: Generic Tree with Comparable (Hard)
+
+Create a generic binary search tree that stores comparable items.
+
+**Requirements**:
+- `insert(value: T)` - add value to tree
+- `contains(value: T): Boolean` - check if value exists
+- `toSortedList(): List<T>` - return sorted list of all values
+
+**Solution**:
+
+```kotlin
+class BinarySearchTree<T : Comparable<T>> {
+    private var root: Node<T>? = null
+
+    private class Node<T>(val value: T) {
+        var left: Node<T>? = null
+        var right: Node<T>? = null
+    }
+
+    fun insert(value: T) {
+        root = insertRec(root, value)
+    }
+
+    private fun insertRec(node: Node<T>?, value: T): Node<T> {
+        if (node == null) {
+            return Node(value)
         }
 
-        @Suppress("UNCHECKED_CAST")
-        return instance as? Task<T>
+        when {
+            value < node.value -> node.left = insertRec(node.left, value)
+            value > node.value -> node.right = insertRec(node.right, value)
+        }
+
+        return node
     }
 
-    fun listTasks(): List<String> = tasks.keys.toList()
-
-    fun getTaskInfo(name: String): TaskMetadata? {
-        val taskClass = tasks[name] ?: return null
-        val annotation = taskClass.annotations.filterIsInstance<RegisteredTask>().first()
-
-        return TaskMetadata(
-            name = annotation.name,
-            priority = annotation.priority,
-            retries = annotation.retries
-        )
+    fun contains(value: T): Boolean {
+        return containsRec(root, value)
     }
+
+    private fun containsRec(node: Node<T>?, value: T): Boolean {
+        if (node == null) return false
+
+        return when {
+            value == node.value -> true
+            value < node.value -> containsRec(node.left, value)
+            else -> containsRec(node.right, value)
+        }
+    }
+
+    fun toSortedList(): List<T> {
+        val result = mutableListOf<T>()
+        inOrderTraversal(root, result)
+        return result
+    }
+
+    private fun inOrderTraversal(node: Node<T>?, result: MutableList<T>) {
+        if (node != null) {
+            inOrderTraversal(node.left, result)
+            result.add(node.value)
+            inOrderTraversal(node.right, result)
+        }
+    }
+}
+
+fun main() {
+    val tree = BinarySearchTree<Int>()
+    tree.insert(5)
+    tree.insert(3)
+    tree.insert(7)
+    tree.insert(1)
+    tree.insert(9)
+
+    println("Contains 3: ${tree.contains(3)}")  // true
+    println("Contains 6: ${tree.contains(6)}")  // false
+    println("Sorted: ${tree.toSortedList()}")   // [1, 3, 5, 7, 9]
+
+    val stringTree = BinarySearchTree<String>()
+    stringTree.insert("dog")
+    stringTree.insert("cat")
+    stringTree.insert("elephant")
+    stringTree.insert("ant")
+
+    println("Sorted: ${stringTree.toSortedList()}")
+    // [ant, cat, dog, elephant]
+}
+```
+
+### Exercise 3: Generic Cache with Constraints (Hard)
+
+Create a generic cache that stores serializable items with expiration.
+
+**Requirements**:
+- Type must be serializable (toString/equals)
+- `put(key: String, value: T, ttlSeconds: Int)` - store with expiration
+- `get(key: String): T?` - retrieve if not expired
+- `clear()` - remove all entries
+- `size: Int` - number of valid entries
+
+**Solution**:
+
+```kotlin
+import java.time.Instant
+
+class Cache<T : Any> {
+    private data class CacheEntry<T>(
+        val value: T,
+        val expiresAt: Long
+    ) {
+        fun isExpired(): Boolean {
+            return System.currentTimeMillis() > expiresAt
+        }
+    }
+
+    private val storage = mutableMapOf<String, CacheEntry<T>>()
+
+    fun put(key: String, value: T, ttlSeconds: Int = 60) {
+        val expiresAt = System.currentTimeMillis() + (ttlSeconds * 1000)
+        storage[key] = CacheEntry(value, expiresAt)
+        cleanupExpired()
+    }
+
+    fun get(key: String): T? {
+        val entry = storage[key] ?: return null
+
+        return if (entry.isExpired()) {
+            storage.remove(key)
+            null
+        } else {
+            entry.value
+        }
+    }
+
+    fun clear() {
+        storage.clear()
+    }
+
+    val size: Int
+        get() {
+            cleanupExpired()
+            return storage.size
+        }
+
+    private fun cleanupExpired() {
+        storage.entries.removeIf { it.value.isExpired() }
+    }
+
+    fun getAllKeys(): Set<String> {
+        cleanupExpired()
+        return storage.keys.toSet()
+    }
+}
+
+fun main() {
+    val cache = Cache<String>()
+
+    cache.put("user1", "Alice", 2)
+    cache.put("user2", "Bob", 5)
+
+    println("Get user1: ${cache.get("user1")}")  // Alice
+    println("Size: ${cache.size}")                // 2
+
+    // Wait for expiration (in real code)
+    Thread.sleep(2100)
+
+    println("Get user1 after expiration: ${cache.get("user1")}")  // null
+    println("Get user2: ${cache.get("user2")}")   // Bob
+    println("Size: ${cache.size}")                // 1
+
+    // Works with any type
+    val numberCache = Cache<Int>()
+    numberCache.put("count", 42, 10)
+    println("Count: ${numberCache.get("count")}")  // 42
+
+    cache.clear()
+    println("Size after clear: ${cache.size}")  // 0
 }
 ```
 
 ---
 
-## Phase 5: DSL Configuration (60 minutes)
+## Checkpoint Quiz
 
-### Task DSL
+Test your understanding of generics!
 
+### Question 1: Type Parameter Syntax
+
+What does this function signature mean?
 ```kotlin
-@DslMarker
-annotation class TaskFlowDsl
-
-@TaskFlowDsl
-class TaskBuilder<T> {
-    var name: String = ""
-    var description: String = ""
-    var priority: TaskPriority = TaskPriority.NORMAL
-    var retries: Int = 0
-    var timeout: Long = 0
-
-    private var action: (suspend () -> T)? = null
-
-    fun action(block: suspend () -> T) {
-        action = block
-    }
-
-    fun build(): SimpleTask<T> {
-        val metadata = TaskMetadata(name, description, priority, retries, timeout)
-        val taskAction = action ?: throw IllegalStateException("Task action not defined")
-
-        return object : SimpleTask<T>(metadata) {
-            override suspend fun run(): T = taskAction()
-        }
-    }
-}
-
-fun <T> task(block: TaskBuilder<T>.() -> Unit): SimpleTask<T> {
-    return TaskBuilder<T>().apply(block).build()
-}
+fun <T : Number> average(values: List<T>): Double
 ```
 
-### Workflow DSL
+**A)** T can be any type
+**B)** T must be Number or its subtype
+**C)** T must be exactly Number
+**D)** T can be Number or Any
 
-```kotlin
-@TaskFlowDsl
-class WorkflowBuilder<T> {
-    var name: String = ""
-    var description: String = ""
-
-    private val tasks = mutableListOf<Task<*>>()
-    private var finalTask: (suspend (List<Any?>) -> T)? = null
-
-    fun <R> task(name: String, action: suspend () -> R) {
-        val task = task<R> {
-            this.name = name
-            action(action)
-        }
-        tasks.add(task)
-    }
-
-    fun finalize(action: suspend (List<Any?>) -> T) {
-        finalTask = action
-    }
-
-    fun build(): WorkflowTask<T> {
-        val metadata = TaskMetadata(name, description)
-        return WorkflowTask(metadata, tasks, finalTask!!)
-    }
-}
-
-class WorkflowTask<T>(
-    override val metadata: TaskMetadata,
-    private val tasks: List<Task<*>>,
-    private val finalizer: suspend (List<Any?>) -> T
-) : Task<T> {
-    private val _status = MutableStateFlow(TaskStatus.PENDING)
-    override val status: StateFlow<TaskStatus> = _status
-
-    override suspend fun execute(): TaskResult<T> {
-        _status.value = TaskStatus.RUNNING
-
-        return try {
-            val results = tasks.map { task ->
-                when (val result = task.execute()) {
-                    is TaskResult.Success -> result.value
-                    is TaskResult.Failure -> throw result.error
-                    is TaskResult.Cancelled -> throw CancellationException("Subtask cancelled")
-                }
-            }
-
-            val finalResult = finalizer(results)
-            _status.value = TaskStatus.COMPLETED
-            TaskResult.Success(finalResult)
-        } catch (e: CancellationException) {
-            _status.value = TaskStatus.CANCELLED
-            TaskResult.Cancelled
-        } catch (e: Exception) {
-            _status.value = TaskStatus.FAILED
-            TaskResult.Failure(e)
-        }
-    }
-
-    override fun cancel() {
-        tasks.forEach { it.cancel() }
-        _status.value = TaskStatus.CANCELLED
-    }
-}
-
-fun <T> workflow(block: WorkflowBuilder<T>.() -> Unit): WorkflowTask<T> {
-    return WorkflowBuilder<T>().apply(block).build()
-}
-```
+**Answer**: **B** - The `: Number` constraint means T must be Number or any of its subtypes (Int, Double, Float, etc.)
 
 ---
 
-## Complete Solution: TaskFlow System
+### Question 2: Variance
 
-Here's the complete integrated solution:
+Which statement is correct about variance?
 
-```kotlin
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
-import kotlin.reflect.KClass
-import kotlin.reflect.full.*
+**A)** `out` is used when a type is only consumed
+**B)** `in` is used when a type is only produced
+**C)** `out` makes a type covariant (producer)
+**D)** Invariant types can be used as both covariant and contravariant
 
-// ========== Core Types ==========
-
-sealed class TaskResult<out T> {
-    data class Success<T>(val value: T) : TaskResult<T>()
-    data class Failure(val error: Throwable) : TaskResult<Nothing>()
-    object Cancelled : TaskResult<Nothing>()
-
-    fun <R> map(transform: (T) -> R): TaskResult<R> = when (this) {
-        is Success -> Success(transform(value))
-        is Failure -> this
-        is Cancelled -> this
-    }
-
-    fun getOrNull(): T? = (this as? Success)?.value
-}
-
-data class TaskMetadata(
-    val name: String,
-    val description: String = "",
-    val priority: TaskPriority = TaskPriority.NORMAL,
-    val retries: Int = 0,
-    val timeout: Long = 0
-)
-
-enum class TaskPriority { LOW, NORMAL, HIGH, CRITICAL }
-enum class TaskStatus { PENDING, RUNNING, COMPLETED, FAILED, CANCELLED }
-
-// ========== Task Interface ==========
-
-interface Task<T> {
-    val metadata: TaskMetadata
-    val status: StateFlow<TaskStatus>
-    suspend fun execute(): TaskResult<T>
-    fun cancel()
-}
-
-// ========== Example Tasks ==========
-
-@RegisteredTask(name = "DataFetch", priority = TaskPriority.HIGH, retries = 3)
-class DataFetchTask(override val metadata: TaskMetadata) : SimpleTask<String>(metadata) {
-    override suspend fun run(): String {
-        delay(1000)
-        return "Fetched data at ${System.currentTimeMillis()}"
-    }
-}
-
-@RegisteredTask(name = "DataProcess", priority = TaskPriority.NORMAL, retries = 2)
-class DataProcessTask(override val metadata: TaskMetadata) : SimpleTask<String>(metadata) {
-    override suspend fun run(): String {
-        delay(500)
-        return "Processed data"
-    }
-}
-
-// ========== Main Demo ==========
-
-fun main() = runBlocking {
-    println("=== TaskFlow Demo ===\n")
-
-    // 1. Simple Task with DSL
-    println("1. Creating task with DSL:")
-    val simpleTask = task<String> {
-        name = "GreetingTask"
-        description = "Generates a greeting"
-        timeout = 5000
-
-        action {
-            delay(500)
-            "Hello from TaskFlow!"
-        }
-    }
-
-    val result1 = simpleTask.execute()
-    println("Result: ${result1.getOrNull()}\n")
-
-    // 2. Workflow Task
-    println("2. Creating workflow:")
-    val workflowTask = workflow<String> {
-        name = "DataPipeline"
-        description = "Fetch and process data"
-
-        task("fetch") {
-            delay(1000)
-            "Raw Data"
-        }
-
-        task("transform") {
-            delay(500)
-            "Transformed"
-        }
-
-        finalize { results ->
-            "Pipeline completed: $results"
-        }
-    }
-
-    val result2 = workflowTask.execute()
-    println("Workflow result: ${result2.getOrNull()}\n")
-
-    // 3. Task Executor with monitoring
-    println("3. Task Executor with monitoring:")
-    val executor = TaskExecutor(maxConcurrentTasks = 2)
-
-    launch {
-        executor.events.collect { event ->
-            when (event) {
-                is TaskEvent.Started -> println("  ▶ Started: ${event.taskName}")
-                is TaskEvent.Completed -> println("  ✅ Completed: ${event.taskName}")
-                is TaskEvent.Failed -> println("  ❌ Failed: ${event.taskName}")
-                is TaskEvent.Retrying -> println("  🔄 Retrying: ${event.taskName} (attempt ${event.attempt})")
-                is TaskEvent.Cancelled -> println("  ⛔ Cancelled: ${event.taskName}")
-            }
-        }
-    }
-
-    val tasks = (1..5).map { i ->
-        task<Int> {
-            name = "Task-$i"
-            retries = 2
-            action {
-                delay((500..1500).random().toLong())
-                if (i == 3) throw Exception("Simulated failure")
-                i * 10
-            }
-        }
-    }
-
-    val results = tasks.map { async { executor.execute(it) } }.awaitAll()
-
-    println("\nResults:")
-    results.forEach { result ->
-        println("  ${result.getOrNull() ?: "Failed"}")
-    }
-
-    // 4. Task Registry with Reflection
-    println("\n4. Task Registry:")
-    TaskRegistry.register(DataFetchTask::class)
-    TaskRegistry.register(DataProcessTask::class)
-
-    println("Registered tasks: ${TaskRegistry.listTasks()}")
-
-    val fetchTask = TaskRegistry.create<String>("DataFetch")
-    if (fetchTask != null) {
-        val result = executor.execute(fetchTask)
-        println("Registry task result: ${result.getOrNull()}")
-    }
-
-    delay(1000)
-    executor.shutdown()
-
-    println("\n=== Demo Complete ===")
-}
-```
+**Answer**: **C** - `out` makes a type covariant, meaning it can only be produced/returned, not consumed. `in` makes it contravariant (consumer).
 
 ---
 
-## Extension Challenges
+### Question 3: Reified Type Parameters
 
-Ready for more? Try these advanced challenges:
+What is required to use reified type parameters?
 
-### Challenge 1: Dependency Management
+**A)** The function must be suspend
+**B)** The function must be inline
+**C)** The class must be open
+**D)** The type must be nullable
 
-Add task dependencies so tasks only run after their dependencies complete:
-
-```kotlin
-class DependentTask<T>(
-    metadata: TaskMetadata,
-    private val dependencies: List<Task<*>>,
-    private val action: suspend (List<Any?>) -> T
-) : Task<T> {
-    // Implementation here
-}
-```
-
-### Challenge 2: Task Scheduler
-
-Implement scheduled and recurring tasks:
-
-```kotlin
-class TaskScheduler {
-    fun scheduleAt(time: LocalDateTime, task: Task<*>)
-    fun scheduleRecurring(interval: Duration, task: Task<*>)
-    fun cancel(taskId: String)
-}
-```
-
-### Challenge 3: Persistence
-
-Save and restore task state:
-
-```kotlin
-interface TaskPersistence {
-    suspend fun saveState(task: Task<*>)
-    suspend fun loadState(taskId: String): Task<*>?
-    suspend fun getHistory(taskId: String): List<TaskResult<*>>
-}
-```
-
-### Challenge 4: Priority Queue
-
-Implement priority-based task execution:
-
-```kotlin
-class PriorityTaskExecutor {
-    suspend fun submit(task: Task<*>)
-    // Executes higher priority tasks first
-}
-```
-
-### Challenge 5: Error Recovery
-
-Add sophisticated error recovery strategies:
-
-```kotlin
-sealed class RecoveryStrategy {
-    object Retry : RecoveryStrategy()
-    data class Fallback(val alternativeTask: Task<*>) : RecoveryStrategy()
-    data class Circuit(val threshold: Int, val resetTime: Duration) : RecoveryStrategy()
-}
-```
+**Answer**: **B** - Reified type parameters require the function to be `inline` so the compiler can substitute the actual type at call sites.
 
 ---
 
-## Testing Your Implementation
+### Question 4: Star Projection
 
-```kotlin
-import kotlinx.coroutines.test.*
-import kotlin.test.*
+What can you do with a `MutableList<*>`?
 
-class TaskFlowTests {
-    @Test
-    fun testSimpleTaskSuccess() = runTest {
-        val task = task<Int> {
-            name = "Test"
-            action { 42 }
-        }
+**A)** Add and remove elements
+**B)** Only add elements
+**C)** Only read elements
+**D)** Nothing at all
 
-        val result = task.execute()
-        assertTrue(result is TaskResult.Success)
-        assertEquals(42, result.getOrNull())
-    }
-
-    @Test
-    fun testTaskRetry() = runTest {
-        var attempts = 0
-        val task = task<Int> {
-            name = "RetryTest"
-            retries = 2
-            action {
-                attempts++
-                if (attempts < 3) throw Exception("Fail")
-                42
-            }
-        }
-
-        val executor = TaskExecutor()
-        val result = executor.execute(task)
-
-        assertEquals(3, attempts)
-        assertTrue(result is TaskResult.Success)
-    }
-
-    @Test
-    fun testWorkflow() = runTest {
-        val workflow = workflow<Int> {
-            name = "TestWorkflow"
-
-            task("step1") { 10 }
-            task("step2") { 20 }
-
-            finalize { results ->
-                (results[0] as Int) + (results[1] as Int)
-            }
-        }
-
-        val result = workflow.execute()
-        assertEquals(30, result.getOrNull())
-    }
-}
-```
+**Answer**: **C** - `MutableList<*>` can only read elements (as `Any?`). You cannot add elements because the compiler doesn't know the actual type.
 
 ---
 
-## What You've Built
+### Question 5: Multiple Constraints
 
-Congratulations! You've built a production-quality task scheduling system that demonstrates:
+How do you specify multiple type constraints?
 
-✅ **Generics** - Type-safe task system with generic results
-✅ **Coroutines** - Async task execution with proper concurrency
-✅ **Flows** - Real-time status monitoring and events
-✅ **Delegation** - Lazy resources, observable state, validated config
-✅ **Reflection** - Dynamic task discovery and registration
-✅ **DSLs** - Beautiful, type-safe configuration API
-✅ **Error Handling** - Retry logic, timeouts, cancellation
-✅ **Structured Concurrency** - Proper lifecycle management
+```kotlin
+fun <T> process(item: T) where T : _____, T : _____
+```
+
+**A)** Separate with commas inside angle brackets
+**B)** Use `where` clause with commas
+**C)** Use multiple angle brackets
+**D)** Not possible in Kotlin
+
+**Answer**: **B** - Multiple constraints use the `where` clause: `fun <T> process(item: T) where T : Constraint1, T : Constraint2`
 
 ---
 
 ## Summary
 
-You've completed Part 4: Advanced Kotlin Features! Here's everything you learned:
+Congratulations! You've mastered Kotlin generics. Here's what you learned:
 
-### Lesson 4.1: Generics
-- Generic classes and functions
-- Type constraints and variance
-- Reified type parameters
+✅ **Generic Classes and Functions** - Write reusable code for any type
+✅ **Type Constraints** - Restrict types with upper bounds
+✅ **Variance** - Understand `out` (covariant), `in` (contravariant), and invariant
+✅ **Reified Type Parameters** - Preserve type information at runtime
+✅ **Star Projections** - Work with unknown types safely
+✅ **Generic Constraints** - Use `where` for multiple bounds
 
-### Lesson 4.2: Coroutines Fundamentals
-- Suspend functions
-- launch, async, runBlocking
-- Scopes and contexts
+### Key Takeaways
 
-### Lesson 4.3: Advanced Coroutines
-- Structured concurrency
-- Flows and Channels
-- StateFlow and SharedFlow
+1. **Generics provide type safety** without code duplication
+2. **Use `out`** when you only return a type (producer)
+3. **Use `in`** when you only accept a type (consumer)
+4. **`reified` requires `inline`** but gives runtime type access
+5. **Star projection `*`** is useful when the exact type doesn't matter
 
-### Lesson 4.4: Delegation
-- Class delegation
-- Property delegation
-- Lazy initialization
+### Next Steps
 
-### Lesson 4.5: Annotations and Reflection
-- Custom annotations
-- Runtime reflection
-- Metadata inspection
-
-### Lesson 4.6: DSLs
-- Lambda with receiver
-- Type-safe builders
-- @DslMarker
-
-### Lesson 4.7: Capstone Project
-- Real-world integration
-- Production patterns
-- Advanced architectures
+In the next lesson, we'll dive into **Coroutines Fundamentals** - Kotlin's powerful approach to asynchronous programming. You'll learn how to write concurrent code that's easy to read and maintain!
 
 ---
 
-## Next Steps
-
-You're now ready for **Part 5: Backend Development with Ktor**! You'll learn to:
-- Build RESTful APIs
-- Handle HTTP requests and responses
-- Implement authentication and authorization
-- Work with databases
-- Deploy production applications
-
-Keep this capstone project as a reference—many patterns you built here apply to backend development!
-
----
-
-**Final Challenge**: Extend TaskFlow with a web dashboard using Ktor. Create REST endpoints to submit tasks, monitor progress, view history, and manage the scheduler. Combine everything you've learned in Parts 1-5!
+**Practice Challenge**: Create a generic `Pool<T>` class that manages reusable objects (like database connections). Implement `acquire()` to get an object and `release(obj: T)` to return it to the pool.

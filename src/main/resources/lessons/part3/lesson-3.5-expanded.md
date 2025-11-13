@@ -1,1140 +1,913 @@
-# Lesson 3.5: Function Composition and Currying
+# Lesson 2.5: Data Classes and Sealed Classes
 
-**Estimated Time**: 60 minutes
-**Difficulty**: Advanced
-**Prerequisites**: Lessons 3.1-3.4 (Functional programming fundamentals)
+**Estimated Time**: 65 minutes
 
 ---
 
 ## Topic Introduction
 
-You've learned functional programming basics, lambdas, collections, and scope functions. Now it's time to explore advanced functional techniques that enable powerful abstractions.
+Kotlin provides special class types that solve common programming patterns elegantly. You've learned about regular classes, abstract classes, and interfaces. Now let's explore two powerful Kotlin features:
 
-Function composition and currying are techniques that let you build complex functionality from simple building blocks. They're the foundation of elegant, reusable code.
+**Data Classes**: Classes designed to hold data with automatic implementations of `equals()`, `hashCode()`, `toString()`, and `copy()`.
 
-In this lesson, you'll learn:
-- Function composition (combining functions)
-- Currying and partial application
-- Extension functions as functional tools
-- Infix functions for readable code
-- Operator overloading
-- Building domain-specific languages (DSLs)
+**Sealed Classes**: Classes with a restricted hierarchy where all subclasses are known at compile-time, perfect for representing state or result types.
 
-By the end, you'll create expressive, composable APIs!
+These features make Kotlin code more concise, safer, and more expressive than traditional OOP languages.
 
 ---
 
-## The Concept: Building with Functions
+## The Concept
 
-### The LEGO Analogy
+### Why Special Class Types?
 
-Imagine building with LEGO:
-- **Small pieces**: Individual functions (single responsibility)
-- **Combining pieces**: Function composition (build complex structures)
-- **Specialized tools**: Extension functions, operators
+**Problem with Regular Classes**:
 
 ```kotlin
-// Individual functions (LEGO pieces)
-fun trim(s: String) = s.trim()
-fun uppercase(s: String) = s.uppercase()
-fun addExclamation(s: String) = "$s!"
+class User(val name: String, val age: Int)
 
-// Composition (building something bigger)
-fun enthusiasticProcess(s: String) = addExclamation(uppercase(trim(s)))
+val user1 = User("Alice", 25)
+val user2 = User("Alice", 25)
 
-val result = enthusiasticProcess("  hello  ")
-println(result)  // HELLO!
+println(user1 == user2)  // false (different instances!)
+println(user1)           // User@4a574795 (not helpful!)
 ```
 
-**Better with composition**:
+**Solution with Data Classes**:
 
 ```kotlin
-val process = ::trim then ::uppercase then ::addExclamation
-val result = process("  hello  ")
-println(result)  // HELLO!
+data class User(val name: String, val age: Int)
+
+val user1 = User("Alice", 25)
+val user2 = User("Alice", 25)
+
+println(user1 == user2)  // true (compares data!)
+println(user1)           // User(name=Alice, age=25) (readable!)
 ```
 
 ---
 
-## Function Composition
+## Data Classes
 
-Combining functions to create new functions.
+### Creating Data Classes
 
-### Mathematical Foundation
-
-In math: `(f ∘ g)(x) = f(g(x))`
+Use the `data` keyword before `class`:
 
 ```kotlin
-// g(x) then f(result)
-fun compose(f: (Int) -> Int, g: (Int) -> Int): (Int) -> Int {
-    return { x -> f(g(x)) }
-}
-
-val double = { x: Int -> x * 2 }
-val increment = { x: Int -> x + 1 }
-
-// Compose: first increment, then double
-val incrementThenDouble = compose(double, increment)
-
-println(incrementThenDouble(5))  // (5 + 1) * 2 = 12
+data class Person(val name: String, val age: Int, val email: String)
 ```
 
-### Generic Composition
+**What Kotlin generates automatically**:
+1. **`equals()`** - Compares data, not references
+2. **`hashCode()`** - Consistent with `equals()`
+3. **`toString()`** - Readable string representation
+4. **`copy()`** - Creates copies with modified properties
+5. **`componentN()`** - Destructuring declarations
+
+### Requirements for Data Classes
+
+1. Primary constructor must have at least one parameter
+2. All primary constructor parameters must be `val` or `var`
+3. Cannot be `abstract`, `open`, `sealed`, or `inner`
+4. May extend other classes or implement interfaces
+
+### Auto-Generated Functions
+
+**1. `toString()`** - Readable representation
 
 ```kotlin
-// Generic composition for any types
-fun <A, B, C> compose(f: (B) -> C, g: (A) -> B): (A) -> C {
-    return { x -> f(g(x)) }
-}
+data class User(val name: String, val age: Int)
 
-val trim: (String) -> String = { it.trim() }
-val length: (String) -> Int = { it.length }
-
-val trimAndLength = compose(length, trim)
-
-println(trimAndLength("  hello  "))  // 5
+val user = User("Alice", 25)
+println(user)  // User(name=Alice, age=25)
 ```
 
-### Infix Composition Operator
-
-Make composition more readable with `infix`:
+**2. `equals()` and `hashCode()`** - Structural equality
 
 ```kotlin
-infix fun <A, B, C> ((B) -> C).compose(other: (A) -> B): (A) -> C {
-    return { x -> this(other(x)) }
-}
+data class Point(val x: Int, val y: Int)
 
-// Or "andThen" for more intuitive reading
-infix fun <A, B, C> ((A) -> B).andThen(other: (B) -> C): (A) -> C {
-    return { x -> other(this(x)) }
-}
+val p1 = Point(10, 20)
+val p2 = Point(10, 20)
+val p3 = Point(30, 40)
 
-// Usage
-val trim: (String) -> String = { it.trim() }
-val uppercase: (String) -> String = { it.uppercase() }
-val length: (String) -> Int = { it.length }
+println(p1 == p2)  // true (same data)
+println(p1 == p3)  // false (different data)
 
-// Read as: trim, then uppercase, then get length
-val process = trim andThen uppercase andThen length
-
-println(process("  hello  "))  // 5
+// HashCode consistency
+println(p1.hashCode() == p2.hashCode())  // true
 ```
 
-### Practical Example: Data Transformation Pipeline
+**3. `copy()`** - Create modified copies
 
 ```kotlin
-// Individual transformations
-val validateEmail: (String) -> String? = { email ->
-    if (email.contains("@")) email else null
+data class User(val name: String, val age: Int, val email: String)
+
+val user = User("Alice", 25, "alice@example.com")
+
+// Create a copy with modified age
+val olderUser = user.copy(age = 26)
+
+println(user)       // User(name=Alice, age=25, email=alice@example.com)
+println(olderUser)  // User(name=Alice, age=26, email=alice@example.com)
+
+// Copy with multiple changes
+val differentUser = user.copy(name = "Bob", age = 30)
+println(differentUser)  // User(name=Bob, age=30, email=alice@example.com)
+```
+
+**Why `copy()` matters**:
+- Immutability: Don't modify original, create new versions
+- Thread safety: Immutable data is inherently thread-safe
+- Functional programming: Transform data without side effects
+
+---
+
+## Destructuring Declarations
+
+Data classes support **destructuring** - extracting multiple values at once:
+
+```kotlin
+data class User(val name: String, val age: Int, val email: String)
+
+val user = User("Alice", 25, "alice@example.com")
+
+// Destructure into separate variables
+val (name, age, email) = user
+
+println(name)   // Alice
+println(age)    // 25
+println(email)  // alice@example.com
+```
+
+**How it works**: Kotlin generates `component1()`, `component2()`, etc. functions:
+
+```kotlin
+val name = user.component1()  // Same as destructuring
+val age = user.component2()
+val email = user.component3()
+```
+
+**Partial Destructuring**:
+
+```kotlin
+val (name, age) = user  // Only extract first two
+val (_, _, email) = user  // Skip first two with underscore
+```
+
+**Destructuring in Loops**:
+
+```kotlin
+data class Person(val name: String, val age: Int)
+
+val people = listOf(
+    Person("Alice", 25),
+    Person("Bob", 30),
+    Person("Carol", 22)
+)
+
+for ((name, age) in people) {
+    println("$name is $age years old")
 }
-
-val normalizeEmail: (String) -> String = { email ->
-    email.trim().lowercase()
-}
-
-val extractDomain: (String) -> String = { email ->
-    email.substringAfter("@")
-}
-
-// Composition
-infix fun <A, B, C> ((A) -> B?).thenIfNotNull(other: (B) -> C): (A) -> C? {
-    return { x -> this(x)?.let(other) }
-}
-
-val processPipeline = validateEmail thenIfNotNull normalizeEmail
-
-val email1 = processPipeline("  USER@EXAMPLE.COM  ")
-println(email1)  // user@example.com
-
-val email2 = processPipeline("invalid")
-println(email2)  // null
 ```
 
 ---
 
-## Currying
+## Real-World Data Class Examples
 
-Transforming a function with multiple parameters into a sequence of functions, each taking a single parameter.
-
-### Basic Currying
+### Example 1: API Response
 
 ```kotlin
-// Regular function
-fun add(a: Int, b: Int): Int = a + b
+data class ApiResponse<T>(
+    val success: Boolean,
+    val data: T?,
+    val message: String,
+    val timestamp: Long = System.currentTimeMillis()
+)
 
-// Curried version
-fun curriedAdd(a: Int): (Int) -> Int {
-    return { b -> a + b }
+data class User(val id: Int, val username: String, val email: String)
+
+fun fetchUser(id: Int): ApiResponse<User> {
+    return if (id > 0) {
+        val user = User(id, "alice", "alice@example.com")
+        ApiResponse(success = true, data = user, message = "User found")
+    } else {
+        ApiResponse(success = false, data = null, message = "Invalid user ID")
+    }
 }
 
-// Usage
-val add5 = curriedAdd(5)
-println(add5(3))   // 8
-println(add5(10))  // 15
+fun main() {
+    val response = fetchUser(1)
+    println(response)
 
-// Or in one line
-println(curriedAdd(10)(5))  // 15
+    if (response.success) {
+        val user = response.data
+        println("User: ${user?.username}")
+    }
+}
 ```
 
-### Generic Currying Helper
+### Example 2: Coordinates and Geometry
 
 ```kotlin
-fun <A, B, C> curry(f: (A, B) -> C): (A) -> (B) -> C {
-    return { a -> { b -> f(a, b) } }
+data class Point(val x: Double, val y: Double) {
+    fun distanceTo(other: Point): Double {
+        val dx = x - other.x
+        val dy = y - other.y
+        return kotlin.math.sqrt(dx * dx + dy * dy)
+    }
 }
 
-// Usage
-val add = { a: Int, b: Int -> a + b }
-val curriedAdd = curry(add)
+data class Rectangle(val topLeft: Point, val bottomRight: Point) {
+    val width: Double
+        get() = bottomRight.x - topLeft.x
 
-val add10 = curriedAdd(10)
-println(add10(5))  // 15
+    val height: Double
+        get() = bottomRight.y - topLeft.y
+
+    val area: Double
+        get() = width * height
+}
+
+fun main() {
+    val p1 = Point(0.0, 0.0)
+    val p2 = Point(3.0, 4.0)
+
+    println("Distance: ${p1.distanceTo(p2)}")  // 5.0
+
+    val rect = Rectangle(Point(0.0, 10.0), Point(5.0, 0.0))
+    println("Area: ${rect.area}")  // 50.0
+}
 ```
 
-### Three-Parameter Currying
+---
+
+## Sealed Classes
+
+**Sealed classes** represent restricted class hierarchies where all subclasses are known at compile-time.
+
+### Why Sealed Classes?
+
+**Problem**: Modeling states or results with regular classes
 
 ```kotlin
-fun <A, B, C, D> curry(f: (A, B, C) -> D): (A) -> (B) -> (C) -> D {
-    return { a -> { b -> { c -> f(a, b, c) } } }
+open class Result
+class Success(val data: String) : Result()
+class Error(val message: String) : Result()
+
+fun handleResult(result: Result) {
+    when (result) {
+        is Success -> println("Success: ${result.data}")
+        is Error -> println("Error: ${result.message}")
+        // What if we add a new subclass? Compiler won't warn us!
+    }
 }
-
-val multiply = { a: Int, b: Int, c: Int -> a * b * c }
-val curriedMultiply = curry(multiply)
-
-val multiplyBy2 = curriedMultiply(2)
-val multiplyBy2And3 = multiplyBy2(3)
-println(multiplyBy2And3(4))  // 24
-
-// Or all at once
-println(curriedMultiply(2)(3)(4))  // 24
 ```
 
-### Practical Example: Configuration Builder
+**Solution**: Sealed classes
 
 ```kotlin
-// Regular function with many parameters
-fun sendEmail(
-    to: String,
-    subject: String,
-    body: String,
-    priority: String,
-    attachments: List<String>
-) {
-    println("Sending email:")
-    println("  To: $to")
-    println("  Subject: $subject")
-    println("  Body: $body")
-    println("  Priority: $priority")
-    println("  Attachments: $attachments")
+sealed class Result {
+    data class Success(val data: String) : Result()
+    data class Error(val message: String) : Result()
+    object Loading : Result()
 }
 
-// Curried version for reusability
-fun emailSender(to: String) = { subject: String ->
-    { body: String ->
-        { priority: String ->
-            { attachments: List<String> ->
-                sendEmail(to, subject, body, priority, attachments)
+fun handleResult(result: Result) {
+    when (result) {
+        is Result.Success -> println("Success: ${result.data}")
+        is Result.Error -> println("Error: ${result.message}")
+        Result.Loading -> println("Loading...")
+        // ✅ Compiler ensures all cases are covered!
+    }
+}
+```
+
+### Defining Sealed Classes
+
+```kotlin
+sealed class NetworkResult {
+    data class Success(val data: String) : NetworkResult()
+    data class Error(val code: Int, val message: String) : NetworkResult()
+    object Loading : NetworkResult()
+    object Idle : NetworkResult()
+}
+```
+
+**Key Points**:
+- Subclasses must be defined in the same file (or as nested classes)
+- Cannot be instantiated directly
+- Perfect for `when` expressions (exhaustive checking)
+
+---
+
+## Sealed Classes for State Management
+
+```kotlin
+sealed class UiState {
+    object Loading : UiState()
+    data class Success(val items: List<String>) : UiState()
+    data class Error(val message: String) : UiState()
+    object Empty : UiState()
+}
+
+class ViewModel {
+    private var state: UiState = UiState.Loading
+
+    fun loadData() {
+        state = UiState.Loading
+        displayState()
+
+        // Simulate loading
+        Thread.sleep(1000)
+
+        val items = listOf("Item 1", "Item 2", "Item 3")
+        state = if (items.isNotEmpty()) {
+            UiState.Success(items)
+        } else {
+            UiState.Empty
+        }
+        displayState()
+    }
+
+    fun displayState() {
+        when (state) {
+            is UiState.Loading -> println("⏳ Loading...")
+            is UiState.Success -> {
+                val items = (state as UiState.Success).items
+                println("✅ Loaded ${items.size} items: $items")
             }
+            is UiState.Error -> {
+                val message = (state as UiState.Error).message
+                println("❌ Error: $message")
+            }
+            UiState.Empty -> println("📭 No items found")
         }
     }
 }
 
-// Create specialized senders
-val sendToAdmin = emailSender("admin@example.com")
-val sendAlertToAdmin = sendToAdmin("ALERT")
-
-// Use it
-sendAlertToAdmin("System down")("HIGH")(emptyList())
-
-// Or create even more specialized versions
-val sendHighPriorityAlert = sendToAdmin("ALERT")("System issue")("HIGH")
-sendHighPriorityAlert(listOf("log.txt"))
+fun main() {
+    val viewModel = ViewModel()
+    viewModel.loadData()
+}
 ```
 
 ---
 
-## Partial Application
+## Enum Classes
 
-Fixing some arguments of a function, creating a new function.
-
-### Manual Partial Application
+**Enum classes** define a fixed set of constants.
 
 ```kotlin
-fun greet(greeting: String, name: String): String {
-    return "$greeting, $name!"
+enum class Direction {
+    NORTH, SOUTH, EAST, WEST
 }
 
-// Partially apply the greeting
-fun greetWith(greeting: String): (String) -> String {
-    return { name -> greet(greeting, name) }
+enum class Priority(val level: Int) {
+    LOW(1),
+    MEDIUM(2),
+    HIGH(3),
+    CRITICAL(4);
+
+    fun isUrgent() = level >= 3
 }
 
-val sayHello = greetWith("Hello")
-val sayGoodbye = greetWith("Goodbye")
+fun main() {
+    val direction = Direction.NORTH
+    println(direction)  // NORTH
 
-println(sayHello("Alice"))     // Hello, Alice!
-println(sayGoodbye("Bob"))     // Goodbye, Bob!
+    val priority = Priority.HIGH
+    println("Level: ${priority.level}")  // Level: 3
+    println("Urgent: ${priority.isUrgent()}")  // Urgent: true
+
+    // Iterate over all values
+    Priority.values().forEach { p ->
+        println("${p.name}: Level ${p.level}")
+    }
+
+    // String to enum
+    val p = Priority.valueOf("MEDIUM")
+    println(p.level)  // 2
+}
 ```
 
-### Generic Partial Application Helper
+**Enum vs Sealed Class**:
 
-```kotlin
-fun <A, B, C> partial1(f: (A, B) -> C, a: A): (B) -> C {
-    return { b -> f(a, b) }
-}
-
-fun <A, B, C> partial2(f: (A, B) -> C, b: B): (A) -> C {
-    return { a -> f(a, b) }
-}
-
-// Usage
-val multiply = { a: Int, b: Int -> a * b }
-
-val double = partial1(multiply, 2)
-println(double(5))  // 10
-
-val multiplyBy10 = partial2(multiply, 10)
-println(multiplyBy10(5))  // 50
-```
-
-### Practical Example: Database Queries
-
-```kotlin
-// Generic query function
-fun query(
-    database: String,
-    table: String,
-    columns: List<String>,
-    where: String
-): String {
-    return "SELECT ${columns.joinToString()} FROM $database.$table WHERE $where"
-}
-
-// Partially apply database
-fun queriesFor(database: String) = { table: String, columns: List<String>, where: String ->
-    query(database, table, columns, where)
-}
-
-// Partially apply database and table
-fun tableQueries(database: String, table: String) = { columns: List<String>, where: String ->
-    query(database, table, columns, where)
-}
-
-// Usage
-val prodQueries = queriesFor("production")
-val userQuery = prodQueries("users", listOf("id", "name", "email"), "active = true")
-println(userQuery)
-// SELECT id, name, email FROM production.users WHERE active = true
-
-val userTableQueries = tableQueries("production", "users")
-val activeUsers = userTableQueries(listOf("*"), "active = true")
-println(activeUsers)
-// SELECT * FROM production.users WHERE active = true
-```
+| Feature | Enum | Sealed Class |
+|---------|------|--------------|
+| Fixed set of instances | ✅ Yes (all at compile-time) | ✅ Yes (types known at compile-time) |
+| Can have different data | ❌ No (same structure) | ✅ Yes (different properties) |
+| Can inherit | ❌ No | ✅ Yes |
+| When to use | Finite set of constants | Type hierarchies with different data |
 
 ---
 
-## Extension Functions as Functional Tools
+## Value Classes (Inline Classes)
 
-Extension functions enable functional-style APIs.
-
-### Pipeline Operations
+**Value classes** provide type safety without runtime overhead.
 
 ```kotlin
-// Extension functions for string processing
-fun String.trimAndLower() = this.trim().lowercase()
-fun String.removeSpaces() = this.replace(" ", "")
-fun String.addPrefix(prefix: String) = "$prefix$this"
-fun String.addSuffix(suffix: String) = "$this$suffix"
+@JvmInline
+value class UserId(val value: Int)
 
-// Usage: fluent pipeline
-val result = "  Hello World  "
-    .trimAndLower()
-    .removeSpaces()
-    .addPrefix("[")
-    .addSuffix("]")
-
-println(result)  // [helloworld]
-```
-
-### Collection Extensions
-
-```kotlin
-// Custom collection operations
-fun <T> List<T>.second(): T? = this.getOrNull(1)
-fun <T> List<T>.secondOrNull(): T? = this.getOrNull(1)
-
-fun <T> List<T>.takeIfNotEmpty(): List<T>? =
-    if (this.isNotEmpty()) this else null
-
-fun <T> List<T>.splitAt(index: Int): Pair<List<T>, List<T>> =
-    this.take(index) to this.drop(index)
-
-// Usage
-val numbers = listOf(1, 2, 3, 4, 5)
-
-println(numbers.second())  // 2
-val (left, right) = numbers.splitAt(2)
-println("Left: $left, Right: $right")  // Left: [1, 2], Right: [3, 4, 5]
-```
-
-### Higher-Order Extension Functions
-
-```kotlin
-// Retry logic as extension
-fun <T> (() -> T).retry(times: Int): T? {
-    repeat(times) { attempt ->
-        try {
-            return this()
-        } catch (e: Exception) {
-            if (attempt == times - 1) throw e
-            println("Attempt ${attempt + 1} failed, retrying...")
-        }
+@JvmInline
+value class Email(val value: String) {
+    init {
+        require(value.contains("@")) { "Invalid email" }
     }
-    return null
 }
 
-// Measure execution time
-fun <T> (() -> T).measureTimeMillis(): Pair<T, Long> {
-    val start = System.currentTimeMillis()
-    val result = this()
-    val elapsed = System.currentTimeMillis() - start
-    return result to elapsed
+fun sendEmail(email: Email) {
+    println("Sending email to ${email.value}")
 }
 
-// Usage
-val (result, time) = {
-    Thread.sleep(100)
-    "Done"
-}.measureTimeMillis()
+fun main() {
+    val userId = UserId(123)
+    val email = Email("alice@example.com")
 
-println("Result: $result, Time: ${time}ms")
+    // sendEmail(UserId(456))  // ❌ Type mismatch!
+    sendEmail(email)  // ✅ Correct type
+
+    // At runtime, email is just a String (no wrapper object)
+}
 ```
+
+**Benefits**:
+- Type safety: Can't accidentally pass wrong type
+- Zero runtime overhead: Unwrapped at runtime
+- Validation in init block
 
 ---
 
-## Infix Functions
+## Exercise 1: Product Catalog System
 
-Make function calls read like natural language.
+**Goal**: Create a product catalog using data classes.
 
-### Basic Infix
+**Requirements**:
+1. Data class `Product` with: `id`, `name`, `price`, `category`, `inStock`
+2. Data class `Order` with: `orderId`, `products: List<Product>`, `total`
+3. Function to calculate total from products
+4. Function to create a modified order with discount
+5. Test with sample products and orders
 
-```kotlin
-infix fun Int.times(str: String): String {
-    return str.repeat(this)
-}
+---
 
-println(3 times "Ha")  // HaHaHa
-
-infix fun String.onto(list: MutableList<String>) {
-    list.add(this)
-}
-
-val items = mutableListOf<String>()
-"apple" onto items
-"banana" onto items
-println(items)  // [apple, banana]
-```
-
-### Building Readable DSLs
+## Solution: Product Catalog
 
 ```kotlin
-// Test assertions
-infix fun <T> T.shouldBe(expected: T) {
-    if (this != expected) {
-        throw AssertionError("Expected $expected but got $this")
-    }
-}
-
-infix fun String.shouldContain(substring: String) {
-    if (!this.contains(substring)) {
-        throw AssertionError("'$this' should contain '$substring'")
-    }
-}
-
-// Usage (reads like English!)
-val name = "Alice"
-name shouldBe "Alice"
-name shouldContain "ice"
-
-val result = 2 + 2
-result shouldBe 4
-```
-
-### Practical Example: Query DSL
-
-```kotlin
-data class Query(val table: String, val conditions: List<String> = emptyList())
-
-infix fun String.from(table: String) = Query(table)
-
-infix fun Query.where(condition: String) = this.copy(
-    conditions = this.conditions + condition
+data class Product(
+    val id: Int,
+    val name: String,
+    val price: Double,
+    val category: String,
+    val inStock: Boolean = true
 )
 
-infix fun Query.and(condition: String) = this.copy(
-    conditions = this.conditions + condition
-)
+data class Order(
+    val orderId: String,
+    val products: List<Product>,
+    val discount: Double = 0.0
+) {
+    val subtotal: Double
+        get() = products.sumOf { it.price }
 
-fun Query.build(): String {
-    val whereCl= if (conditions.isNotEmpty()) {
-        " WHERE ${conditions.joinToString(" AND ")}"
-    } else ""
-    return "SELECT $table FROM $table$whereClause"
-}
+    val total: Double
+        get() = subtotal - discount
 
-// Usage: reads like SQL!
-val query = "users" from "users_table" where "age > 18" and "active = true"
-println(query.build())
-// SELECT users FROM users_table WHERE age > 18 AND active = true
-```
-
----
-
-## Operator Overloading
-
-Define how operators work with custom types.
-
-### Arithmetic Operators
-
-```kotlin
-data class Vector(val x: Double, val y: Double) {
-    operator fun plus(other: Vector) = Vector(x + other.x, y + other.y)
-    operator fun minus(other: Vector) = Vector(x - other.x, y - other.y)
-    operator fun times(scalar: Double) = Vector(x * scalar, y * scalar)
-
-    fun length() = Math.sqrt(x * x + y * y)
-}
-
-val v1 = Vector(1.0, 2.0)
-val v2 = Vector(3.0, 4.0)
-
-val sum = v1 + v2
-println("Sum: $sum")  // Vector(x=4.0, y=6.0)
-
-val scaled = v1 * 2.0
-println("Scaled: $scaled")  // Vector(x=2.0, y=4.0)
-```
-
-### Comparison Operators
-
-```kotlin
-data class Money(val amount: Double, val currency: String) {
-    operator fun compareTo(other: Money): Int {
-        require(currency == other.currency) { "Cannot compare different currencies" }
-        return amount.compareTo(other.amount)
+    fun applyDiscount(discountAmount: Double): Order {
+        return copy(discount = discountAmount)
     }
 
-    operator fun plus(other: Money): Money {
-        require(currency == other.currency) { "Cannot add different currencies" }
-        return Money(amount + other.amount, currency)
-    }
-}
-
-val m1 = Money(100.0, "USD")
-val m2 = Money(50.0, "USD")
-
-println(m1 > m2)   // true
-println(m1 + m2)   // Money(amount=150.0, currency=USD)
-```
-
-### Invoke Operator (Callable Objects)
-
-```kotlin
-class Multiplier(val factor: Int) {
-    operator fun invoke(value: Int): Int = value * factor
-}
-
-val triple = Multiplier(3)
-println(triple(10))  // 30
-println(triple(5))   // 15
-
-// Function-like object!
-```
-
-### Index Access Operator
-
-```kotlin
-class Grid(val width: Int, val height: Int) {
-    private val data = Array(width * height) { 0 }
-
-    operator fun get(x: Int, y: Int): Int {
-        return data[y * width + x]
-    }
-
-    operator fun set(x: Int, y: Int, value: Int) {
-        data[y * width + x] = value
-    }
-}
-
-val grid = Grid(3, 3)
-grid[1, 2] = 42
-println(grid[1, 2])  // 42
-```
-
----
-
-## Building a Simple DSL
-
-Combine everything to create a domain-specific language.
-
-### HTML Builder DSL
-
-```kotlin
-@DslMarker
-annotation class HtmlTagMarker
-
-@HtmlTagMarker
-abstract class Tag(val name: String) {
-    val children = mutableListOf<Tag>()
-    val attributes = mutableMapOf<String, String>()
-
-    protected fun <T : Tag> initTag(tag: T, init: T.() -> Unit): T {
-        tag.init()
-        children.add(tag)
-        return tag
-    }
-
-    fun render(): String {
-        val attrs = if (attributes.isEmpty()) "" else {
-            attributes.entries.joinToString(" ", " ") { "${it.key}=\"${it.value}\"" }
+    fun displayOrder() {
+        println("\n=== Order $orderId ===")
+        products.forEach { product ->
+            println("${product.name} - $${product.price}")
         }
-        val content = children.joinToString("") { it.render() }
-        return "<$name$attrs>$content</$name>"
+        println("---")
+        println("Subtotal: $$subtotal")
+        if (discount > 0) {
+            println("Discount: -$$discount")
+        }
+        println("Total: $$total")
+        println("===================\n")
     }
-}
-
-class HTML : Tag("html") {
-    fun head(init: Head.() -> Unit) = initTag(Head(), init)
-    fun body(init: Body.() -> Unit) = initTag(Body(), init)
-}
-
-class Head : Tag("head") {
-    fun title(init: Title.() -> Unit) = initTag(Title(), init)
-}
-
-class Title : Tag("title") {
-    operator fun String.unaryPlus() {
-        children.add(Text(this))
-    }
-}
-
-class Body : Tag("body") {
-    fun h1(init: H1.() -> Unit) = initTag(H1(), init)
-    fun p(init: P.() -> Unit) = initTag(P(), init)
-}
-
-class H1 : Tag("h1") {
-    operator fun String.unaryPlus() {
-        children.add(Text(this))
-    }
-}
-
-class P : Tag("p") {
-    operator fun String.unaryPlus() {
-        children.add(Text(this))
-    }
-}
-
-class Text(val content: String) : Tag("") {
-    override fun render() = content
-}
-
-fun html(init: HTML.() -> Unit): HTML {
-    val html = HTML()
-    html.init()
-    return html
-}
-
-// Usage: beautiful DSL!
-val page = html {
-    head {
-        title { +"My Page" }
-    }
-    body {
-        h1 { +"Welcome!" }
-        p { +"This is a paragraph." }
-        p { +"Another paragraph." }
-    }
-}
-
-println(page.render())
-// <html><head><title>My Page</title></head><body><h1>Welcome!</h1><p>This is a paragraph.</p><p>Another paragraph.</p></body></html>
-```
-
----
-
-## Exercise 1: Function Composition
-
-**Goal**: Implement function composition operators.
-
-**Task**: Create `andThen` and `compose` operators for functions.
-
-```kotlin
-// TODO: Implement these
-infix fun <A, B, C> ((A) -> B).andThen(other: (B) -> C): (A) -> C {
-    // Your code here
-}
-
-infix fun <A, B, C> ((B) -> C).compose(other: (A) -> B): (A) -> C {
-    // Your code here
 }
 
 fun main() {
-    val trim: (String) -> String = { it.trim() }
-    val uppercase: (String) -> String = { it.uppercase() }
-    val addExclamation: (String) -> String = { "$it!" }
+    val products = listOf(
+        Product(1, "Laptop", 999.99, "Electronics"),
+        Product(2, "Mouse", 29.99, "Electronics"),
+        Product(3, "Keyboard", 79.99, "Electronics"),
+        Product(4, "Monitor", 299.99, "Electronics"),
+        Product(5, "Desk Lamp", 39.99, "Furniture", inStock = false)
+    )
 
-    // TODO: Test both operators
+    // Filter in-stock products
+    val availableProducts = products.filter { it.inStock }
+
+    // Create order
+    val order = Order(
+        orderId = "ORD-2025-001",
+        products = listOf(
+            products[0],  // Laptop
+            products[1],  // Mouse
+            products[2]   // Keyboard
+        )
+    )
+
+    order.displayOrder()
+
+    // Apply discount
+    val discountedOrder = order.applyDiscount(50.0)
+    discountedOrder.displayOrder()
+
+    // Destructuring
+    val (orderId, items, discount) = discountedOrder
+    println("Order ID: $orderId")
+    println("Number of items: ${items.size}")
+    println("Discount: $$discount")
 }
 ```
 
 ---
 
-## Solution 1: Function Composition
+## Exercise 2: API Result with Sealed Classes
 
-```kotlin
-infix fun <A, B, C> ((A) -> B).andThen(other: (B) -> C): (A) -> C {
-    return { x -> other(this(x)) }
-}
+**Goal**: Model API responses using sealed classes.
 
-infix fun <A, B, C> ((B) -> C).compose(other: (A) -> B): (A) -> C {
-    return { x -> this(other(x)) }
-}
-
-fun main() {
-    val trim: (String) -> String = { it.trim() }
-    val uppercase: (String) -> String = { it.uppercase() }
-    val addExclamation: (String) -> String = { "$it!" }
-
-    // andThen: left to right
-    val process1 = trim andThen uppercase andThen addExclamation
-    println(process1("  hello  "))  // HELLO!
-
-    // compose: right to left
-    val process2 = addExclamation compose uppercase compose trim
-    println(process2("  world  "))  // WORLD!
-
-    // Practical example: data processing
-    val validate: (String) -> String? = { if (it.isNotEmpty()) it else null }
-    val normalize: (String) -> String = { it.trim().lowercase() }
-    val hash: (String) -> Int = { it.hashCode() }
-
-    val pipeline = normalize andThen hash
-    println("Hash: ${pipeline("  HELLO  ")}")  // Hash of "hello"
-}
-```
-
-**Explanation**:
-- `andThen`: Read left-to-right (intuitive)
-- `compose`: Mathematical notation (right-to-left)
-- Both achieve the same result, different reading order
+**Requirements**:
+1. Sealed class `ApiResult<T>` with subclasses: `Success`, `Error`, `Loading`
+2. Function `fetchData()` that returns different results
+3. Function `handleResult()` that processes each case
+4. Test with different scenarios
 
 ---
 
-## Exercise 2: Currying Implementation
-
-**Goal**: Implement a curry function for 2-parameter functions.
-
-**Task**:
+## Solution: API Result
 
 ```kotlin
-fun <A, B, C> curry(f: (A, B) -> C): (A) -> (B) -> C {
-    // TODO: Implement
+sealed class ApiResult<out T> {
+    data class Success<T>(val data: T) : ApiResult<T>()
+    data class Error(val code: Int, val message: String) : ApiResult<Nothing>()
+    object Loading : ApiResult<Nothing>()
 }
 
-fun main() {
-    val add = { a: Int, b: Int -> a + b }
-    val multiply = { a: Int, b: Int -> a * b }
+data class User(val id: Int, val name: String, val email: String)
 
-    // TODO: Test currying
-}
-```
-
----
-
-## Solution 2: Currying Implementation
-
-```kotlin
-fun <A, B, C> curry(f: (A, B) -> C): (A) -> (B) -> C {
-    return { a -> { b -> f(a, b) } }
-}
-
-// Bonus: Uncurry
-fun <A, B, C> uncurry(f: (A) -> (B) -> C): (A, B) -> C {
-    return { a, b -> f(a)(b) }
-}
-
-fun main() {
-    val add = { a: Int, b: Int -> a + b }
-    val multiply = { a: Int, b: Int -> a * b }
-
-    // Curry add
-    val curriedAdd = curry(add)
-    val add10 = curriedAdd(10)
-    println(add10(5))   // 15
-    println(add10(20))  // 30
-
-    // Curry multiply
-    val curriedMultiply = curry(multiply)
-    val double = curriedMultiply(2)
-    val triple = curriedMultiply(3)
-    println(double(7))  // 14
-    println(triple(7))  // 21
-
-    // Practical: Specialized formatters
-    val format = { prefix: String, value: String -> "$prefix: $value" }
-    val curriedFormat = curry(format)
-
-    val errorFormatter = curriedFormat("ERROR")
-    val infoFormatter = curriedFormat("INFO")
-
-    println(errorFormatter("Something went wrong"))  // ERROR: Something went wrong
-    println(infoFormatter("Process started"))        // INFO: Process started
-
-    // Uncurry example
-    val uncurriedAdd = uncurry(curriedAdd)
-    println(uncurriedAdd(5, 3))  // 8
-}
-```
-
-**Explanation**:
-- Currying transforms multi-parameter functions into chains
-- Creates specialized versions by fixing parameters
-- Useful for configuration and creating function families
-
----
-
-## Exercise 3: DSL Builder
-
-**Goal**: Create a simple DSL for building configurations.
-
-**Task**:
-
-```kotlin
-// TODO: Implement a configuration DSL
-class ServerConfig {
-    var host: String = ""
-    var port: Int = 0
-    val routes = mutableListOf<Route>()
-
-    fun route(path: String, init: Route.() -> Unit) {
-        // TODO
+fun fetchUser(userId: Int): ApiResult<User> {
+    return when {
+        userId <= 0 -> ApiResult.Error(400, "Invalid user ID")
+        userId == 999 -> ApiResult.Loading
+        else -> ApiResult.Success(User(userId, "User $userId", "user$userId@example.com"))
     }
 }
 
-class Route(val path: String) {
-    var method: String = "GET"
-    var handler: String = ""
-}
-
-fun server(init: ServerConfig.() -> Unit): ServerConfig {
-    // TODO
+fun <T> handleResult(result: ApiResult<T>, onSuccess: (T) -> Unit) {
+    when (result) {
+        is ApiResult.Success -> {
+            println("✅ Success!")
+            onSuccess(result.data)
+        }
+        is ApiResult.Error -> {
+            println("❌ Error ${result.code}: ${result.message}")
+        }
+        ApiResult.Loading -> {
+            println("⏳ Loading...")
+        }
+    }
 }
 
 fun main() {
-    // Should work like this:
-    val config = server {
-        host = "localhost"
-        port = 8080
-        route("/users") {
-            method = "GET"
-            handler = "listUsers"
-        }
-        route("/users") {
-            method = "POST"
-            handler = "createUser"
-        }
+    println("=== Fetch User 1 ===")
+    val result1 = fetchUser(1)
+    handleResult(result1) { user ->
+        println("User: ${user.name} (${user.email})")
     }
+
+    println("\n=== Fetch Invalid User ===")
+    val result2 = fetchUser(-1)
+    handleResult(result2) { user ->
+        println("User: ${user.name}")
+    }
+
+    println("\n=== Fetch Loading State ===")
+    val result3 = fetchUser(999)
+    handleResult(result3) { user ->
+        println("User: ${user.name}")
+    }
+
+    // Using when expression directly
+    println("\n=== Direct when expression ===")
+    val message = when (val result = fetchUser(5)) {
+        is ApiResult.Success -> "Loaded: ${result.data.name}"
+        is ApiResult.Error -> "Failed: ${result.message}"
+        ApiResult.Loading -> "Please wait..."
+    }
+    println(message)
 }
 ```
 
 ---
 
-## Solution 3: DSL Builder
+## Exercise 3: Task Management with Sealed Classes
+
+**Goal**: Build a task management system using sealed classes for task states.
+
+**Requirements**:
+1. Sealed class `TaskState` with: `Todo`, `InProgress`, `Completed`, `Cancelled`
+2. Data class `Task` with: `id`, `title`, `description`, `state`
+3. Functions to transition between states
+4. Track state change history
+
+---
+
+## Solution: Task Management
 
 ```kotlin
-class ServerConfig {
-    var host: String = ""
-    var port: Int = 0
-    val routes = mutableListOf<Route>()
-
-    fun route(path: String, init: Route.() -> Unit) {
-        val route = Route(path)
-        route.init()
-        routes.add(route)
+sealed class TaskState {
+    object Todo : TaskState() {
+        override fun toString() = "TODO"
     }
 
-    override fun toString(): String {
-        return """
-            Server Configuration:
-              Host: $host
-              Port: $port
-              Routes:
-                ${routes.joinToString("\n    ") { it.toString() }}
-        """.trimIndent()
+    data class InProgress(val assignee: String, val startedAt: Long = System.currentTimeMillis()) : TaskState() {
+        override fun toString() = "IN_PROGRESS (Assignee: $assignee)"
+    }
+
+    data class Completed(val completedBy: String, val completedAt: Long = System.currentTimeMillis()) : TaskState() {
+        override fun toString() = "COMPLETED (By: $completedBy)"
+    }
+
+    data class Cancelled(val reason: String) : TaskState() {
+        override fun toString() = "CANCELLED (Reason: $reason)"
     }
 }
 
-class Route(val path: String) {
-    var method: String = "GET"
-    var handler: String = ""
+data class Task(
+    val id: Int,
+    val title: String,
+    val description: String,
+    val state: TaskState = TaskState.Todo,
+    val history: List<TaskState> = listOf(TaskState.Todo)
+) {
+    fun startWork(assignee: String): Task {
+        require(state is TaskState.Todo) { "Task must be in TODO state to start" }
+        val newState = TaskState.InProgress(assignee)
+        return copy(state = newState, history = history + newState)
+    }
 
-    override fun toString() = "$method $path -> $handler"
+    fun complete(completedBy: String): Task {
+        require(state is TaskState.InProgress) { "Task must be in progress to complete" }
+        val newState = TaskState.Completed(completedBy)
+        return copy(state = newState, history = history + newState)
+    }
+
+    fun cancel(reason: String): Task {
+        require(state !is TaskState.Completed) { "Cannot cancel completed task" }
+        val newState = TaskState.Cancelled(reason)
+        return copy(state = newState, history = history + newState)
+    }
+
+    fun displayTask() {
+        println("\n=== Task #$id ===")
+        println("Title: $title")
+        println("Description: $description")
+        println("Current State: $state")
+        println("\nState History:")
+        history.forEachIndexed { index, state ->
+            println("  ${index + 1}. $state")
+        }
+        println("================\n")
+    }
+
+    fun getStatusEmoji(): String = when (state) {
+        is TaskState.Todo -> "📝"
+        is TaskState.InProgress -> "🔄"
+        is TaskState.Completed -> "✅"
+        is TaskState.Cancelled -> "❌"
+    }
 }
 
-fun server(init: ServerConfig.() -> Unit): ServerConfig {
-    val config = ServerConfig()
-    config.init()
-    return config
+class TaskManager {
+    private val tasks = mutableMapOf<Int, Task>()
+    private var nextId = 1
+
+    fun createTask(title: String, description: String): Task {
+        val task = Task(nextId++, title, description)
+        tasks[task.id] = task
+        println("Created task: ${task.getStatusEmoji()} ${task.title}")
+        return task
+    }
+
+    fun updateTask(task: Task) {
+        tasks[task.id] = task
+        println("Updated task: ${task.getStatusEmoji()} ${task.title} -> ${task.state}")
+    }
+
+    fun listTasks() {
+        println("\n=== All Tasks ===")
+        tasks.values.forEach { task ->
+            println("${task.getStatusEmoji()} #${task.id}: ${task.title} [${task.state}]")
+        }
+        println("=================\n")
+    }
 }
 
 fun main() {
-    val config = server {
-        host = "localhost"
-        port = 8080
+    val manager = TaskManager()
 
-        route("/users") {
-            method = "GET"
-            handler = "listUsers"
-        }
+    // Create tasks
+    var task1 = manager.createTask("Implement login", "Add JWT authentication")
+    var task2 = manager.createTask("Fix bug #123", "Null pointer exception in profile")
+    var task3 = manager.createTask("Write tests", "Unit tests for payment module")
 
-        route("/users") {
-            method = "POST"
-            handler = "createUser"
-        }
+    manager.listTasks()
 
-        route("/users/{id}") {
-            method = "GET"
-            handler = "getUser"
-        }
+    // Start working on tasks
+    task1 = task1.startWork("Alice")
+    manager.updateTask(task1)
 
-        route("/users/{id}") {
-            method = "PUT"
-            handler = "updateUser"
-        }
+    task2 = task2.startWork("Bob")
+    manager.updateTask(task2)
 
-        route("/users/{id}") {
-            method = "DELETE"
-            handler = "deleteUser"
-        }
-    }
+    manager.listTasks()
 
-    println(config)
-    /*
-    Server Configuration:
-      Host: localhost
-      Port: 8080
-      Routes:
-        GET /users -> listUsers
-        POST /users -> createUser
-        GET /users/{id} -> getUser
-        PUT /users/{id} -> updateUser
-        DELETE /users/{id} -> deleteUser
-    */
+    // Complete a task
+    task1 = task1.complete("Alice")
+    manager.updateTask(task1)
+
+    // Cancel a task
+    task3 = task3.cancel("Requirements changed")
+    manager.updateTask(task3)
+
+    manager.listTasks()
+
+    // Display full history
+    task1.displayTask()
 }
 ```
-
-**Explanation**:
-- DSL provides type-safe configuration
-- Lambda with receiver (`init: ServerConfig.() -> Unit`) enables clean syntax
-- Nested structures through builder pattern
-- Reads almost like a configuration file!
 
 ---
 
 ## Checkpoint Quiz
 
 ### Question 1
-What is function composition?
+What does the `data` keyword do?
 
-A) Writing functions inside other functions
-B) Combining functions to create new functions where output of one becomes input of another
-C) Making functions larger
-D) Commenting functions
+A) Makes the class immutable
+B) Automatically generates `equals()`, `hashCode()`, `toString()`, and `copy()`
+C) Makes the class faster
+D) Allows inheritance
 
 ### Question 2
-What is currying?
+What is destructuring in data classes?
 
-A) Converting a multi-parameter function into a sequence of single-parameter functions
-B) Making functions run faster
-C) A cooking technique
-D) Error handling
+A) Deleting the class
+B) Extracting multiple properties into separate variables at once
+C) Breaking inheritance
+D) Splitting the class into multiple files
 
 ### Question 3
-What does the `infix` keyword do?
+What is the main advantage of sealed classes?
 
-A) Makes functions run in the background
-B) Allows calling functions without dot notation and parentheses (binary operation style)
-C) Makes functions faster
-D) Prevents function calls
+A) They're faster
+B) They provide exhaustive `when` expression checking
+C) They use less memory
+D) They can have multiple constructors
 
 ### Question 4
-What is operator overloading?
+When should you use a data class?
 
-A) Using too many operators
-B) Defining custom behavior for operators like +, -, *, / on custom types
-C) A performance optimization
-D) A deprecated feature
+A) When you need inheritance
+B) When you primarily need to hold data
+C) When you need abstract methods
+D) When you need multiple constructors
 
 ### Question 5
-What is a DSL (Domain-Specific Language)?
+What's the difference between enum and sealed classes?
 
-A) A new programming language
-B) An API designed to read like natural language for a specific domain
-C) A debugging tool
-D) A database query language
+A) Enums are faster
+B) Sealed classes can have subclasses with different properties; enums cannot
+C) Enums can inherit; sealed classes cannot
+D) There is no difference
 
 ---
 
 ## Quiz Answers
 
-**Question 1: B) Combining functions to create new functions where output of one becomes input of another**
+**Question 1: B) Automatically generates `equals()`, `hashCode()`, `toString()`, and `copy()`**
+
+Data classes save you from writing boilerplate code.
 
 ```kotlin
-val trim = { s: String -> s.trim() }
-val uppercase = { s: String -> s.uppercase() }
+data class User(val name: String, val age: Int)
 
-// Compose: output of trim goes into uppercase
-val trimAndUpper = { s: String -> uppercase(trim(s)) }
-
-println(trimAndUpper("  hello  "))  // HELLO
+// Automatically generates:
+// - equals() for structural equality
+// - hashCode() consistent with equals()
+// - toString() for readable output
+// - copy() for creating modified copies
+// - componentN() for destructuring
 ```
-
-Composition builds complex operations from simple parts.
 
 ---
 
-**Question 2: A) Converting a multi-parameter function into a sequence of single-parameter functions**
+**Question 2: B) Extracting multiple properties into separate variables at once**
+
+Destructuring uses the `componentN()` functions generated by data classes.
 
 ```kotlin
-// Normal function
-fun add(a: Int, b: Int) = a + b
+data class Point(val x: Int, val y: Int)
 
-// Curried version
-fun curriedAdd(a: Int) = { b: Int -> a + b }
+val point = Point(10, 20)
+val (x, y) = point  // Destructuring
 
-val add5 = curriedAdd(5)
-println(add5(3))  // 8
+println(x)  // 10
+println(y)  // 20
 ```
-
-Currying enables partial application and function specialization.
 
 ---
 
-**Question 3: B) Allows calling functions without dot notation and parentheses (binary operation style)**
+**Question 3: B) They provide exhaustive `when` expression checking**
+
+The compiler ensures you handle all subclasses of a sealed class.
 
 ```kotlin
-infix fun Int.times(str: String) = str.repeat(this)
-
-// Regular call
-println(3.times("Ha"))
-
-// Infix call
-println(3 times "Ha")  // More readable!
-```
-
-Makes code read more naturally.
-
----
-
-**Question 4: B) Defining custom behavior for operators like +, -, *, / on custom types**
-
-```kotlin
-data class Vector(val x: Int, val y: Int) {
-    operator fun plus(other: Vector) = Vector(x + other.x, y + other.y)
+sealed class Result {
+    object Success : Result()
+    object Error : Result()
 }
 
-val v1 = Vector(1, 2)
-val v2 = Vector(3, 4)
-val sum = v1 + v2  // Uses our custom plus operator
-println(sum)  // Vector(x=4, y=6)
+fun handle(result: Result) = when (result) {
+    Result.Success -> "OK"
+    Result.Error -> "Failed"
+    // ✅ Compiler ensures all cases covered!
+}
 ```
-
-Enables intuitive syntax for custom types.
 
 ---
 
-**Question 5: B) An API designed to read like natural language for a specific domain**
+**Question 4: B) When you primarily need to hold data**
+
+Data classes are perfect for DTOs, API models, configuration, etc.
 
 ```kotlin
-// DSL for HTML
-html {
-    head {
-        title { +"My Page" }
-    }
-    body {
-        h1 { +"Welcome" }
-    }
-}
+// ✅ Good use of data class
+data class User(val id: Int, val name: String, val email: String)
 
-// Reads like HTML structure!
+// ❌ Bad use (lots of behavior, not primarily data)
+data class DatabaseConnection(val url: String) {
+    fun connect() { }
+    fun query(sql: String) { }
+    fun disconnect() { }
+}
 ```
 
-DSLs make code expressive and domain-specific.
+---
+
+**Question 5: B) Sealed classes can have subclasses with different properties; enums cannot**
+
+Enums are for fixed constants with the same structure. Sealed classes are for type hierarchies with varying data.
+
+```kotlin
+// Enum: All instances have same structure
+enum class Color(val hex: String) {
+    RED("#FF0000"),
+    GREEN("#00FF00")
+}
+
+// Sealed: Subclasses have different properties
+sealed class Result {
+    data class Success(val data: String) : Result()
+    data class Error(val code: Int, val message: String) : Result()
+}
+```
 
 ---
 
 ## What You've Learned
 
-✅ Function composition (combining functions)
-✅ Currying (transforming multi-parameter functions)
-✅ Partial application (fixing some parameters)
-✅ Extension functions as functional tools
-✅ Infix functions for readable code
-✅ Operator overloading for custom types
-✅ Building domain-specific languages (DSLs)
-✅ Advanced functional programming techniques
+✅ Data classes and their auto-generated functions
+✅ The `copy()` function for immutable updates
+✅ Destructuring declarations
+✅ Sealed classes for restricted hierarchies
+✅ Enum classes for fixed constants
+✅ Value classes for type-safe primitives
+✅ When to use each special class type
 
 ---
 
 ## Next Steps
 
-In **Lesson 3.6: Part 3 Capstone - Data Processing Pipeline**, you'll:
-- Build a complete functional programming project
-- Process CSV data with functional operations
-- Create reusable pipeline components
-- Apply everything you've learned
-- Build statistics and reporting features
+In **Lesson 2.6: Object Declarations and Companion Objects**, you'll learn:
+- Object expressions for anonymous objects
+- Object declarations for singletons
+- Companion objects for static-like members
+- Factory methods and constants
+- When to use objects vs classes
 
-Time to put it all together!
-
----
-
-## Key Takeaways
-
-**Function Composition**:
-```kotlin
-val process = trim andThen uppercase andThen addPrefix
-```
-Build complex operations from simple building blocks.
-
-**Currying**:
-```kotlin
-val curriedAdd = { a: Int -> { b: Int -> a + b } }
-val add10 = curriedAdd(10)
-```
-Create specialized functions from general ones.
-
-**Infix & Operators**:
-```kotlin
-infix fun Int.times(str: String) = str.repeat(this)
-3 times "Ha"  // HaHaHa
-```
-Make code read naturally.
-
-**DSLs**:
-```kotlin
-server {
-    host = "localhost"
-    port = 8080
-    route("/api") { ... }
-}
-```
-Type-safe, readable configuration.
+You're almost done with Part 2!
 
 ---
 
-**Congratulations on completing Lesson 3.5!** 🎉
+**Congratulations on completing Lesson 2.5!** 🎉
 
-You've mastered advanced functional programming techniques! These concepts enable powerful abstractions and elegant APIs. Now you're ready to build real-world functional applications in the capstone project!
+Data classes and sealed classes are Kotlin superpowers that make your code more concise and safer!

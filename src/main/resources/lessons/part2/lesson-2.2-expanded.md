@@ -1,893 +1,872 @@
-# Lesson 2.2: Properties and Initialization
+# Lesson 2.2: Combining Conditions - Logical Operators
 
-**Estimated Time**: 65 minutes
+**Estimated Time**: 55 minutes
+**Difficulty**: Beginner
+**Prerequisites**: Lesson 2.1 (If statements)
 
 ---
 
 ## Topic Introduction
 
-In Lesson 2.1, you learned the basics of classes and objects. Now it's time to dive deeper into **properties**—the data that objects hold.
+In the last lesson, you learned to make decisions with if statements and simple conditions. But real-world decisions often involve **multiple conditions** working together:
 
-Kotlin provides powerful features for managing properties that go far beyond simple variables:
-- **Custom getters and setters** for computed or validated values
-- **Late initialization** for properties that can't be set immediately
-- **Lazy initialization** for expensive operations that should only happen when needed
-- **Backing fields** for advanced property control
-- **Property delegation** to reuse property logic
+- "**IF** it's raining **AND** I don't have an umbrella, **THEN** I'll get wet"
+- "**IF** you're under 13 **OR** over 65, **THEN** you get a discount"
+- "**IF** the door is **NOT** locked, **THEN** you can enter"
 
-These features make Kotlin properties more flexible and powerful than in most other languages. Let's explore them!
+Notice the words **AND**, **OR**, and **NOT**? These are **logical operators**, and they let you combine and modify conditions to create more sophisticated decision-making logic.
 
----
+In this lesson, you'll learn:
+- The three logical operators: AND (`&&`), OR (`||`), and NOT (`!`)
+- How to combine multiple conditions
+- Truth tables and how logical operators work
+- Short-circuit evaluation for efficiency
+- Common patterns and best practices
+- How to simplify complex conditional logic
 
-## The Concept
-
-### Properties vs Fields
-
-In many languages (like Java), classes have **fields** (private variables) and **getter/setter methods** to access them:
-
-**Java (verbose)**:
-```java
-public class Person {
-    private String name;
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-}
-```
-
-**Kotlin (clean)**:
-```kotlin
-class Person {
-    var name: String = ""
-}
-```
-
-In Kotlin, properties automatically have getters (and setters for `var`). You access them like fields, but they're actually calling methods behind the scenes!
-
-```kotlin
-val person = Person()
-person.name = "Alice"  // Calls setter
-println(person.name)    // Calls getter
-```
+By the end, you'll write elegant code that handles complex real-world scenarios!
 
 ---
 
-## Custom Getters and Setters
+## The Concept: Logical Operators
 
-### Custom Getters
+### Real-World Logic
 
-A **custom getter** computes a value every time the property is accessed.
+Think about these everyday decisions:
 
-**Example: Computed Properties**
+**AND logic (both must be true):**
+```
+To withdraw money from ATM:
+- You must have your card AND
+- You must know your PIN
+(If either is missing, you can't withdraw)
+```
+
+**OR logic (at least one must be true):**
+```
+To enter the VIP lounge:
+- You must be a premium member OR
+- You must have a VIP ticket
+(Either one gets you in)
+```
+
+**NOT logic (invert/flip the condition):**
+```
+IF the alarm is NOT set:
+    You can leave without disabling it
+```
+
+Programming uses these exact same patterns!
+
+### The Three Logical Operators
+
+| Operator | Name | Symbol | Meaning |
+|----------|------|--------|---------|
+| AND | Logical AND | `&&` | Both conditions must be true |
+| OR | Logical OR | `\|\|` | At least one condition must be true |
+| NOT | Logical NOT | `!` | Inverts/flips the condition |
+
+---
+
+## The AND Operator (&&)
+
+The AND operator (`&&`) returns `true` only when **BOTH** conditions are true.
+
+### Truth Table for AND
+
+| Condition A | Condition B | A && B |
+|-------------|-------------|--------|
+| true | true | **true** |
+| true | false | false |
+| false | true | false |
+| false | false | false |
+
+**Think of it as:** "This **AND** that" - you need **both**.
+
+### Basic AND Example
 
 ```kotlin
-class Rectangle(val width: Double, val height: Double) {
-    val area: Double
-        get() = width * height  // Computed each time
-
-    val perimeter: Double
-        get() = 2 * (width + height)
-}
-
 fun main() {
-    val rect = Rectangle(5.0, 10.0)
-    println(rect.area)       // 50.0 (computed)
-    println(rect.perimeter)  // 30.0 (computed)
+    val hasTicket = true
+    val hasID = true
+
+    if (hasTicket && hasID) {
+        println("Welcome to the concert!")
+    } else {
+        println("Sorry, you need both a ticket and ID")
+    }
 }
 ```
 
-**Why use a custom getter instead of a method?**
-- More natural syntax: `rect.area` vs `rect.getArea()`
-- Semantic: it looks like a property because it behaves like one
-- Lightweight computation that doesn't change the object state
+**Output:**
+```
+Welcome to the concert!
+```
 
-**Example: Derived Properties**
-
+**What if hasID was false?**
 ```kotlin
-class Person(val firstName: String, val lastName: String) {
-    val fullName: String
-        get() = "$firstName $lastName"
-}
+val hasTicket = true
+val hasID = false
 
+if (hasTicket && hasID) {
+    println("Welcome to the concert!")  // SKIPPED
+} else {
+    println("Sorry, you need both a ticket and ID")  // EXECUTES
+}
+```
+
+**Output:**
+```
+Sorry, you need both a ticket and ID
+```
+
+### Real-World AND Examples
+
+**Example 1: Age and license check**
+```kotlin
 fun main() {
-    val person = Person("Alice", "Johnson")
-    println(person.fullName)  // Alice Johnson
+    val age = 25
+    val hasLicense = true
+
+    if (age >= 16 && hasLicense) {
+        println("You can drive legally!")
+    } else {
+        println("You cannot drive")
+    }
 }
 ```
 
-### Custom Setters
-
-A **custom setter** validates or transforms values when they're assigned.
-
-**Example: Input Validation**
-
+**Example 2: Login validation**
 ```kotlin
-class User(name: String) {
-    var name: String = name
-        set(value) {
-            require(value.isNotBlank()) { "Name cannot be blank" }
-            field = value.trim()  // 'field' is the backing field
-        }
-
-    var age: Int = 0
-        set(value) {
-            require(value in 0..150) { "Age must be between 0 and 150" }
-            field = value
-        }
-}
-
 fun main() {
-    val user = User("Alice")
+    val username = "admin"
+    val password = "secret123"
 
-    user.name = "  Bob  "
-    println(user.name)  // Bob (trimmed)
-
-    user.age = 25
-    println(user.age)   // 25
-
-    // user.age = 200  // ❌ Exception: Age must be between 0 and 150
-    // user.name = ""  // ❌ Exception: Name cannot be blank
+    if (username == "admin" && password == "secret123") {
+        println("Login successful!")
+    } else {
+        println("Invalid username or password")
+    }
 }
 ```
 
-**Key Points**:
-- `set(value)` defines custom logic when the property is assigned
-- `field` refers to the **backing field** (the actual stored value)
-- Use `field` to avoid infinite recursion (don't use the property name inside its own setter!)
-
-### Visibility Modifiers for Setters
-
-You can make a property readable publicly but only writable internally:
-
+**Example 3: Range check (value between two numbers)**
 ```kotlin
-class BankAccount(initialBalance: Double) {
-    var balance: Double = initialBalance
-        private set  // Can only be modified inside the class
-
-    fun deposit(amount: Double) {
-        require(amount > 0) { "Amount must be positive" }
-        balance += amount
-    }
-
-    fun withdraw(amount: Double) {
-        require(amount > 0 && amount <= balance) { "Invalid withdrawal" }
-        balance -= amount
-    }
-}
-
 fun main() {
-    val account = BankAccount(1000.0)
+    val temperature = 72
 
-    println(account.balance)  // ✅ Can read: 1000.0
-    account.deposit(500.0)
-    println(account.balance)  // 1500.0
-
-    // account.balance = 9999.0  // ❌ Error: Cannot assign to 'balance': the setter is private
+    if (temperature >= 65 && temperature <= 75) {
+        println("Perfect temperature!")
+    } else {
+        println("Too hot or too cold")
+    }
 }
 ```
 
----
+### Chaining Multiple AND Conditions
 
-## Late Initialization (`lateinit`)
-
-Sometimes you can't initialize a property immediately (e.g., in Android, views are initialized after the object is created). **`lateinit`** lets you declare a non-null property without initializing it right away.
-
-### When to Use `lateinit`
-
-Use `lateinit` when:
-- The property will be initialized before use (but not in the constructor)
-- The property is non-null
-- The property type is non-primitive (not Int, Double, Boolean, etc.)
-
-**Example: Setup Method**
+You can chain more than two conditions:
 
 ```kotlin
-class DatabaseConnection {
-    lateinit var connectionString: String
-
-    fun connect(host: String, port: Int) {
-        connectionString = "jdbc:mysql://$host:$port/mydb"
-        println("Connected to $connectionString")
-    }
-
-    fun query() {
-        if (::connectionString.isInitialized) {
-            println("Querying database at $connectionString")
-        } else {
-            println("Error: Not connected to database!")
-        }
-    }
-}
-
 fun main() {
-    val db = DatabaseConnection()
+    val hasPassport = true
+    val hasVisa = true
+    val hasTicket = true
 
-    // db.query()  // Would work but connectionString isn't initialized yet
-
-    db.connect("localhost", 3306)
-    db.query()  // Querying database at jdbc:mysql://localhost:3306/mydb
+    if (hasPassport && hasVisa && hasTicket) {
+        println("You're ready for international travel!")
+    } else {
+        println("Missing required documents")
+    }
 }
 ```
 
-**Checking if `lateinit` is Initialized**:
+All three conditions must be true for the message to print.
+
+---
+
+## The OR Operator (||)
+
+The OR operator (`||`) returns `true` when **AT LEAST ONE** condition is true.
+
+### Truth Table for OR
+
+| Condition A | Condition B | A \|\| B |
+|-------------|-------------|----------|
+| true | true | **true** |
+| true | false | **true** |
+| false | true | **true** |
+| false | false | false |
+
+**Think of it as:** "This **OR** that" - you need **at least one**.
+
+### Basic OR Example
 
 ```kotlin
-if (::connectionString.isInitialized) {
-    // Safe to use
-}
-```
-
-**Warning**: Accessing an uninitialized `lateinit` property throws `UninitializedPropertyAccessException`!
-
-**Example: Dependency Injection**
-
-```kotlin
-class UserService {
-    lateinit var database: Database
-    lateinit var logger: Logger
-
-    fun initialize(db: Database, log: Logger) {
-        database = db
-        logger = log
-    }
-
-    fun getUser(id: Int): String {
-        logger.log("Fetching user $id")
-        return database.query("SELECT * FROM users WHERE id = $id")
-    }
-}
-
-class Database {
-    fun query(sql: String): String = "Result of: $sql"
-}
-
-class Logger {
-    fun log(message: String) = println("[LOG] $message")
-}
-
 fun main() {
-    val service = UserService()
-    service.initialize(Database(), Logger())
+    val isPremiumMember = false
+    val hasVIPPass = true
 
-    println(service.getUser(42))
+    if (isPremiumMember || hasVIPPass) {
+        println("Welcome to the VIP lounge!")
+    } else {
+        println("Standard access only")
+    }
 }
 ```
 
-**Output**:
+**Output:**
 ```
-[LOG] Fetching user 42
-Result of: SELECT * FROM users WHERE id = 42
+Welcome to the VIP lounge!
 ```
 
----
+Even though `isPremiumMember` is false, `hasVIPPass` is true, so the condition succeeds!
 
-## Lazy Initialization
+### Real-World OR Examples
 
-**Lazy properties** are initialized only when they're first accessed. Perfect for expensive operations that might not be needed.
-
-### The `lazy` Delegate
-
+**Example 1: Weekend check**
 ```kotlin
-class DataProcessor {
-    val heavyData: List<Int> by lazy {
-        println("Computing heavy data...")
-        (1..1000000).toList()  // Expensive operation
-    }
-
-    fun process() {
-        println("Starting process")
-        println("First 5 items: ${heavyData.take(5)}")  // heavyData initialized here
-        println("Process complete")
-    }
-}
-
 fun main() {
-    val processor = DataProcessor()
-    println("DataProcessor created")
-    println("About to call process()")
+    val day = "Saturday"
 
-    processor.process()
+    if (day == "Saturday" || day == "Sunday") {
+        println("It's the weekend! Relax!")
+    } else {
+        println("It's a weekday. Time to work!")
+    }
 }
 ```
 
-**Output**:
-```
-DataProcessor created
-About to call process()
-Starting process
-Computing heavy data...
-First 5 items: [1, 2, 3, 4, 5]
-Process complete
-```
-
-**Key Points**:
-- The lambda `{ ... }` is only executed once, on first access
-- The result is cached and reused for subsequent accesses
-- Thread-safe by default
-- Can only be used with `val` (not `var`)
-
-**Example: Configuration Loading**
-
+**Example 2: Discount eligibility**
 ```kotlin
-class Application {
-    val config: Map<String, String> by lazy {
-        println("Loading configuration from file...")
-        mapOf(
-            "app.name" to "MyApp",
-            "app.version" to "1.0.0",
-            "db.host" to "localhost"
-        )
-    }
-
-    fun start() {
-        println("Application starting...")
-        println("App: ${config["app.name"]} v${config["app.version"]}")
-        println("Database: ${config["db.host"]}")
-    }
-}
-
 fun main() {
-    val app = Application()
-    println("App object created")
+    val age = 70
+    val isStudent = false
 
-    Thread.sleep(1000)
-
-    app.start()  // Config loaded here on first access
+    if (age < 13 || age > 65 || isStudent) {
+        println("You qualify for a discount!")
+    } else {
+        println("Regular price applies")
+    }
 }
 ```
 
-**Output**:
+**Output:**
 ```
-App object created
-Application starting...
-Loading configuration from file...
-App: MyApp v1.0.0
-Database: localhost
+You qualify for a discount!
 ```
 
----
+The person is over 65, so they qualify (even though they're not a student).
 
-## Backing Fields
-
-A **backing field** is the actual storage for a property. Kotlin generates it automatically when needed.
-
-**When Kotlin generates a backing field**:
-- Property has a default accessor (getter/setter)
-- Property has a custom accessor that uses `field`
-
-**When Kotlin does NOT generate a backing field**:
-- Property only has a custom getter that doesn't use `field`
-
+**Example 3: Emergency access**
 ```kotlin
-class Example {
-    // Has backing field (stores value)
-    var stored: String = "value"
-
-    // Has backing field (custom setter uses 'field')
-    var validated: Int = 0
-        set(value) {
-            if (value >= 0) field = value
-        }
-
-    // NO backing field (just computed)
-    val computed: String
-        get() = "Always computed"
-}
-```
-
-**Example: Tracking Property Changes**
-
-```kotlin
-class Product(name: String, price: Double) {
-    var name: String = name
-        set(value) {
-            println("Name changed from '$field' to '$value'")
-            field = value
-        }
-
-    var price: Double = price
-        set(value) {
-            require(value >= 0) { "Price cannot be negative" }
-            println("Price changed from $$field to $$value")
-            field = value
-        }
-}
-
 fun main() {
-    val product = Product("Laptop", 999.99)
+    val isAdmin = false
+    val isEmergency = true
 
-    product.name = "Gaming Laptop"  // Name changed from 'Laptop' to 'Gaming Laptop'
-    product.price = 1299.99          // Price changed from $999.99 to $1299.99
+    if (isAdmin || isEmergency) {
+        println("Access granted")
+    } else {
+        println("Access denied")
+    }
 }
 ```
 
 ---
 
-## Property Delegation Basics
+## The NOT Operator (!)
 
-**Property delegation** allows you to reuse property logic by delegating to another object.
+The NOT operator (`!`) **inverts** (flips) a Boolean value.
 
-**Syntax**: `var/val propertyName: Type by delegate`
+### Truth Table for NOT
 
-### Built-in Delegates
+| Condition | !Condition |
+|-----------|------------|
+| true | **false** |
+| false | **true** |
 
-**1. `lazy` (already covered)**
+**Think of it as:** "The opposite of..."
 
-**2. `observable` - Notified on property changes**
+### Basic NOT Example
 
 ```kotlin
-import kotlin.properties.Delegates
-
-class User {
-    var name: String by Delegates.observable("Initial") { property, oldValue, newValue ->
-        println("${property.name} changed from '$oldValue' to '$newValue'")
-    }
-}
-
 fun main() {
-    val user = User()
+    val isRaining = false
 
-    user.name = "Alice"  // name changed from 'Initial' to 'Alice'
-    user.name = "Bob"    // name changed from 'Alice' to 'Bob'
+    if (!isRaining) {
+        println("You don't need an umbrella!")
+    }
 }
 ```
 
-**3. `vetoable` - Validate changes before accepting**
+**Output:**
+```
+You don't need an umbrella!
+```
 
+`isRaining` is false, so `!isRaining` becomes true, and the if block executes.
+
+### Real-World NOT Examples
+
+**Example 1: Checking if not equal**
 ```kotlin
-import kotlin.properties.Delegates
-
-class Settings {
-    var fontSize: Int by Delegates.vetoable(12) { property, oldValue, newValue ->
-        newValue in 8..24  // Only accept values between 8 and 24
-    }
-}
-
 fun main() {
-    val settings = Settings()
+    val status = "pending"
 
-    println(settings.fontSize)  // 12
-
-    settings.fontSize = 16
-    println(settings.fontSize)  // 16
-
-    settings.fontSize = 50  // Rejected (out of range)
-    println(settings.fontSize)  // Still 16
+    if (!(status == "completed")) {
+        println("Task is still in progress")
+    }
 }
 ```
 
----
+**Note:** This is the same as `status != "completed"`. The `!=` operator is actually a shorthand for `!(... == ...)`.
 
-## Exercise 1: Temperature Converter
-
-**Goal**: Create a `Temperature` class with Celsius and Fahrenheit properties that stay in sync.
-
-**Requirements**:
-1. Property: `celsius` (Double, with setter)
-2. Property: `fahrenheit` (Double, computed from celsius)
-3. When `celsius` changes, `fahrenheit` updates automatically
-4. Formulas: `F = C * 9/5 + 32`, `C = (F - 32) * 5/9`
-
----
-
-## Solution: Temperature Converter
-
+**Example 2: Door lock check**
 ```kotlin
-class Temperature(celsius: Double = 0.0) {
-    var celsius: Double = celsius
-        set(value) {
-            field = value
-            println("Temperature set to $value°C (${fahrenheit}°F)")
-        }
-
-    val fahrenheit: Double
-        get() = celsius * 9 / 5 + 32
-
-    fun setFahrenheit(f: Double) {
-        celsius = (f - 32) * 5 / 9
-    }
-
-    fun display() {
-        println("$celsius°C = $fahrenheit°F")
-    }
-}
-
 fun main() {
-    val temp = Temperature()
+    val isDoorLocked = false
 
-    temp.celsius = 0.0    // Temperature set to 0.0°C (32.0°F)
-    temp.display()        // 0.0°C = 32.0°F
-
-    temp.celsius = 100.0  // Temperature set to 100.0°C (212.0°F)
-    temp.display()        // 100.0°C = 212.0°F
-
-    temp.setFahrenheit(98.6)
-    temp.display()        // 37.0°C = 98.6°F
+    if (!isDoorLocked) {
+        println("You can open the door")
+    } else {
+        println("Door is locked, use your key")
+    }
 }
 ```
 
----
-
-## Exercise 2: Shopping Cart with Validation
-
-**Goal**: Build a `ShoppingCart` class with validation and computed properties.
-
-**Requirements**:
-1. Property: `items` (mutable list of `CartItem`)
-2. Property: `totalPrice` (computed, read-only)
-3. Property: `itemCount` (computed, read-only)
-4. Method: `addItem(name: String, price: Double, quantity: Int)` - validate price > 0 and quantity > 0
-5. Method: `removeItem(name: String)`
-6. Method: `displayCart()`
-
----
-
-## Solution: Shopping Cart
-
+**Example 3: Inverting complex conditions**
 ```kotlin
-data class CartItem(val name: String, val price: Double, val quantity: Int) {
-    val subtotal: Double
-        get() = price * quantity
-}
-
-class ShoppingCart {
-    private val items = mutableListOf<CartItem>()
-
-    val totalPrice: Double
-        get() = items.sumOf { it.subtotal }
-
-    val itemCount: Int
-        get() = items.sumOf { it.quantity }
-
-    fun addItem(name: String, price: Double, quantity: Int) {
-        require(price > 0) { "Price must be positive" }
-        require(quantity > 0) { "Quantity must be positive" }
-
-        // Check if item already exists
-        val existingItem = items.find { it.name == name }
-        if (existingItem != null) {
-            items.remove(existingItem)
-            items.add(CartItem(name, price, existingItem.quantity + quantity))
-            println("Updated $name quantity")
-        } else {
-            items.add(CartItem(name, price, quantity))
-            println("Added $name to cart")
-        }
-    }
-
-    fun removeItem(name: String) {
-        val removed = items.removeIf { it.name == name }
-        if (removed) {
-            println("Removed $name from cart")
-        } else {
-            println("$name not found in cart")
-        }
-    }
-
-    fun displayCart() {
-        if (items.isEmpty()) {
-            println("Cart is empty")
-            return
-        }
-
-        println("\n=== Shopping Cart ===")
-        items.forEach { item ->
-            println("${item.name}: $${item.price} x ${item.quantity} = $${item.subtotal}")
-        }
-        println("---")
-        println("Total Items: $itemCount")
-        println("Total Price: $$totalPrice")
-        println("===================\n")
-    }
-}
-
 fun main() {
-    val cart = ShoppingCart()
+    val hasPermission = true
+    val isBanned = false
 
-    cart.addItem("Laptop", 999.99, 1)
-    cart.addItem("Mouse", 29.99, 2)
-    cart.addItem("Keyboard", 79.99, 1)
-
-    cart.displayCart()
-
-    cart.addItem("Mouse", 29.99, 1)  // Update quantity
-
-    cart.displayCart()
-
-    cart.removeItem("Keyboard")
-
-    cart.displayCart()
+    if (hasPermission && !isBanned) {
+        println("Access granted")
+    }
 }
 ```
 
-**Output**:
+**Output:**
 ```
-Added Laptop to cart
-Added Mouse to cart
-Added Keyboard to cart
-
-=== Shopping Cart ===
-Laptop: $999.99 x 1 = $999.99
-Mouse: $29.99 x 2 = $59.98
-Keyboard: $79.99 x 1 = $79.99
----
-Total Items: 4
-Total Price: $1139.96
-===================
-
-Updated Mouse quantity
-
-=== Shopping Cart ===
-Laptop: $999.99 x 1 = $999.99
-Mouse: $29.99 x 3 = $89.97
-Keyboard: $79.99 x 1 = $79.99
----
-Total Items: 5
-Total Price: $1169.95
-===================
-
-Removed Keyboard from cart
-
-=== Shopping Cart ===
-Laptop: $999.99 x 1 = $999.99
-Mouse: $29.99 x 3 = $89.97
----
-Total Items: 4
-Total Price: $1089.96
-===================
+Access granted
 ```
 
 ---
 
-## Exercise 3: User Profile with Lazy Loading
+## Combining Logical Operators
 
-**Goal**: Create a `UserProfile` class that lazily loads expensive data.
+You can combine AND, OR, and NOT in the same expression!
 
-**Requirements**:
-1. Properties: `username`, `email`
-2. Lazy property: `profilePicture` (simulated expensive load)
-3. Lazy property: `activityHistory` (simulated database query)
-4. Method: `displayProfile()` - shows all info (triggers lazy loading)
-
----
-
-## Solution: User Profile
+### Example: Comprehensive Access Control
 
 ```kotlin
-data class Activity(val action: String, val timestamp: String)
-
-class UserProfile(val username: String, val email: String) {
-
-    val profilePicture: ByteArray by lazy {
-        println("Loading profile picture from server...")
-        Thread.sleep(500)  // Simulate network delay
-        ByteArray(1024)  // Simulated image data
-    }
-
-    val activityHistory: List<Activity> by lazy {
-        println("Loading activity history from database...")
-        Thread.sleep(300)  // Simulate database query
-        listOf(
-            Activity("Logged in", "2025-01-15 08:30:00"),
-            Activity("Updated profile", "2025-01-15 09:15:00"),
-            Activity("Posted comment", "2025-01-15 10:45:00")
-        )
-    }
-
-    fun displayProfile() {
-        println("\n=== User Profile ===")
-        println("Username: $username")
-        println("Email: $email")
-        println("Profile Picture Size: ${profilePicture.size} bytes")
-        println("Recent Activities:")
-        activityHistory.forEach { activity ->
-            println("  - ${activity.action} at ${activity.timestamp}")
-        }
-        println("===================\n")
-    }
-}
-
 fun main() {
-    println("Creating user profile...")
-    val profile = UserProfile("alice_coder", "alice@example.com")
+    val age = 17
+    val hasParentConsent = true
+    val isVIP = false
 
-    println("Profile object created (data not loaded yet)")
-    Thread.sleep(1000)
-
-    println("\nCalling displayProfile() for the first time...")
-    profile.displayProfile()
-
-    println("Calling displayProfile() again (data already cached)...")
-    profile.displayProfile()
-}
-```
-
-**Output**:
-```
-Creating user profile...
-Profile object created (data not loaded yet)
-
-Calling displayProfile() for the first time...
-Loading profile picture from server...
-Loading activity history from database...
-
-=== User Profile ===
-Username: alice_coder
-Email: alice@example.com
-Profile Picture Size: 1024 bytes
-Recent Activities:
-  - Logged in at 2025-01-15 08:30:00
-  - Updated profile at 2025-01-15 09:15:00
-  - Posted comment at 2025-01-15 10:45:00
-===================
-
-Calling displayProfile() again (data already cached)...
-
-=== User Profile ===
-Username: alice_coder
-Email: alice@example.com
-Profile Picture Size: 1024 bytes
-Recent Activities:
-  - Logged in at 2025-01-15 08:30:00
-  - Updated profile at 2025-01-15 09:15:00
-  - Posted comment at 2025-01-15 10:45:00
-===================
-```
-
----
-
-## Checkpoint Quiz
-
-### Question 1
-What is the difference between a regular property and a property with a custom getter?
-
-A) Custom getters can only be used with `var`
-B) Custom getters compute the value each time the property is accessed
-C) Custom getters are slower
-D) There is no difference
-
-### Question 2
-When should you use `lateinit`?
-
-A) For all properties
-B) For properties that will be initialized later, before first use
-C) For computed properties
-D) For primitive types like Int and Double
-
-### Question 3
-What does the `field` keyword refer to in a custom setter?
-
-A) The parameter passed to the setter
-B) The backing field (actual storage) of the property
-C) The class instance
-D) The property name
-
-### Question 4
-What is the main benefit of lazy initialization?
-
-A) Properties are initialized faster
-B) Expensive operations are deferred until needed
-C) Properties use less memory
-D) Properties can be null
-
-### Question 5
-What happens if you access an uninitialized `lateinit` property?
-
-A) It returns null
-B) It returns a default value
-C) It throws `UninitializedPropertyAccessException`
-D) The code doesn't compile
-
----
-
-## Quiz Answers
-
-**Question 1: B) Custom getters compute the value each time the property is accessed**
-
-Custom getters don't store a value—they compute it when accessed.
-
-```kotlin
-class Rectangle(val width: Double, val height: Double) {
-    val area: Double
-        get() = width * height  // Computed each time
-}
-```
-
----
-
-**Question 2: B) For properties that will be initialized later, before first use**
-
-`lateinit` is perfect for dependency injection, Android views, or any scenario where you can't initialize in the constructor but will initialize before use.
-
-```kotlin
-class Service {
-    lateinit var database: Database
-
-    fun initialize(db: Database) {
-        database = db
+    if ((age >= 18 || hasParentConsent) && !isVIP) {
+        println("Standard access granted")
     }
 }
 ```
 
-**Note**: Can't be used with primitive types (Int, Double, etc.) or nullable types.
+**How it evaluates:**
+1. `age >= 18` → `17 >= 18` → false
+2. `hasParentConsent` → true
+3. `false || true` → **true** (at least one is true)
+4. `!isVIP` → `!false` → **true**
+5. `true && true` → **true** (both parts are true)
+6. Execute the if block
 
----
+### Order of Operations (Precedence)
 
-**Question 3: B) The backing field (actual storage) of the property**
+Just like math has PEMDAS, logical operators have precedence:
 
-`field` lets you access the actual stored value in custom accessors.
+1. **`!` (NOT)** - Highest priority
+2. **`&&` (AND)** - Medium priority
+3. **`||` (OR)** - Lowest priority
+
+**Example:**
+```kotlin
+val result = !false && true || false
+```
+
+**Evaluation order:**
+1. `!false` → true (NOT first)
+2. `true && true` → true (AND second)
+3. `true || false` → true (OR last)
+
+**Use parentheses for clarity:**
+```kotlin
+val result = ((!false) && true) || false  // Much clearer!
+```
+
+### Complex Real-World Example: Movie Ticket Eligibility
 
 ```kotlin
-var age: Int = 0
-    set(value) {
-        require(value >= 0) { "Age must be non-negative" }
-        field = value  // Sets the backing field
+fun main() {
+    val age = 16
+    val hasParentConsent = true
+    val isMatinee = false
+    val isMember = true
+
+    // Movie is R-rated, requires 17+ OR 13-16 with parent consent
+    // Additionally, members get access to any showing, non-members only matinee
+    val canWatch = (age >= 17 || (age >= 13 && hasParentConsent)) &&
+                   (isMember || isMatinee)
+
+    if (canWatch) {
+        println("Enjoy the movie!")
+    } else {
+        println("Cannot watch this movie")
     }
+}
 ```
 
-Without `field`, you'd get infinite recursion!
+**Breaking it down:**
+- Age check: `age >= 17` is false, but `age >= 13 && hasParentConsent` is true → **passes**
+- Showing access: `isMember` is true → **passes**
+- Both conditions pass → **can watch!**
 
 ---
 
-**Question 4: B) Expensive operations are deferred until needed**
+## Short-Circuit Evaluation
 
-Lazy initialization improves performance by delaying expensive operations until they're actually needed.
+This is an important optimization that logical operators use:
+
+### AND Short-Circuit
+
+With `&&`, if the **first** condition is false, the second condition **isn't even checked** (because the result will be false regardless).
 
 ```kotlin
-val heavyData: List<Int> by lazy {
-    // This only runs when heavyData is first accessed
-    (1..1000000).toList()
+fun main() {
+    val a = false
+    val b = expensiveFunction()  // This would take 10 seconds
+
+    if (a && b) {
+        println("Both true")
+    }
+}
+```
+
+Since `a` is false, `b` is **never evaluated**! This saves time.
+
+**Practical example:**
+```kotlin
+fun main() {
+    val numbers = listOf<Int>()  // Empty list
+
+    if (numbers.isNotEmpty() && numbers[0] > 10) {
+        println("First element is greater than 10")
+    }
+}
+```
+
+If the list is empty, `numbers[0]` would crash the program! But short-circuit evaluation saves us—it never checks `numbers[0]` because `numbers.isNotEmpty()` is already false.
+
+### OR Short-Circuit
+
+With `||`, if the **first** condition is true, the second condition **isn't checked** (because the result will be true regardless).
+
+```kotlin
+fun main() {
+    val isAdmin = true
+    val hasSpecialPermission = expensiveCheck()  // Would take time
+
+    if (isAdmin || hasSpecialPermission) {
+        println("Access granted")
+    }
+}
+```
+
+Since `isAdmin` is true, `hasSpecialPermission` is **never checked**!
+
+**Important:** Be careful with side effects! Don't put critical code in conditions that might not execute:
+
+❌ **WRONG:**
+```kotlin
+if (isLoggedIn || performLogin()) {  // performLogin might not run!
+    // ...
 }
 ```
 
 ---
 
-**Question 5: C) It throws `UninitializedPropertyAccessException`**
+## Hands-On Practice
 
-Always initialize `lateinit` properties before using them, or check with `::property.isInitialized`.
+### Exercise 1: Age and Height Restriction
+
+**Challenge:** An amusement park ride requires:
+- Age >= 12 AND height >= 48 inches
+
+Write a program that checks if someone can ride.
+
+<details>
+<summary>Click to see solution</summary>
 
 ```kotlin
-lateinit var name: String
+fun main() {
+    val age = 14
+    val heightInches = 50
 
-// println(name)  // ❌ UninitializedPropertyAccessException
+    if (age >= 12 && heightInches >= 48) {
+        println("You can ride the roller coaster!")
+    } else {
+        println("Sorry, you don't meet the requirements")
+    }
+}
+```
 
-if (::name.isInitialized) {
-    println(name)  // ✅ Safe
+**Output:**
+```
+You can ride the roller coaster!
+```
+
+**Both conditions must be true:**
+- `14 >= 12` → true
+- `50 >= 48` → true
+- `true && true` → true
+</details>
+
+---
+
+### Exercise 2: Weekend or Holiday
+
+**Challenge:** Write a program that prints "Day off!" if it's either:
+- Saturday OR Sunday OR a holiday
+
+<details>
+<summary>Click to see solution</summary>
+
+```kotlin
+fun main() {
+    val day = "Friday"
+    val isHoliday = true
+
+    if (day == "Saturday" || day == "Sunday" || isHoliday) {
+        println("Day off!")
+    } else {
+        println("Work day")
+    }
+}
+```
+
+**Output:**
+```
+Day off!
+```
+
+**At least one condition is true:**
+- `day == "Saturday"` → false
+- `day == "Sunday"` → false
+- `isHoliday` → true
+- `false || false || true` → true
+</details>
+
+---
+
+### Exercise 3: Password Validation
+
+**Challenge:** Create a password validator that checks if a password is valid. A valid password must:
+- Be at least 8 characters long AND
+- NOT be "password123" (too common)
+
+<details>
+<summary>Click to see solution</summary>
+
+```kotlin
+fun main() {
+    val password = "mySecurePass"
+
+    if (password.length >= 8 && password != "password123") {
+        println("Password is valid")
+    } else {
+        println("Password is invalid")
+    }
+}
+```
+
+**Output:**
+```
+Password is valid
+```
+
+**Evaluation:**
+- `password.length >= 8` → `12 >= 8` → true
+- `password != "password123"` → true
+- `true && true` → true
+</details>
+
+---
+
+### Exercise 4: Temperature Alert System
+
+**Challenge:** Write a program that alerts if temperature is dangerous:
+- Below 32°F (freezing) OR above 100°F (heat danger)
+
+<details>
+<summary>Click to see solution</summary>
+
+```kotlin
+fun main() {
+    val temperature = 28
+
+    if (temperature < 32 || temperature > 100) {
+        println("⚠️ Temperature alert! Take precautions.")
+    } else {
+        println("Temperature is in safe range")
+    }
+}
+```
+
+**Output:**
+```
+⚠️ Temperature alert! Take precautions.
+```
+
+**Evaluation:**
+- `28 < 32` → true
+- `28 > 100` → false
+- `true || false` → true
+</details>
+
+---
+
+## Common Pitfalls and Best Practices
+
+### Pitfall 1: Confusing && with ||
+
+❌ **WRONG (wants AND but uses OR):**
+```kotlin
+val age = 10
+val hasLicense = true
+
+if (age >= 16 || hasLicense) {  // WRONG! This allows 10-year-old with license
+    println("Can drive")
+}
+```
+
+✅ **CORRECT:**
+```kotlin
+if (age >= 16 && hasLicense) {  // Both conditions required
+    println("Can drive")
+}
+```
+
+### Pitfall 2: Redundant Comparisons
+
+❌ **Redundant:**
+```kotlin
+if (isLoggedIn == true) {  // Unnecessary comparison
+    // ...
+}
+```
+
+✅ **Clean:**
+```kotlin
+if (isLoggedIn) {  // Boolean already true/false
+    // ...
+}
+```
+
+❌ **Redundant:**
+```kotlin
+if (!isLoggedIn == true) {  // Confusing!
+    // ...
+}
+```
+
+✅ **Clean:**
+```kotlin
+if (!isLoggedIn) {
+    // ...
+}
+```
+
+### Pitfall 3: Complex Nested Conditions
+
+❌ **Hard to read:**
+```kotlin
+if (a && b || c && !d && e || f) {
+    // What does this even mean?
+}
+```
+
+✅ **Use variables for clarity:**
+```kotlin
+val hasBasicAccess = a && b
+val hasSpecialAccess = c && !d && e
+val isVIP = f
+
+if (hasBasicAccess || hasSpecialAccess || isVIP) {
+    // Much clearer!
+}
+```
+
+### Best Practice 1: Use Parentheses for Complex Logic
+
+Make your intent crystal clear:
+
+```kotlin
+if ((age >= 18 || hasParentConsent) && !isBanned) {
+    // Clear: (age check) AND (not banned)
+}
+```
+
+### Best Practice 2: DeMorgan's Laws
+
+Sometimes you can simplify logic using DeMorgan's Laws:
+
+**DeMorgan's Law 1:**
+```
+!(A && B) equals (!A || !B)
+```
+
+**DeMorgan's Law 2:**
+```
+!(A || B) equals (!A && !B)
+```
+
+**Example:**
+```kotlin
+// These are equivalent:
+if (!(isWeekend && isHoliday)) { /* ... */ }
+if (!isWeekend || !isHoliday) { /* ... */ }
+```
+
+---
+
+## Quick Quiz
+
+**Question 1:** What will this code print?
+```kotlin
+val a = true
+val b = false
+if (a && b) {
+    println("A")
+} else {
+    println("B")
+}
+```
+
+<details>
+<summary>Answer</summary>
+
+**Output:** `B`
+
+**Explanation:** `true && false` is false, so the else block executes.
+</details>
+
+---
+
+**Question 2:** What will this code print?
+```kotlin
+val x = 5
+val y = 10
+if (x > 0 || y < 0) {
+    println("Yes")
+} else {
+    println("No")
+}
+```
+
+<details>
+<summary>Answer</summary>
+
+**Output:** `Yes`
+
+**Explanation:**
+- `x > 0` → `5 > 0` → true
+- `y < 0` → `10 < 0` → false
+- `true || false` → true
+
+At least one condition is true, so "Yes" prints.
+</details>
+
+---
+
+**Question 3:** Simplify this condition:
+```kotlin
+if (!(age < 18)) {
+    println("Adult")
+}
+```
+
+<details>
+<summary>Answer</summary>
+
+**Simplified:**
+```kotlin
+if (age >= 18) {
+    println("Adult")
+}
+```
+
+**Explanation:** "NOT less than 18" is the same as "greater than or equal to 18".
+</details>
+
+---
+
+## Summary
+
+Congratulations! You've mastered logical operators. Let's recap:
+
+**Key Concepts:**
+- **AND (`&&`)**: Both conditions must be true
+- **OR (`||`)**: At least one condition must be true
+- **NOT (`!`)**: Inverts/flips a Boolean value
+- **Short-circuit evaluation**: Optimization that skips unnecessary checks
+- **Precedence**: `!` → `&&` → `||` (use parentheses for clarity)
+
+**Truth Tables:**
+```
+AND (&&)           OR (||)            NOT (!)
+T && T = T         T || T = T         !T = F
+T && F = F         T || F = T         !F = T
+F && T = F         F || T = T
+F && F = F         F || F = F
+```
+
+**Common Patterns:**
+```kotlin
+// Range check
+if (x >= min && x <= max) { }
+
+// Multiple options
+if (option1 || option2 || option3) { }
+
+// Exclusion check
+if (condition && !exception) { }
+
+// Complex logic
+if ((condition1 || condition2) && !condition3) { }
+```
+
+**Best Practices:**
+- Use parentheses to make complex conditions clear
+- Extract complex logic into named Boolean variables
+- Remember short-circuit evaluation for efficiency
+- Avoid redundant comparisons with Boolean variables
+
+---
+
+## What's Next?
+
+You can now combine multiple conditions, but what if you have many different cases to check? "If grade is A, print this. If B, print that. If C, print something else..."
+
+In the next lesson, you'll learn the **when expression**—Kotlin's elegant way to handle multiple specific cases without writing long if-else chains!
+
+**Preview:**
+```kotlin
+when (grade) {
+    'A' -> println("Excellent!")
+    'B' -> println("Great!")
+    'C' -> println("Good!")
+    else -> println("Keep trying!")
 }
 ```
 
 ---
 
-## What You've Learned
-
-✅ Custom getters for computed properties
-✅ Custom setters for validation and transformation
-✅ Private setters for controlled access
-✅ `lateinit` for delayed initialization
-✅ Lazy initialization with the `lazy` delegate
-✅ Backing fields with the `field` keyword
-✅ Property delegation basics (`observable`, `vetoable`)
-
----
-
-## Next Steps
-
-In **Lesson 2.3: Inheritance and Polymorphism**, you'll learn:
-- Creating class hierarchies with inheritance
-- Overriding methods and properties
-- Abstract classes for shared behavior
-- Polymorphism: treating objects of different types uniformly
-- Type checking and casting
-
-You're mastering Kotlin's powerful property system!
-
----
-
-**Congratulations on completing Lesson 2.2!** 🎉
-
-Properties are the foundation of OOP. Kotlin's property features give you fine-grained control while keeping your code clean and expressive.
+**Excellent progress! Mark this lesson complete and continue to Lesson 2.3!** 🎉

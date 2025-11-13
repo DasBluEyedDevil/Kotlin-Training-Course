@@ -1,920 +1,776 @@
-# Lesson 3.1: Introduction to Functional Programming
+# Lesson 2.1: Introduction to Object-Oriented Programming
 
 **Estimated Time**: 60 minutes
-**Difficulty**: Intermediate
-**Prerequisites**: Parts 1-2 (Kotlin fundamentals, OOP)
 
 ---
 
 ## Topic Introduction
 
-Welcome to Part 3: Functional Programming! You've mastered Kotlin basics and object-oriented programming. Now it's time to explore a powerful programming paradigm that will transform how you write code.
+Welcome to Part 2 of the Kotlin Training Course! You've mastered the fundamentals—variables, control flow, functions, and collections. Now it's time to learn **Object-Oriented Programming (OOP)**, a paradigm that will transform how you design and structure your code.
 
-Functional programming (FP) is not just about using functions—it's a different way of thinking about problems. Instead of telling the computer **what to do** step-by-step (imperative), you describe **what you want** (declarative). The result? Code that's shorter, clearer, and easier to test.
+OOP is more than just a programming technique—it's a way of thinking about problems. Instead of writing procedural code that executes step-by-step, you'll learn to model real-world entities as **objects** with their own data and behavior.
 
-In this lesson, you'll learn:
-- What functional programming really means
-- First-class and higher-order functions
-- Lambda expressions basics
-- Function types in Kotlin
-- How to pass functions as parameters
-
-By the end, you'll write elegant, functional code that reads like English!
+By the end of this lesson, you'll understand what OOP is, why it matters, and how to create your first classes and objects in Kotlin.
 
 ---
 
-## The Concept: What Is Functional Programming?
+## The Concept
 
-### The Assembly Line Analogy
+### What is Object-Oriented Programming?
 
-Imagine two approaches to making a pizza:
+**Object-Oriented Programming (OOP)** is a programming paradigm that organizes code around **objects**—self-contained units that combine data (properties) and behavior (methods).
 
-**Imperative Approach** (Traditional Programming):
-```
-1. Take dough → Put on counter
-2. Take sauce → Pour on dough
-3. Take cheese → Sprinkle on sauce
-4. Take pepperoni → Place on cheese
-5. Take pizza → Put in oven
-6. Wait 15 minutes → Take pizza out
-```
+**Real-World Analogy: A Car**
 
-**Functional Approach**:
-```
-pizza = take(dough)
-  .add(sauce)
-  .add(cheese)
-  .add(pepperoni)
-  .bake(15)
-```
+Think about a car in the real world:
 
-The functional approach:
-- Chains operations together
-- Each step transforms data and passes it forward
-- Reads more naturally
-- Easier to understand at a glance
+**Properties (Data)**:
+- Color: "Red"
+- Brand: "Toyota"
+- Model: "Camry"
+- Current Speed: 0 mph
+- Fuel Level: 100%
 
-### Core Principles of Functional Programming
+**Behaviors (Actions)**:
+- Start engine
+- Accelerate
+- Brake
+- Turn left/right
+- Refuel
 
-**1. Functions Are First-Class Citizens**
+A car is an **object** with both data and functionality. OOP lets you model concepts like this in code!
 
-In FP, functions are values just like numbers or strings. You can:
-- Store them in variables
-- Pass them to other functions
-- Return them from functions
-- Create them on the fly
+### Why OOP Matters
+
+**Before OOP (Procedural Programming)**:
 
 ```kotlin
-// Functions are values!
-val greet = fun(name: String) = "Hello, $name!"
-val result = greet("Alice")  // "Hello, Alice!"
+// Scattered data
+var carColor = "Red"
+var carBrand = "Toyota"
+var carSpeed = 0
+
+// Scattered functions
+fun accelerateCar() {
+    carSpeed += 10
+}
+
+fun brakeCar() {
+    carSpeed -= 10
+}
 ```
 
-**2. Higher-Order Functions**
+**Problems**:
+- Data and behavior are disconnected
+- Hard to manage multiple cars
+- No clear organization
+- Prone to errors (which car are we accelerating?)
 
-Functions that take other functions as parameters or return functions:
+**With OOP**:
 
 ```kotlin
-// Takes a function as parameter
-fun repeat(times: Int, action: () -> Unit) {
-    for (i in 1..times) {
-        action()
+class Car(val color: String, val brand: String) {
+    var speed = 0
+
+    fun accelerate() {
+        speed += 10
+    }
+
+    fun brake() {
+        speed -= 10
     }
 }
 
-repeat(3) { println("Hello!") }
-// Output:
-// Hello!
-// Hello!
-// Hello!
+val myCar = Car("Red", "Toyota")
+myCar.accelerate()
+println(myCar.speed)  // 10
 ```
 
-**3. Immutability**
-
-Prefer values that don't change (immutable data):
-
-```kotlin
-// ❌ Imperative (mutating)
-var total = 0
-for (num in numbers) {
-    total += num
-}
-
-// ✅ Functional (immutable)
-val total = numbers.sum()
-```
-
-**4. Pure Functions**
-
-Functions with no side effects—same input always gives same output:
-
-```kotlin
-// ✅ Pure function
-fun add(a: Int, b: Int): Int = a + b
-
-// ❌ Impure function (depends on external state)
-var discount = 0.1
-fun applyDiscount(price: Double): Double = price * (1 - discount)
-```
+**Benefits**:
+- ✅ Data and behavior are bundled together
+- ✅ Easy to create multiple cars
+- ✅ Clear organization and structure
+- ✅ Safer and more maintainable
 
 ---
 
-## First-Class Functions
+## Classes and Objects
 
-In Kotlin, functions are **first-class citizens**—they're treated like any other value.
+### What is a Class?
 
-### Assigning Functions to Variables
+A **class** is a blueprint or template for creating objects. It defines:
+- **Properties**: What data the object holds
+- **Methods**: What actions the object can perform
+
+**Analogy**: A class is like a cookie cutter, and objects are the cookies.
+
+```
+Class (Blueprint)          Objects (Instances)
+┌─────────────┐           ┌─────────────┐ ┌─────────────┐
+│   Car       │           │  Car #1     │ │  Car #2     │
+│             │ ─────────▶│  Red Toyota │ │  Blue Honda │
+│ color       │           │  Speed: 0   │ │  Speed: 30  │
+│ speed       │           └─────────────┘ └─────────────┘
+│ accelerate()│
+└─────────────┘
+```
+
+### Creating Your First Class
+
+**Syntax**:
 
 ```kotlin
-// Traditional function declaration
-fun double(x: Int): Int {
-    return x * 2
+class ClassName {
+    // Properties
+    // Methods
 }
-
-// Assigning function to variable
-val doubleFunc = ::double  // Function reference
-
-println(doubleFunc(5))  // 10
 ```
 
-### Anonymous Functions
-
-Functions without names:
+**Example: Person Class**
 
 ```kotlin
-// Anonymous function assigned to variable
-val triple = fun(x: Int): Int {
-    return x * 3
-}
+class Person {
+    var name: String = ""
+    var age: Int = 0
 
-println(triple(4))  // 12
-```
-
-### Lambda Expressions (Preview)
-
-Shorter syntax for anonymous functions:
-
-```kotlin
-// Lambda expression
-val square = { x: Int -> x * x }
-
-println(square(6))  // 36
-```
-
-### Why This Matters
-
-```kotlin
-// Store different math operations
-val add = { a: Int, b: Int -> a + b }
-val subtract = { a: Int, b: Int -> a - b }
-val multiply = { a: Int, b: Int -> a * b }
-
-// Use them interchangeably
-fun calculate(a: Int, b: Int, operation: (Int, Int) -> Int): Int {
-    return operation(a, b)
-}
-
-println(calculate(10, 5, add))       // 15
-println(calculate(10, 5, subtract))  // 5
-println(calculate(10, 5, multiply))  // 50
-```
-
----
-
-## Higher-Order Functions
-
-Functions that work with other functions.
-
-### Taking Functions as Parameters
-
-```kotlin
-fun processNumber(x: Int, transformer: (Int) -> Int): Int {
-    println("Processing $x...")
-    return transformer(x)
-}
-
-// Use it with different transformations
-val result1 = processNumber(5) { it * 2 }     // 10
-val result2 = processNumber(5) { it * it }    // 25
-val result3 = processNumber(5) { it + 100 }   // 105
-```
-
-### Real-World Example: Custom List Processing
-
-```kotlin
-fun customFilter(list: List<Int>, predicate: (Int) -> Boolean): List<Int> {
-    val result = mutableListOf<Int>()
-    for (item in list) {
-        if (predicate(item)) {
-            result.add(item)
-        }
+    fun introduce() {
+        println("Hi, I'm $name and I'm $age years old.")
     }
-    return result
-}
-
-val numbers = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-
-// Filter even numbers
-val evens = customFilter(numbers) { it % 2 == 0 }
-println(evens)  // [2, 4, 6, 8, 10]
-
-// Filter numbers greater than 5
-val bigNumbers = customFilter(numbers) { it > 5 }
-println(bigNumbers)  // [6, 7, 8, 9, 10]
-```
-
-### Returning Functions
-
-```kotlin
-fun createMultiplier(factor: Int): (Int) -> Int {
-    return { number -> number * factor }
-}
-
-val double = createMultiplier(2)
-val triple = createMultiplier(3)
-val tenfold = createMultiplier(10)
-
-println(double(5))    // 10
-println(triple(5))    // 15
-println(tenfold(5))   // 50
-```
-
----
-
-## Lambda Expressions Basics
-
-Lambdas are concise anonymous functions.
-
-### Basic Lambda Syntax
-
-```kotlin
-// Full syntax
-val sum = { a: Int, b: Int -> a + b }
-//         { parameters -> body }
-
-// Using the lambda
-println(sum(3, 7))  // 10
-```
-
-### Lambda Structure
-
-```
-{ parameters -> body }
-  ↓          ↓
-  input      what to do with input
-```
-
-Examples:
-
-```kotlin
-// No parameters
-val greet = { println("Hello!") }
-greet()  // Hello!
-
-// One parameter
-val square = { x: Int -> x * x }
-println(square(4))  // 16
-
-// Multiple parameters
-val concat = { a: String, b: String -> "$a $b" }
-println(concat("Hello", "World"))  // Hello World
-
-// Multiple statements
-val complexOperation = { x: Int ->
-    val doubled = x * 2
-    val squared = doubled * doubled
-    squared  // Last expression is returned
-}
-println(complexOperation(3))  // 36 (3 * 2 = 6, then 6 * 6 = 36)
-```
-
-### Type Inference
-
-Kotlin often infers lambda parameter types:
-
-```kotlin
-// Explicit type
-val numbers = listOf(1, 2, 3, 4, 5)
-val doubled = numbers.map({ x: Int -> x * 2 })
-
-// Type inferred (cleaner!)
-val tripled = numbers.map({ x -> x * 3 })
-
-// Even shorter with 'it' (single parameter)
-val quadrupled = numbers.map({ it * 4 })
-
-// Trailing lambda (move outside parentheses)
-val quintupled = numbers.map { it * 5 }
-
-println(quintupled)  // [5, 10, 15, 20, 25]
-```
-
----
-
-## Function Types
-
-Every function has a type, just like variables.
-
-### Basic Function Type Syntax
-
-```kotlin
-// Variable type: (ParameterTypes) -> ReturnType
-
-val greet: (String) -> String = { name -> "Hello, $name!" }
-//         ^^^^^^^^^^^^^^^^     function type
-
-val add: (Int, Int) -> Int = { a, b -> a + b }
-//       ^^^^^^^^^^^^^^^^^   function type
-
-val printMessage: (String) -> Unit = { message -> println(message) }
-//                ^^^^^^^^^^^^^^^^   function type (Unit = no return value)
-```
-
-### Function Type Components
-
-```
-(Int, String) -> Boolean
- ↓      ↓         ↓
- param types      return type
-```
-
-### Using Function Types in Declarations
-
-```kotlin
-// Function parameter with function type
-fun applyOperation(x: Int, y: Int, operation: (Int, Int) -> Int): Int {
-    return operation(x, y)
-}
-
-val result1 = applyOperation(10, 5, { a, b -> a + b })   // 15
-val result2 = applyOperation(10, 5, { a, b -> a - b })   // 5
-val result3 = applyOperation(10, 5, { a, b -> a * b })   // 50
-```
-
-### Nullable Function Types
-
-```kotlin
-var operation: ((Int, Int) -> Int)? = null
-
-operation = { a, b -> a + b }
-
-// Safe call with nullable function
-val result = operation?.invoke(5, 3)  // 8
-
-operation = null
-val result2 = operation?.invoke(5, 3)  // null
-```
-
----
-
-## Passing Functions as Parameters
-
-One of the most powerful FP techniques.
-
-### Example 1: Retry Logic
-
-```kotlin
-fun <T> retry(times: Int, action: () -> T): T? {
-    repeat(times) { attempt ->
-        try {
-            return action()
-        } catch (e: Exception) {
-            println("Attempt ${attempt + 1} failed: ${e.message}")
-            if (attempt == times - 1) throw e
-        }
-    }
-    return null
-}
-
-// Usage
-fun unreliableNetworkCall(): String {
-    if (Math.random() < 0.7) throw Exception("Network error")
-    return "Success!"
-}
-
-val result = retry(3) { unreliableNetworkCall() }
-```
-
-### Example 2: Timing Function Execution
-
-```kotlin
-fun <T> measureTime(label: String, block: () -> T): T {
-    val startTime = System.currentTimeMillis()
-    val result = block()
-    val endTime = System.currentTimeMillis()
-    println("$label took ${endTime - startTime}ms")
-    return result
-}
-
-// Usage
-val sum = measureTime("Calculating sum") {
-    (1..1_000_000).sum()
-}
-// Output: Calculating sum took 42ms
-```
-
-### Example 3: List Transformation
-
-```kotlin
-fun List<Int>.customMap(transform: (Int) -> Int): List<Int> {
-    val result = mutableListOf<Int>()
-    for (item in this) {
-        result.add(transform(item))
-    }
-    return result
-}
-
-val numbers = listOf(1, 2, 3, 4, 5)
-
-val doubled = numbers.customMap { it * 2 }
-println(doubled)  // [2, 4, 6, 8, 10]
-
-val squared = numbers.customMap { it * it }
-println(squared)  // [1, 4, 9, 16, 25]
-```
-
----
-
-## Practical Examples: Real-World Use Cases
-
-### Example 1: Form Validation
-
-```kotlin
-data class User(val name: String, val email: String, val age: Int)
-
-typealias Validator<T> = (T) -> Boolean
-
-fun <T> validate(value: T, validators: List<Validator<T>>): Boolean {
-    return validators.all { it(value) }
-}
-
-val nameValidator: Validator<String> = { it.length >= 3 }
-val emailValidator: Validator<String> = { it.contains("@") }
-val ageValidator: Validator<Int> = { it >= 18 }
-
-// Validate name
-val validName = validate("John", listOf(nameValidator))
-println("Name valid: $validName")  // true
-
-// Validate email
-val validEmail = validate("john@example.com", listOf(emailValidator))
-println("Email valid: $validEmail")  // true
-
-// Validate age
-val validAge = validate(25, listOf(ageValidator))
-println("Age valid: $validAge")  // true
-```
-
-### Example 2: Event Handling
-
-```kotlin
-class Button(val label: String) {
-    private var clickHandler: (() -> Unit)? = null
-
-    fun onClick(handler: () -> Unit) {
-        clickHandler = handler
-    }
-
-    fun click() {
-        println("Button '$label' clicked")
-        clickHandler?.invoke()
-    }
-}
-
-// Usage
-val saveButton = Button("Save")
-saveButton.onClick {
-    println("Saving data...")
-}
-
-val cancelButton = Button("Cancel")
-cancelButton.onClick {
-    println("Operation cancelled")
-}
-
-saveButton.click()
-// Output:
-// Button 'Save' clicked
-// Saving data...
-
-cancelButton.click()
-// Output:
-// Button 'Cancel' clicked
-// Operation cancelled
-```
-
-### Example 3: Strategy Pattern with Functions
-
-```kotlin
-class PriceCalculator {
-    fun calculatePrice(
-        basePrice: Double,
-        quantity: Int,
-        discountStrategy: (Double, Int) -> Double
-    ): Double {
-        return discountStrategy(basePrice, quantity)
-    }
-}
-
-// Different discount strategies
-val noDiscount = { price: Double, qty: Int -> price * qty }
-val bulkDiscount = { price: Double, qty: Int ->
-    if (qty >= 10) price * qty * 0.9 else price * qty
-}
-val loyaltyDiscount = { price: Double, qty: Int -> price * qty * 0.85 }
-
-val calculator = PriceCalculator()
-
-println(calculator.calculatePrice(100.0, 5, noDiscount))        // 500.0
-println(calculator.calculatePrice(100.0, 15, bulkDiscount))     // 1350.0
-println(calculator.calculatePrice(100.0, 5, loyaltyDiscount))   // 425.0
-```
-
----
-
-## Exercise 1: Function Calculator
-
-**Goal**: Create a calculator that uses functions for operations.
-
-**Requirements**:
-1. Create a function `calculate` that takes two numbers and an operation function
-2. Define operation functions for: add, subtract, multiply, divide
-3. Use the calculator with different operations
-
-**Starter Code**:
-```kotlin
-fun calculate(a: Int, b: Int, operation: (Int, Int) -> Int): Int {
-    // TODO: Implement
 }
 
 fun main() {
-    // TODO: Define operations and use calculator
+    // Create an object (instance) of Person
+    val person1 = Person()
+    person1.name = "Alice"
+    person1.age = 25
+    person1.introduce()  // Hi, I'm Alice and I'm 25 years old.
+
+    // Create another object
+    val person2 = Person()
+    person2.name = "Bob"
+    person2.age = 30
+    person2.introduce()  // Hi, I'm Bob and I'm 30 years old.
+}
+```
+
+**Key Points**:
+- `class Person` defines the blueprint
+- `Person()` creates a new instance (object)
+- Each object has its own independent data
+- `person1` and `person2` are separate objects
+
+---
+
+## Properties
+
+**Properties** are variables that belong to a class. They define the state of an object.
+
+**Two Types**:
+- **`val`** (immutable): Cannot be changed after initialization
+- **`var`** (mutable): Can be changed
+
+```kotlin
+class BankAccount {
+    val accountNumber: String = "123456"  // Can't change
+    var balance: Double = 0.0              // Can change
+
+    fun deposit(amount: Double) {
+        balance += amount
+    }
+
+    fun withdraw(amount: Double) {
+        if (amount <= balance) {
+            balance -= amount
+        } else {
+            println("Insufficient funds!")
+        }
+    }
+}
+
+fun main() {
+    val account = BankAccount()
+    println(account.balance)  // 0.0
+
+    account.deposit(100.0)
+    println(account.balance)  // 100.0
+
+    account.withdraw(30.0)
+    println(account.balance)  // 70.0
+
+    // account.accountNumber = "999999"  // ❌ Error: Val cannot be reassigned
 }
 ```
 
 ---
 
-## Solution 1: Function Calculator
+## Constructors
+
+### Primary Constructor
+
+A **constructor** is a special function that initializes an object when it's created. The **primary constructor** is defined in the class header.
+
+**Without Constructor** (tedious):
 
 ```kotlin
-fun calculate(a: Int, b: Int, operation: (Int, Int) -> Int): Int {
-    return operation(a, b)
+val person = Person()
+person.name = "Alice"
+person.age = 25
+```
+
+**With Constructor** (clean):
+
+```kotlin
+class Person(val name: String, val age: Int) {
+    fun introduce() {
+        println("Hi, I'm $name and I'm $age years old.")
+    }
 }
 
 fun main() {
-    // Define operations as lambdas
-    val add = { a: Int, b: Int -> a + b }
-    val subtract = { a: Int, b: Int -> a - b }
-    val multiply = { a: Int, b: Int -> a * b }
-    val divide = { a: Int, b: Int -> if (b != 0) a / b else 0 }
-
-    val x = 20
-    val y = 4
-
-    println("$x + $y = ${calculate(x, y, add)}")         // 24
-    println("$x - $y = ${calculate(x, y, subtract)}")    // 16
-    println("$x * $y = ${calculate(x, y, multiply)}")    // 80
-    println("$x / $y = ${calculate(x, y, divide)}")      // 5
-
-    // Can also use lambdas directly
-    println("$x % $y = ${calculate(x, y) { a, b -> a % b }}")  // 0
+    val person = Person("Alice", 25)
+    person.introduce()  // Hi, I'm Alice and I'm 25 years old.
 }
 ```
 
 **Explanation**:
-- We define operation functions as lambda expressions
-- Each lambda takes two Ints and returns an Int
-- The `calculate` function is generic—it works with any operation
-- We can pass pre-defined operations or create them inline
+- `class Person(val name: String, val age: Int)` defines properties in the constructor
+- `val` or `var` makes them properties (accessible throughout the class)
+- Without `val`/`var`, they're just constructor parameters
 
----
+**Constructor with Default Values**:
 
-## Exercise 2: Custom List Filter
-
-**Goal**: Build a reusable filter function for lists.
-
-**Requirements**:
-1. Create a function `filterList` that takes a list and a predicate function
-2. The predicate determines which elements to keep
-3. Test with different predicates (even numbers, > 10, etc.)
-
-**Starter Code**:
 ```kotlin
-fun filterList(list: List<Int>, predicate: (Int) -> Boolean): List<Int> {
-    // TODO: Implement
+class Car(
+    val brand: String,
+    val model: String,
+    val year: Int = 2024,  // Default value
+    var mileage: Int = 0   // Default value
+) {
+    fun displayInfo() {
+        println("$year $brand $model - $mileage miles")
+    }
 }
 
 fun main() {
-    val numbers = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-    // TODO: Filter with different predicates
+    val car1 = Car("Toyota", "Camry")  // Uses defaults
+    car1.displayInfo()  // 2024 Toyota Camry - 0 miles
+
+    val car2 = Car("Honda", "Civic", 2020, 15000)
+    car2.displayInfo()  // 2020 Honda Civic - 15000 miles
+}
+```
+
+### Init Block
+
+The **`init` block** runs when an object is created. Use it for validation or setup logic.
+
+```kotlin
+class BankAccount(val accountNumber: String, initialBalance: Double) {
+    var balance: Double = 0.0
+
+    init {
+        require(initialBalance >= 0) { "Initial balance cannot be negative" }
+        balance = initialBalance
+        println("Account $accountNumber created with balance $$balance")
+    }
+}
+
+fun main() {
+    val account = BankAccount("123456", 100.0)
+    // Output: Account 123456 created with balance $100.0
+
+    // val badAccount = BankAccount("999999", -50.0)  // ❌ Exception!
+}
+```
+
+### Secondary Constructors
+
+**Secondary constructors** provide alternative ways to create objects.
+
+```kotlin
+class Person(val name: String, val age: Int) {
+    var email: String = ""
+
+    // Secondary constructor
+    constructor(name: String, age: Int, email: String) : this(name, age) {
+        this.email = email
+    }
+
+    fun displayInfo() {
+        println("Name: $name, Age: $age, Email: $email")
+    }
+}
+
+fun main() {
+    val person1 = Person("Alice", 25)
+    person1.displayInfo()  // Name: Alice, Age: 25, Email:
+
+    val person2 = Person("Bob", 30, "bob@example.com")
+    person2.displayInfo()  // Name: Bob, Age: 30, Email: bob@example.com
+}
+```
+
+**Note**: In modern Kotlin, **default parameters** are preferred over secondary constructors.
+
+---
+
+## Methods
+
+**Methods** are functions that belong to a class. They define the behavior of an object.
+
+```kotlin
+class Calculator {
+    fun add(a: Int, b: Int): Int {
+        return a + b
+    }
+
+    fun subtract(a: Int, b: Int): Int {
+        return a - b
+    }
+
+    fun multiply(a: Int, b: Int): Int {
+        return a * b
+    }
+
+    fun divide(a: Int, b: Int): Double {
+        require(b != 0) { "Cannot divide by zero" }
+        return a.toDouble() / b
+    }
+}
+
+fun main() {
+    val calc = Calculator()
+
+    println(calc.add(5, 3))        // 8
+    println(calc.subtract(10, 4))  // 6
+    println(calc.multiply(3, 7))   // 21
+    println(calc.divide(15, 3))    // 5.0
 }
 ```
 
 ---
 
-## Solution 2: Custom List Filter
+## The `this` Keyword
+
+**`this`** refers to the current instance of the class. Use it to:
+1. Distinguish between properties and parameters with the same name
+2. Reference the current object
 
 ```kotlin
-fun filterList(list: List<Int>, predicate: (Int) -> Boolean): List<Int> {
-    val result = mutableListOf<Int>()
-    for (item in list) {
-        if (predicate(item)) {
-            result.add(item)
+class Person(name: String, age: Int) {
+    var name: String = name
+    var age: Int = age
+
+    fun updateName(name: String) {
+        this.name = name  // this.name is the property, name is the parameter
+    }
+
+    fun haveBirthday() {
+        this.age++  // Optional: this.age++ is the same as age++
+    }
+
+    fun compareAge(otherPerson: Person): String {
+        return when {
+            this.age > otherPerson.age -> "$name is older than ${otherPerson.name}"
+            this.age < otherPerson.age -> "$name is younger than ${otherPerson.name}"
+            else -> "$name and ${otherPerson.name} are the same age"
         }
     }
-    return result
 }
 
 fun main() {
-    val numbers = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25)
+    val alice = Person("Alice", 25)
+    val bob = Person("Bob", 30)
 
-    // Filter even numbers
-    val evens = filterList(numbers) { it % 2 == 0 }
-    println("Even numbers: $evens")  // [2, 4, 6, 8, 10, 20]
+    alice.updateName("Alicia")
+    println(alice.name)  // Alicia
 
-    // Filter numbers greater than 10
-    val bigNumbers = filterList(numbers) { it > 10 }
-    println("Numbers > 10: $bigNumbers")  // [15, 20, 25]
-
-    // Filter numbers divisible by 5
-    val divisibleBy5 = filterList(numbers) { it % 5 == 0 }
-    println("Divisible by 5: $divisibleBy5")  // [5, 10, 15, 20, 25]
-
-    // Filter numbers in range 3..7
-    val inRange = filterList(numbers) { it in 3..7 }
-    println("In range 3-7: $inRange")  // [3, 4, 5, 6, 7]
+    println(alice.compareAge(bob))  // Alicia is younger than Bob
 }
 ```
 
-**Explanation**:
-- `filterList` iterates through the list
-- For each item, it calls the predicate function
-- If predicate returns true, item is included in result
-- Different predicates give different filtered results
-
 ---
 
-## Exercise 3: Function Builder
+## Exercise 1: Create a Student Class
 
-**Goal**: Create a function that returns different functions based on input.
+**Goal**: Create a `Student` class with properties and methods.
 
 **Requirements**:
-1. Create `createGreeter` that takes a greeting style
-2. Return appropriate greeting function
-3. Styles: "formal", "casual", "enthusiastic"
-
-**Starter Code**:
-```kotlin
-fun createGreeter(style: String): (String) -> String {
-    // TODO: Return different greeting functions based on style
-}
-
-fun main() {
-    // TODO: Test different greeting styles
-}
-```
+1. Properties: `name` (String), `studentId` (String), `grade` (Int, 0-100)
+2. Method: `isPass()` returns true if grade >= 60, false otherwise
+3. Method: `displayInfo()` prints student details
+4. Create 3 students and test the methods
 
 ---
 
-## Solution 3: Function Builder
+## Solution: Student Class
 
 ```kotlin
-fun createGreeter(style: String): (String) -> String {
-    return when (style) {
-        "formal" -> { name -> "Good day, $name. How may I assist you?" }
-        "casual" -> { name -> "Hey $name! What's up?" }
-        "enthusiastic" -> { name -> "OH WOW! Hi $name!!! So great to see you!!!" }
-        else -> { name -> "Hello, $name." }
+class Student(val name: String, val studentId: String, var grade: Int) {
+
+    init {
+        require(grade in 0..100) { "Grade must be between 0 and 100" }
+    }
+
+    fun isPass(): Boolean {
+        return grade >= 60
+    }
+
+    fun displayInfo() {
+        val status = if (isPass()) "PASS" else "FAIL"
+        println("Student: $name (ID: $studentId)")
+        println("Grade: $grade - $status")
     }
 }
 
 fun main() {
-    val formalGreeter = createGreeter("formal")
-    val casualGreeter = createGreeter("casual")
-    val enthusiasticGreeter = createGreeter("enthusiastic")
+    val student1 = Student("Alice Johnson", "S001", 85)
+    val student2 = Student("Bob Smith", "S002", 55)
+    val student3 = Student("Carol Davis", "S003", 92)
 
-    val person = "Alice"
-
-    println(formalGreeter(person))
-    // Output: Good day, Alice. How may I assist you?
-
-    println(casualGreeter(person))
-    // Output: Hey Alice! What's up?
-
-    println(enthusiasticGreeter(person))
-    // Output: OH WOW! Hi Alice!!! So great to see you!!!
-
-    // Can also create and use immediately
-    println(createGreeter("unknown")(person))
-    // Output: Hello, Alice.
+    student1.displayInfo()
+    println()
+    student2.displayInfo()
+    println()
+    student3.displayInfo()
 }
 ```
 
-**Explanation**:
-- `createGreeter` is a factory function that returns functions
-- Based on style parameter, it returns different greeting implementations
-- Each returned function has the same signature: `(String) -> String`
-- This demonstrates functions returning functions—powerful abstraction!
+**Output**:
+```
+Student: Alice Johnson (ID: S001)
+Grade: 85 - PASS
+
+Student: Bob Smith (ID: S002)
+Grade: 55 - FAIL
+
+Student: Carol Davis (ID: S003)
+Grade: 92 - PASS
+```
+
+---
+
+## Exercise 2: Create a Rectangle Class
+
+**Goal**: Create a `Rectangle` class that calculates area and perimeter.
+
+**Requirements**:
+1. Properties: `width` (Double), `height` (Double)
+2. Method: `area()` returns width * height
+3. Method: `perimeter()` returns 2 * (width + height)
+4. Method: `isSquare()` returns true if width == height
+5. Create rectangles and test all methods
+
+---
+
+## Solution: Rectangle Class
+
+```kotlin
+class Rectangle(val width: Double, val height: Double) {
+
+    init {
+        require(width > 0 && height > 0) { "Width and height must be positive" }
+    }
+
+    fun area(): Double {
+        return width * height
+    }
+
+    fun perimeter(): Double {
+        return 2 * (width + height)
+    }
+
+    fun isSquare(): Boolean {
+        return width == height
+    }
+
+    fun displayInfo() {
+        println("Rectangle: ${width} x ${height}")
+        println("  Area: ${area()}")
+        println("  Perimeter: ${perimeter()}")
+        println("  Is Square: ${isSquare()}")
+    }
+}
+
+fun main() {
+    val rect1 = Rectangle(5.0, 10.0)
+    val rect2 = Rectangle(7.0, 7.0)
+
+    rect1.displayInfo()
+    println()
+    rect2.displayInfo()
+}
+```
+
+**Output**:
+```
+Rectangle: 5.0 x 10.0
+  Area: 50.0
+  Perimeter: 30.0
+  Is Square: false
+
+Rectangle: 7.0 x 7.0
+  Area: 49.0
+  Perimeter: 28.0
+  Is Square: true
+```
+
+---
+
+## Exercise 3: Create a BankAccount Class
+
+**Goal**: Build a complete bank account system.
+
+**Requirements**:
+1. Properties: `accountHolder` (String), `accountNumber` (String), `balance` (Double, private)
+2. Method: `deposit(amount: Double)` adds to balance
+3. Method: `withdraw(amount: Double)` subtracts from balance (check sufficient funds)
+4. Method: `getBalance()` returns current balance
+5. Method: `transfer(amount: Double, targetAccount: BankAccount)` transfers money
+6. Create accounts and perform transactions
+
+---
+
+## Solution: BankAccount Class
+
+```kotlin
+class BankAccount(val accountHolder: String, val accountNumber: String) {
+    private var balance: Double = 0.0
+
+    fun deposit(amount: Double) {
+        require(amount > 0) { "Deposit amount must be positive" }
+        balance += amount
+        println("Deposited $$amount. New balance: $$balance")
+    }
+
+    fun withdraw(amount: Double): Boolean {
+        require(amount > 0) { "Withdrawal amount must be positive" }
+
+        return if (amount <= balance) {
+            balance -= amount
+            println("Withdrew $$amount. New balance: $$balance")
+            true
+        } else {
+            println("Insufficient funds! Balance: $$balance, Requested: $$amount")
+            false
+        }
+    }
+
+    fun getBalance(): Double {
+        return balance
+    }
+
+    fun transfer(amount: Double, targetAccount: BankAccount): Boolean {
+        println("\nTransferring $$amount from ${this.accountHolder} to ${targetAccount.accountHolder}")
+
+        return if (withdraw(amount)) {
+            targetAccount.deposit(amount)
+            println("Transfer successful!")
+            true
+        } else {
+            println("Transfer failed!")
+            false
+        }
+    }
+
+    fun displayInfo() {
+        println("Account Holder: $accountHolder")
+        println("Account Number: $accountNumber")
+        println("Balance: $$balance")
+    }
+}
+
+fun main() {
+    val aliceAccount = BankAccount("Alice Johnson", "ACC001")
+    val bobAccount = BankAccount("Bob Smith", "ACC002")
+
+    // Alice deposits money
+    aliceAccount.deposit(1000.0)
+    println()
+
+    // Alice withdraws money
+    aliceAccount.withdraw(200.0)
+    println()
+
+    // Alice tries to withdraw more than balance
+    aliceAccount.withdraw(1000.0)
+    println()
+
+    // Alice transfers to Bob
+    aliceAccount.transfer(300.0, bobAccount)
+    println()
+
+    // Display final balances
+    aliceAccount.displayInfo()
+    println()
+    bobAccount.displayInfo()
+}
+```
+
+**Output**:
+```
+Deposited $1000.0. New balance: $1000.0
+
+Withdrew $200.0. New balance: $800.0
+
+Insufficient funds! Balance: $800.0, Requested: $1000.0
+
+Transferring $300.0 from Alice Johnson to Bob Smith
+Withdrew $300.0. New balance: $500.0
+Deposited $300.0. New balance: $300.0
+Transfer successful!
+
+Account Holder: Alice Johnson
+Account Number: ACC001
+Balance: $500.0
+
+Account Holder: Bob Smith
+Account Number: ACC002
+Balance: $300.0
+```
 
 ---
 
 ## Checkpoint Quiz
 
-Test your understanding of functional programming concepts!
-
 ### Question 1
-What does it mean that functions are "first-class citizens" in Kotlin?
+What is a class in OOP?
 
-A) Functions must be declared before variables
-B) Functions can be treated as values—stored in variables, passed as parameters, and returned from functions
-C) Functions are more important than other code elements
-D) Functions always execute first in a program
+A) A function that performs calculations
+B) A blueprint or template for creating objects
+C) A variable that stores data
+D) A loop that iterates over collections
 
 ### Question 2
-What is a higher-order function?
+What is the difference between `val` and `var` for properties?
 
-A) A function declared at the top of a file
-B) A function with more parameters than usual
-C) A function that takes another function as a parameter or returns a function
-D) A function that runs faster than normal functions
+A) `val` is for integers, `var` is for strings
+B) `val` is immutable (read-only), `var` is mutable (read-write)
+C) `val` is for classes, `var` is for functions
+D) There is no difference
 
 ### Question 3
-What is the correct syntax for a lambda expression that doubles a number?
+What does the `this` keyword refer to?
 
-A) `lambda x -> x * 2`
-B) `{ x -> x * 2 }`
-C) `func(x) { x * 2 }`
-D) `double(x) = x * 2`
+A) The main function
+B) The parent class
+C) The current instance of the class
+D) A static variable
 
 ### Question 4
-What is the function type of: `{ a: Int, b: Int -> a + b }`?
+What is a constructor?
 
-A) `(Int) -> Int`
-B) `(Int, Int) -> Unit`
-C) `(Int, Int) -> Int`
-D) `() -> Int`
+A) A method that destroys objects
+B) A special function that initializes objects when they're created
+C) A variable that stores class data
+D) A loop that creates multiple objects
 
 ### Question 5
-What does the `it` keyword represent in a lambda?
+Which of the following correctly creates an instance of a `Car` class?
 
-A) The function itself
-B) The single parameter when a lambda has exactly one parameter
-C) The return value
-D) The iteration count in a loop
+A) `Car car = new Car()`
+B) `val car = Car()`
+C) `Car car()`
+D) `new Car() as car`
 
 ---
 
 ## Quiz Answers
 
-**Question 1: B) Functions can be treated as values—stored in variables, passed as parameters, and returned from functions**
+**Question 1: B) A blueprint or template for creating objects**
 
-First-class functions mean functions are treated like any other value in the language:
+A class defines the structure (properties) and behavior (methods) that objects will have. It's like a blueprint for a house—the blueprint itself isn't a house, but you can build many houses from it.
 
 ```kotlin
-// Store in variable
-val greet = { name: String -> "Hello, $name!" }
+class Car(val brand: String)  // Blueprint
 
-// Pass as parameter
-fun execute(action: () -> Unit) = action()
-
-// Return from function
-fun getOperation() = { x: Int -> x * 2 }
+val car1 = Car("Toyota")  // Object 1
+val car2 = Car("Honda")   // Object 2
 ```
-
-This is fundamental to functional programming and enables powerful abstractions.
 
 ---
 
-**Question 2: C) A function that takes another function as a parameter or returns a function**
-
-Higher-order functions work with other functions:
+**Question 2: B) `val` is immutable (read-only), `var` is mutable (read-write)**
 
 ```kotlin
-// Takes function as parameter
-fun applyTwice(x: Int, f: (Int) -> Int): Int {
-    return f(f(x))
+class Person(val name: String, var age: Int)
+
+val person = Person("Alice", 25)
+// person.name = "Bob"  // ❌ Error: Val cannot be reassigned
+person.age = 26         // ✅ OK: Var can be changed
+```
+
+---
+
+**Question 3: C) The current instance of the class**
+
+`this` refers to the object itself. It's useful when you need to distinguish between properties and parameters with the same name.
+
+```kotlin
+class Person(name: String) {
+    var name: String = name  // this.name (property) = name (parameter)
+
+    fun greet() {
+        println("I am ${this.name}")  // References this object's name
+    }
+}
+```
+
+---
+
+**Question 4: B) A special function that initializes objects when they're created**
+
+Constructors set up the initial state of an object.
+
+```kotlin
+class BankAccount(val accountNumber: String, initialBalance: Double) {
+    var balance = initialBalance
 }
 
-// Returns a function
-fun createMultiplier(n: Int): (Int) -> Int {
-    return { x -> x * n }
-}
-
-val result = applyTwice(5) { it * 2 }  // 20
-val triple = createMultiplier(3)
+val account = BankAccount("123456", 1000.0)  // Constructor called here
 ```
-
-This enables generic, reusable code patterns.
 
 ---
 
-**Question 3: B) `{ x -> x * 2 }`**
+**Question 5: B) `val car = Car()`**
 
-Lambda syntax in Kotlin:
-
-```kotlin
-{ parameters -> body }
-
-// Examples:
-{ x -> x * 2 }              // One parameter
-{ a, b -> a + b }           // Two parameters
-{ it * 2 }                  // 'it' for single parameter
-{ x: Int -> x * 2 }         // Explicit type
-```
-
-Curly braces delimit the lambda, arrow separates parameters from body.
-
----
-
-**Question 4: C) `(Int, Int) -> Int`**
-
-Function type syntax: `(ParameterTypes) -> ReturnType`
+Kotlin doesn't use the `new` keyword like Java. You create objects by calling the class name with parentheses.
 
 ```kotlin
-{ a: Int, b: Int -> a + b }
-  ↓       ↓          ↓
-  Int    Int        Int (return type)
+// ✅ Correct Kotlin syntax
+val car = Car("Toyota")
 
-Type: (Int, Int) -> Int
+// ❌ Wrong - Java syntax
+// Car car = new Car("Toyota")
 ```
-
-This describes a function taking two Ints and returning an Int.
-
----
-
-**Question 5: B) The single parameter when a lambda has exactly one parameter**
-
-`it` is shorthand for the single parameter:
-
-```kotlin
-// Explicit parameter
-numbers.map({ x -> x * 2 })
-
-// Using 'it'
-numbers.map({ it * 2 })
-
-// Even shorter
-numbers.map { it * 2 }
-
-// But with multiple parameters, must use names:
-numbers.fold(0) { acc, n -> acc + n }  // Can't use 'it' here
-```
-
-Only works with single-parameter lambdas.
 
 ---
 
 ## What You've Learned
 
-✅ Core principles of functional programming (first-class functions, immutability, pure functions)
-✅ First-class functions—treating functions as values
-✅ Higher-order functions—functions that work with other functions
-✅ Lambda expression syntax and usage
-✅ Function types and type signatures
-✅ Passing functions as parameters
-✅ Returning functions from functions
-✅ Practical applications: validation, event handling, strategy pattern
+✅ What OOP is and why it's powerful
+✅ How to define classes with properties and methods
+✅ Creating objects (instances) from classes
+✅ Using constructors (primary, init blocks, secondary)
+✅ The difference between `val` and `var` properties
+✅ The `this` keyword and when to use it
+✅ Building practical classes (Student, Rectangle, BankAccount)
 
 ---
 
 ## Next Steps
 
-In **Lesson 3.2: Lambda Expressions and Anonymous Functions**, you'll master:
-- Advanced lambda syntax variations
-- The `it` keyword and trailing lambda syntax
-- Anonymous functions vs lambdas
-- Function references and member references
-- When to use each approach
+In **Lesson 2.2: Properties and Initialization**, you'll learn:
+- Custom getters and setters
+- Late initialization with `lateinit`
+- Lazy initialization for performance
+- Backing fields for advanced property control
+- Property delegation basics
 
-Get ready to write even more elegant functional code!
-
----
-
-## Key Takeaways
-
-**Functional Programming Benefits**:
-- More concise code
-- Easier to test (pure functions)
-- Better composability
-- Natural parallelization
-- Reduced bugs from mutable state
-
-**When to Use Functional Style**:
-- ✅ Data transformations (map, filter, reduce)
-- ✅ Event handling
-- ✅ Configuration and customization
-- ✅ Collections processing
-- ❌ Performance-critical tight loops (sometimes)
-- ❌ State machines with complex mutable state
-
-**Remember**:
-- Functions are values—treat them as such
-- Higher-order functions enable powerful abstractions
-- Lambdas make functional code concise
-- Start thinking "what" instead of "how"
+You're building a strong OOP foundation! Keep going!
 
 ---
 
-**Congratulations on completing Lesson 3.1!** 🎉
+**Congratulations on completing Lesson 2.1!** 🎉
 
-You've taken your first steps into functional programming. This paradigm will make your code more elegant and expressive. Keep practicing—functional thinking becomes natural with use!
+You've taken your first steps into Object-Oriented Programming. This is a fundamental shift in how you think about code—from procedures to objects that model the real world.
